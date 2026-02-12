@@ -1,0 +1,17 @@
+{
+  "name": "OrangeFlow SL",
+  "short_name": "OrangeFlow",
+  "description": "Digital BTS Site Approval Platform for Orange Sierra Leone",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fef7f0",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
