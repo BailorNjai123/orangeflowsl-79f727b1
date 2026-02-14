@@ -265,12 +265,26 @@ export default function AdminDashboard() {
                     <Eye className="h-3 w-3 mr-1" /> Review
                   </Button>
                   <Button size="sm" variant="destructive" onClick={async () => {
-                    if (!confirm(`Delete site "${site.site_name}"? This cannot be undone.`)) return;
+                    if (!confirm(`Delete site "${site.site_name}"? This will also delete all related procurement submissions and feedback. This cannot be undone.`)) return;
+                    // Clean up procurement submission files first
+                    const relatedProcs = procSubmissions.filter(p => p.site_id === site.id);
+                    for (const proc of relatedProcs) {
+                      const procFiles = ['land_identified_file_url','ownership_verified_file_url','acquisition_approved_file_url','lease_negotiation_file_url','lease_signed_file_url','lease_registration_file_url','road_access_file_url','vendor_contract_file_url','site_handover_file_url']
+                        .map(f => proc[f]).filter(Boolean).filter((p: string) => !p.startsWith('http'));
+                      if (procFiles.length > 0) await supabase.storage.from('procurement-documents').remove(procFiles);
+                    }
+                    // Clean up site files
                     const filePaths = [site.site_photo_url, site.layout_plan_url, site.approval_letter_url].filter(Boolean).filter((p: string) => !p.startsWith('http'));
                     if (filePaths.length > 0) await supabase.storage.from('site-documents').remove(filePaths);
+                    // Delete site (cascades to procurement_submissions and procurement_feedback)
                     const { error } = await supabase.from('sites').delete().eq('id', site.id);
-                    if (!error) { toast({ title: 'Site deleted' }); fetchData(); }
-                    else toast({ variant: 'destructive', title: 'Error', description: error.message });
+                    if (!error) {
+                      await supabase.from('activity_log').insert({
+                        action: 'site_deleted', description: `Site "${site.site_name}" was deleted`,
+                        user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: site.id,
+                      });
+                      toast({ title: 'Site deleted successfully' }); fetchData();
+                    } else toast({ variant: 'destructive', title: 'Delete failed', description: error.message });
                   }}>
                     <Trash2 className="h-3 w-3 mr-1" /> Delete
                   </Button>
@@ -461,10 +475,19 @@ export default function AdminDashboard() {
                     </>
                   )}
                   <Button size="sm" variant="destructive" onClick={async () => {
-                    if (!confirm('Delete this procurement submission?')) return;
+                    if (!confirm(`Delete procurement submission for "${proc.sites?.site_name}"?`)) return;
+                    // Clean up storage files
+                    const procFiles = ['land_identified_file_url','ownership_verified_file_url','acquisition_approved_file_url','lease_negotiation_file_url','lease_signed_file_url','lease_registration_file_url','road_access_file_url','vendor_contract_file_url','site_handover_file_url']
+                      .map(f => proc[f]).filter(Boolean).filter((p: string) => !p.startsWith('http'));
+                    if (procFiles.length > 0) await supabase.storage.from('procurement-documents').remove(procFiles);
                     const { error } = await supabase.from('procurement_submissions').delete().eq('id', proc.id);
-                    if (!error) { toast({ title: 'Deleted' }); fetchData(); }
-                    else toast({ variant: 'destructive', title: 'Error', description: error.message });
+                    if (!error) {
+                      await supabase.from('activity_log').insert({
+                        action: 'procurement_deleted', description: `Procurement for "${proc.sites?.site_name}" was deleted`,
+                        user_id: user!.id, user_name: profile?.full_name, entity_type: 'procurement_submission', entity_id: proc.id,
+                      });
+                      toast({ title: 'Procurement submission deleted' }); fetchData();
+                    } else toast({ variant: 'destructive', title: 'Delete failed', description: error.message });
                   }}>
                     <Trash2 className="h-3 w-3 mr-1" /> Delete
                   </Button>
