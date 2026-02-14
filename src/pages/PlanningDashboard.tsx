@@ -86,8 +86,8 @@ export default function PlanningDashboard() {
         console.error('Upload error:', error);
         return null;
       }
-      const { data: urlData } = supabase.storage.from('site-documents').getPublicUrl(path);
-      return urlData.publicUrl;
+      const { data: urlData } = await supabase.storage.from('site-documents').createSignedUrl(path, 3600);
+      return urlData?.signedUrl || null;
     };
 
     const [sitePhotoUrl, layoutPlanUrl, approvalLetterUrl] = await Promise.all([
