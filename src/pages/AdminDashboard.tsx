@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, Plus, UserCog, Lock, Unlock, KeyRound } from 'lucide-react';
+import SiteDetailsView from '@/components/SiteDetailsView';
+import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
@@ -273,21 +275,7 @@ export default function AdminDashboard() {
           <DialogHeader><DialogTitle>{selectedSite?.site_name}</DialogTitle></DialogHeader>
           {selectedSite && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Site ID:</span> <span className="font-medium">{selectedSite.site_id_code}</span></div>
-                <div><span className="text-muted-foreground">Location:</span> <span className="font-medium">{selectedSite.region}</span></div>
-                <div><span className="text-muted-foreground">Tower Type:</span> <span className="font-medium">{selectedSite.tower_type || '-'}</span></div>
-                <div><span className="text-muted-foreground">Height:</span> <span className="font-medium">{selectedSite.tower_height ? `${selectedSite.tower_height}m` : '-'}</span></div>
-                <div><span className="text-muted-foreground">Phase:</span> <span className="font-medium">{selectedSite.current_phase || '-'}</span></div>
-                <div><span className="text-muted-foreground">Vendor:</span> <span className="font-medium">{selectedSite.vendor_name || '-'}</span></div>
-              </div>
-              {selectedSite.notes && <div className="text-sm p-2 rounded bg-muted">{selectedSite.notes}</div>}
-              {/* File links */}
-              <div className="flex flex-wrap gap-2">
-                {selectedSite.site_photo_url && <a href={selectedSite.site_photo_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">📷 Site Photo</a>}
-                {selectedSite.layout_plan_url && <a href={selectedSite.layout_plan_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">📐 Layout Plan</a>}
-                {selectedSite.approval_letter_url && <a href={selectedSite.approval_letter_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">📄 Approval Letter</a>}
-              </div>
+              <SiteDetailsView site={selectedSite} />
               {selectedSite.status === 'pending' && (
                 <div className="space-y-3 border-t pt-4">
                   <Label>Review Notes</Label>
@@ -424,18 +412,6 @@ export default function AdminDashboard() {
     </div>
   );
 
-  const procParams = [
-    { key: 'land_identified', label: 'Land Identified' },
-    { key: 'ownership_verified', label: 'Ownership Verified' },
-    { key: 'acquisition_approved', label: 'Acquisition Approved' },
-    { key: 'lease_negotiation', label: 'Lease Negotiation' },
-    { key: 'lease_signed', label: 'Lease Signed' },
-    { key: 'lease_registration', label: 'Lease Registration' },
-    { key: 'road_access', label: 'Road Access' },
-    { key: 'vendor_contract', label: 'Vendor Contract' },
-    { key: 'site_handover', label: 'Site Handover' },
-  ];
-
   const renderProcurement = () => (
     <div className="space-y-4">
       <h2 className="text-lg sm:text-xl font-bold">Procurement Review</h2>
@@ -454,19 +430,8 @@ export default function AdminDashboard() {
                     <h3 className="font-semibold text-sm">{proc.sites?.site_name || 'Site'}</h3>
                     <StatusBadge status={proc.status} />
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {procParams.map(p => (
-                      <span key={p.key} className={`text-[10px] px-1.5 py-0.5 rounded ${proc[p.key] ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
-                        {proc[p.key] ? '✓' : '✗'} {p.label}
-                      </span>
-                    ))}
-                  </div>
-                  {/* File links */}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {procParams.map(p => {
-                      const url = proc[`${p.key}_file_url`];
-                      return url ? <a key={p.key} href={url} target="_blank" rel="noreferrer" className="text-[10px] text-primary underline">📄 {p.label}</a> : null;
-                    })}
+                  <div className="mt-2">
+                    <ProcSubmissionDetails submission={proc} />
                   </div>
                 </div>
                 {proc.status === 'pending' && (
@@ -482,32 +447,25 @@ export default function AdminDashboard() {
       </div>
 
       <Dialog open={!!selectedProc} onOpenChange={(open) => { if (!open) setSelectedProc(null); }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Review Procurement</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Review Procurement: {selectedProc?.sites?.site_name}</DialogTitle></DialogHeader>
           {selectedProc && (
             <div className="space-y-4">
-              <p className="text-sm font-medium">{selectedProc.sites?.site_name}</p>
-              <div className="grid grid-cols-1 gap-2">
-                {procParams.map(p => (
-                  <div key={p.key} className="flex items-center justify-between text-sm p-2 rounded bg-muted/50">
-                    <span>{p.label}</span>
-                    <span className={selectedProc[p.key] ? 'text-success font-medium' : 'text-destructive font-medium'}>
-                      {selectedProc[p.key] ? '✓ Yes' : '✗ No'}
-                    </span>
+              <ProcSubmissionDetails submission={selectedProc} />
+              {selectedProc.status === 'pending' && (
+                <div className="space-y-3 border-t pt-4">
+                  <Label>Review Notes</Label>
+                  <Textarea value={procReviewNotes} onChange={(e) => setProcReviewNotes(e.target.value)} />
+                  <div className="flex gap-2">
+                    <Button className="flex-1 bg-success hover:bg-success/90 text-success-foreground" disabled={actionLoading} onClick={() => handleProcAction(selectedProc, 'approved')}>
+                      <Check className="h-4 w-4 mr-1" /> Approve
+                    </Button>
+                    <Button variant="destructive" className="flex-1" disabled={actionLoading} onClick={() => handleProcAction(selectedProc, 'rejected')}>
+                      <X className="h-4 w-4 mr-1" /> Reject
+                    </Button>
                   </div>
-                ))}
-              </div>
-              {selectedProc.notes && <p className="text-sm p-2 rounded bg-muted">{selectedProc.notes}</p>}
-              <Label>Review Notes</Label>
-              <Textarea value={procReviewNotes} onChange={(e) => setProcReviewNotes(e.target.value)} />
-              <div className="flex gap-2">
-                <Button className="flex-1 bg-success hover:bg-success/90 text-success-foreground" disabled={actionLoading} onClick={() => handleProcAction(selectedProc, 'approved')}>
-                  <Check className="h-4 w-4 mr-1" /> Approve
-                </Button>
-                <Button variant="destructive" className="flex-1" disabled={actionLoading} onClick={() => handleProcAction(selectedProc, 'rejected')}>
-                  <X className="h-4 w-4 mr-1" /> Reject
-                </Button>
-              </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

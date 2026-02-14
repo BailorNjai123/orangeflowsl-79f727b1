@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Radio } from 'lucide-react';
+import { X, Download, Radio, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -8,24 +8,39 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+function isIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+}
+
+function isInStandaloneMode(): boolean {
+  return window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
+}
+
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [show, setShow] = useState(false);
+  const [showIOSBanner, setShowIOSBanner] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Don't show if already installed or previously dismissed this session
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (isInStandaloneMode()) return;
     if (sessionStorage.getItem('pwa-install-dismissed')) return;
 
+    // Chromium browsers
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      // Small delay so it doesn't flash immediately
       setTimeout(() => setShow(true), 2000);
     };
-
     window.addEventListener('beforeinstallprompt', handler);
+
+    // iOS Safari fallback
+    if (isIOS() && !deferredPrompt) {
+      setTimeout(() => {
+        if (!deferredPrompt) setShowIOSBanner(true);
+      }, 3000);
+    }
+
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
@@ -41,15 +56,18 @@ export default function InstallPrompt() {
 
   const handleDismiss = () => {
     setShow(false);
+    setShowIOSBanner(false);
     setDismissed(true);
     sessionStorage.setItem('pwa-install-dismissed', 'true');
   };
 
   if (dismissed) return null;
 
+  const showBanner = show || showIOSBanner;
+
   return (
     <AnimatePresence>
-      {show && (
+      {showBanner && (
         <motion.div
           initial={{ opacity: 0, y: 80 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,16 +82,24 @@ export default function InstallPrompt() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-card-foreground">Install OrangeFlow SL</h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Add to your home screen for faster access and offline support.
-                </p>
+                {showIOSBanner ? (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Tap <Share className="inline h-3 w-3 mx-0.5" /> then <strong>"Add to Home Screen"</strong> to install.
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Add to your home screen for faster access and offline support.
+                  </p>
+                )}
                 <div className="mt-3 flex items-center gap-2">
-                  <Button size="sm" className="gradient-orange border-0 text-primary-foreground text-xs h-8" onClick={handleInstall}>
-                    <Download className="mr-1.5 h-3.5 w-3.5" />
-                    Install
-                  </Button>
+                  {!showIOSBanner && (
+                    <Button size="sm" className="gradient-orange border-0 text-primary-foreground text-xs h-8" onClick={handleInstall}>
+                      <Download className="mr-1.5 h-3.5 w-3.5" />
+                      Install
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" className="text-xs h-8 text-muted-foreground" onClick={handleDismiss}>
-                    Not now
+                    {showIOSBanner ? 'Got it' : 'Not now'}
                   </Button>
                 </div>
               </div>
