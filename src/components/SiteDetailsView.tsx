@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload } from 'lucide-react';
+import { getSignedUrl, extractStoragePath } from '@/lib/storageUtils';
+import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -11,10 +12,11 @@ interface SiteDetailsViewProps {
 }
 
 function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
+  const display = value === null || value === undefined || value === '' ? '-' : value;
   return (
     <div className="flex justify-between items-start gap-2 py-1.5 border-b border-border/50 last:border-0">
       <span className="text-xs text-muted-foreground shrink-0">{label}</span>
-      <span className="text-xs font-medium text-right">{value ?? '-'}</span>
+      <span className="text-xs font-medium text-right">{display}</span>
     </div>
   );
 }
@@ -28,26 +30,16 @@ function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdat
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!path) { setUrl(null); return; }
-    // If it's already a full URL (legacy signed URL), use directly
-    if (path.startsWith('http')) {
-      setUrl(path);
-      return;
-    }
-    // Otherwise generate a signed URL from the storage path
-    supabase.storage.from(bucket).createSignedUrl(path, 3600).then(({ data }) => {
-      if (data?.signedUrl) setUrl(data.signedUrl);
-    });
+    let cancelled = false;
+    getSignedUrl(bucket, path).then(u => { if (!cancelled) setUrl(u); });
+    return () => { cancelled = true; };
   }, [path, bucket]);
 
   const handleDelete = async () => {
     if (!path || !siteId || !fieldName) return;
     setDeleting(true);
-    // Delete file from storage if it's a path (not legacy URL)
-    if (!path.startsWith('http')) {
-      await supabase.storage.from(bucket).remove([path]);
-    }
-    // Clear the URL field in the sites table
+    const storagePath = extractStoragePath(path, bucket);
+    if (storagePath) await supabase.storage.from(bucket).remove([storagePath]);
     await supabase.from('sites').update({ [fieldName]: null }).eq('id', siteId);
     setDeleting(false);
     onUpdated?.();
@@ -56,46 +48,42 @@ function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdat
   const handleReplace = async (file: File) => {
     if (!siteId || !fieldName) return;
     setUploading(true);
-    // Delete old file
-    if (path && !path.startsWith('http')) {
-      await supabase.storage.from(bucket).remove([path]);
-    }
+    const storagePath = extractStoragePath(path, bucket);
+    if (storagePath) await supabase.storage.from(bucket).remove([storagePath]);
     const ext = file.name.split('.').pop();
     const newPath = `${siteId}/${Date.now()}_${fieldName.replace('_url', '')}.${ext}`;
     const { error } = await supabase.storage.from(bucket).upload(newPath, file, { upsert: true });
-    if (!error) {
-      await supabase.from('sites').update({ [fieldName]: newPath }).eq('id', siteId);
-    }
+    if (!error) await supabase.from('sites').update({ [fieldName]: newPath }).eq('id', siteId);
     setUploading(false);
     onUpdated?.();
   };
 
-  if (!path && !allowManage) return null;
+  const hasFile = extractStoragePath(path, bucket) !== null;
+  if (!hasFile && !allowManage) return null;
 
   return (
-    <div className="flex flex-col gap-1">
-      {path && url ? (
-        <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-          <FileDown className="h-3 w-3" /> {label}
+    <div className="flex items-center gap-2">
+      {hasFile && url ? (
+        <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium">
+          <ExternalLink className="h-3 w-3" /> {label}
         </a>
-      ) : !path ? (
-        <span className="text-xs text-muted-foreground">No {label.toLowerCase()}</span>
-      ) : (
+      ) : hasFile ? (
         <span className="text-xs text-muted-foreground">Loading...</span>
+      ) : (
+        <span className="text-xs text-muted-foreground italic">No {label.toLowerCase()}</span>
       )}
       {allowManage && (
-        <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="flex items-center gap-1.5 ml-auto">
           <label className="cursor-pointer">
             <Input type="file" accept=".pdf,.jpg,.png,image/*" className="hidden" onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleReplace(file);
             }} disabled={uploading} />
-            <span className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline cursor-pointer">
-              <Upload className="h-3 w-3" /> {path ? 'Replace' : 'Upload'}
-              {uploading && '...'}
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:underline cursor-pointer">
+              <Upload className="h-3 w-3" /> {hasFile ? 'Replace' : 'Upload'}{uploading && '...'}
             </span>
           </label>
-          {path && (
+          {hasFile && (
             <button onClick={handleDelete} disabled={deleting} className="inline-flex items-center gap-0.5 text-[10px] text-destructive hover:underline">
               <Trash2 className="h-3 w-3" /> Remove{deleting && '...'}
             </button>
@@ -109,7 +97,6 @@ function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdat
 export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }: SiteDetailsViewProps) {
   return (
     <div className="space-y-4">
-      {/* Basic Information */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <MapPin className="h-3.5 w-3.5" /> Basic Information
@@ -131,7 +118,6 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
-      {/* Technical Details */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <Radio className="h-3.5 w-3.5" /> Technical Details
@@ -152,7 +138,6 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
-      {/* Project & Vendor Details */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <User className="h-3.5 w-3.5" /> Project & Vendor Details
@@ -169,7 +154,6 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
-      {/* Dates */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5" /> Key Dates
@@ -182,12 +166,11 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
-      {/* Attachments */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <FileDown className="h-3.5 w-3.5" /> Attachments
         </h4>
-        <div className="rounded-lg border bg-card p-3 flex flex-wrap gap-4">
+        <div className="rounded-lg border bg-card p-3 space-y-2">
           <FileLink label="Site Photo" bucket="site-documents" path={site.site_photo_url}
             siteId={site.id} fieldName="site_photo_url" allowManage={allowFileManage} onUpdated={onFileUpdated} />
           <FileLink label="Layout Plan" bucket="site-documents" path={site.layout_plan_url}
@@ -200,7 +183,6 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
-      {/* Notes */}
       {site.notes && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
