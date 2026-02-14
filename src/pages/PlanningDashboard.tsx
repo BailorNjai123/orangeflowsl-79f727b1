@@ -154,16 +154,21 @@ export default function PlanningDashboard() {
   const handleDeleteSite = async (site: SiteRow) => {
     if (!confirm(`Delete site "${site.site_name}"? This cannot be undone.`)) return;
     setDeletingId(site.id);
-    // Delete associated storage files
+    // Clean up associated storage files
     const filePaths = [site.site_photo_url, site.layout_plan_url, site.approval_letter_url].filter(Boolean).filter((p: string) => !p.startsWith('http'));
     if (filePaths.length > 0) {
       await supabase.storage.from('site-documents').remove(filePaths);
     }
+    // Delete site (cascades to related procurement data)
     const { error } = await supabase.from('sites').delete().eq('id', site.id);
     if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({ variant: 'destructive', title: 'Delete failed', description: error.message });
     } else {
-      toast({ title: 'Site deleted' });
+      await supabase.from('activity_log').insert({
+        action: 'site_deleted', description: `Site "${site.site_name}" was deleted by submitter`,
+        user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: site.id,
+      });
+      toast({ title: 'Site deleted successfully' });
       fetchSites();
     }
     setDeletingId(null);
