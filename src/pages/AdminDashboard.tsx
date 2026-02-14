@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, Plus, UserCog, Lock, Unlock, KeyRound } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, Plus, UserCog, Lock, Unlock, KeyRound, Trash2 } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -260,9 +260,21 @@ export default function AdminDashboard() {
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{site.site_id_code} • {site.region}</p>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setReviewNotes(''); }}>
-                  <Eye className="h-3 w-3 mr-1" /> Review
-                </Button>
+                <div className="flex gap-1.5 flex-wrap">
+                  <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setReviewNotes(''); }}>
+                    <Eye className="h-3 w-3 mr-1" /> Review
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={async () => {
+                    if (!confirm(`Delete site "${site.site_name}"? This cannot be undone.`)) return;
+                    const filePaths = [site.site_photo_url, site.layout_plan_url, site.approval_letter_url].filter(Boolean).filter((p: string) => !p.startsWith('http'));
+                    if (filePaths.length > 0) await supabase.storage.from('site-documents').remove(filePaths);
+                    const { error } = await supabase.from('sites').delete().eq('id', site.id);
+                    if (!error) { toast({ title: 'Site deleted' }); fetchData(); }
+                    else toast({ variant: 'destructive', title: 'Error', description: error.message });
+                  }}>
+                    <Trash2 className="h-3 w-3 mr-1" /> Delete
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -275,7 +287,7 @@ export default function AdminDashboard() {
           <DialogHeader><DialogTitle>{selectedSite?.site_name}</DialogTitle></DialogHeader>
           {selectedSite && (
             <div className="space-y-4">
-              <SiteDetailsView site={selectedSite} />
+              <SiteDetailsView site={selectedSite} allowFileManage={true} onFileUpdated={fetchData} />
               {selectedSite.status === 'pending' && (
                 <div className="space-y-3 border-t pt-4">
                   <Label>Review Notes</Label>
@@ -434,11 +446,21 @@ export default function AdminDashboard() {
                     <ProcSubmissionDetails submission={proc} />
                   </div>
                 </div>
-                {proc.status === 'pending' && (
-                  <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => { setSelectedProc(proc); setProcReviewNotes(''); }}>
-                    Review
+                <div className="flex flex-col gap-1.5">
+                  {proc.status === 'pending' && (
+                    <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => { setSelectedProc(proc); setProcReviewNotes(''); }}>
+                      Review
+                    </Button>
+                  )}
+                  <Button size="sm" variant="destructive" onClick={async () => {
+                    if (!confirm('Delete this procurement submission?')) return;
+                    const { error } = await supabase.from('procurement_submissions').delete().eq('id', proc.id);
+                    if (!error) { toast({ title: 'Deleted' }); fetchData(); }
+                    else toast({ variant: 'destructive', title: 'Error', description: error.message });
+                  }}>
+                    <Trash2 className="h-3 w-3 mr-1" /> Delete
                   </Button>
-                )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -454,12 +476,12 @@ export default function AdminDashboard() {
               {selectedProc.sites && (
                 <div className="space-y-2">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Planning Site Details</h3>
-                  <SiteDetailsView site={selectedProc.sites} />
+                  <SiteDetailsView site={selectedProc.sites} allowFileManage={true} onFileUpdated={fetchData} />
                 </div>
               )}
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Procurement Submission</h3>
-                <ProcSubmissionDetails submission={selectedProc} />
+                <ProcSubmissionDetails submission={selectedProc} allowFileManage={true} onFileUpdated={fetchData} />
               </div>
               {selectedProc.status === 'pending' && (
                 <div className="space-y-3 border-t pt-4">

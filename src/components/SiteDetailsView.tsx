@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { FileDown, MapPin, Ruler, Radio, Zap, Calendar, User } from 'lucide-react';
+import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface SiteDetailsViewProps {
   site: any;
+  allowFileManage?: boolean;
+  onFileUpdated?: () => void;
 }
 
 function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
@@ -15,26 +19,94 @@ function DetailRow({ label, value }: { label: string; value: string | number | n
   );
 }
 
-function FileLink({ label, bucket, path }: { label: string; bucket: string; path: string | null | undefined }) {
+function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdated }: {
+  label: string; bucket: string; path: string | null | undefined;
+  siteId?: string; fieldName?: string; allowManage?: boolean; onUpdated?: () => void;
+}) {
   const [url, setUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!path) return;
+    if (!path) { setUrl(null); return; }
+    // If it's already a full URL (legacy signed URL), use directly
+    if (path.startsWith('http')) {
+      setUrl(path);
+      return;
+    }
+    // Otherwise generate a signed URL from the storage path
     supabase.storage.from(bucket).createSignedUrl(path, 3600).then(({ data }) => {
       if (data?.signedUrl) setUrl(data.signedUrl);
     });
   }, [path, bucket]);
 
-  if (!path) return null;
+  const handleDelete = async () => {
+    if (!path || !siteId || !fieldName) return;
+    setDeleting(true);
+    // Delete file from storage if it's a path (not legacy URL)
+    if (!path.startsWith('http')) {
+      await supabase.storage.from(bucket).remove([path]);
+    }
+    // Clear the URL field in the sites table
+    await supabase.from('sites').update({ [fieldName]: null }).eq('id', siteId);
+    setDeleting(false);
+    onUpdated?.();
+  };
+
+  const handleReplace = async (file: File) => {
+    if (!siteId || !fieldName) return;
+    setUploading(true);
+    // Delete old file
+    if (path && !path.startsWith('http')) {
+      await supabase.storage.from(bucket).remove([path]);
+    }
+    const ext = file.name.split('.').pop();
+    const newPath = `${siteId}/${Date.now()}_${fieldName.replace('_url', '')}.${ext}`;
+    const { error } = await supabase.storage.from(bucket).upload(newPath, file, { upsert: true });
+    if (!error) {
+      await supabase.from('sites').update({ [fieldName]: newPath }).eq('id', siteId);
+    }
+    setUploading(false);
+    onUpdated?.();
+  };
+
+  if (!path && !allowManage) return null;
 
   return (
-    <a href={url || '#'} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-      <FileDown className="h-3 w-3" /> {label}
-    </a>
+    <div className="flex flex-col gap-1">
+      {path && url ? (
+        <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+          <FileDown className="h-3 w-3" /> {label}
+        </a>
+      ) : !path ? (
+        <span className="text-xs text-muted-foreground">No {label.toLowerCase()}</span>
+      ) : (
+        <span className="text-xs text-muted-foreground">Loading...</span>
+      )}
+      {allowManage && (
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <label className="cursor-pointer">
+            <Input type="file" accept=".pdf,.jpg,.png,image/*" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleReplace(file);
+            }} disabled={uploading} />
+            <span className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline cursor-pointer">
+              <Upload className="h-3 w-3" /> {path ? 'Replace' : 'Upload'}
+              {uploading && '...'}
+            </span>
+          </label>
+          {path && (
+            <button onClick={handleDelete} disabled={deleting} className="inline-flex items-center gap-0.5 text-[10px] text-destructive hover:underline">
+              <Trash2 className="h-3 w-3" /> Remove{deleting && '...'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
-export default function SiteDetailsView({ site }: SiteDetailsViewProps) {
+export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }: SiteDetailsViewProps) {
   return (
     <div className="space-y-4">
       {/* Basic Information */}
@@ -115,11 +187,14 @@ export default function SiteDetailsView({ site }: SiteDetailsViewProps) {
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <FileDown className="h-3.5 w-3.5" /> Attachments
         </h4>
-        <div className="rounded-lg border bg-card p-3 flex flex-wrap gap-3">
-          <FileLink label="Site Photo" bucket="site-documents" path={site.site_photo_url} />
-          <FileLink label="Layout Plan" bucket="site-documents" path={site.layout_plan_url} />
-          <FileLink label="Approval Letter" bucket="site-documents" path={site.approval_letter_url} />
-          {!site.site_photo_url && !site.layout_plan_url && !site.approval_letter_url && (
+        <div className="rounded-lg border bg-card p-3 flex flex-wrap gap-4">
+          <FileLink label="Site Photo" bucket="site-documents" path={site.site_photo_url}
+            siteId={site.id} fieldName="site_photo_url" allowManage={allowFileManage} onUpdated={onFileUpdated} />
+          <FileLink label="Layout Plan" bucket="site-documents" path={site.layout_plan_url}
+            siteId={site.id} fieldName="layout_plan_url" allowManage={allowFileManage} onUpdated={onFileUpdated} />
+          <FileLink label="Approval Letter" bucket="site-documents" path={site.approval_letter_url}
+            siteId={site.id} fieldName="approval_letter_url" allowManage={allowFileManage} onUpdated={onFileUpdated} />
+          {!allowFileManage && !site.site_photo_url && !site.layout_plan_url && !site.approval_letter_url && (
             <span className="text-xs text-muted-foreground">No attachments</span>
           )}
         </div>

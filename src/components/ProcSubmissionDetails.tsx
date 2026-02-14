@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, X, FileDown } from 'lucide-react';
+import { Check, X, FileDown, Trash2, Upload } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const procSections = [
   {
@@ -38,29 +39,90 @@ const procSections = [
   },
 ];
 
-function FileLink({ url, label }: { url: string | null | undefined; label: string }) {
+function FileLink({ url, label, submissionId, fieldName, allowManage, onUpdated }: {
+  url: string | null | undefined; label: string;
+  submissionId?: string; fieldName?: string; allowManage?: boolean; onUpdated?: () => void;
+}) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!url) return;
+    if (!url) { setSignedUrl(null); return; }
+    if (url.startsWith('http')) { setSignedUrl(url); return; }
     supabase.storage.from('procurement-documents').createSignedUrl(url, 3600).then(({ data }) => {
       if (data?.signedUrl) setSignedUrl(data.signedUrl);
     });
   }, [url]);
 
-  if (!url) return null;
+  const handleDelete = async () => {
+    if (!url || !submissionId || !fieldName) return;
+    setDeleting(true);
+    if (!url.startsWith('http')) {
+      await supabase.storage.from('procurement-documents').remove([url]);
+    }
+    await supabase.from('procurement_submissions').update({ [fieldName]: null }).eq('id', submissionId);
+    setDeleting(false);
+    onUpdated?.();
+  };
+
+  const handleReplace = async (file: File) => {
+    if (!submissionId || !fieldName) return;
+    setUploading(true);
+    if (url && !url.startsWith('http')) {
+      await supabase.storage.from('procurement-documents').remove([url]);
+    }
+    const ext = file.name.split('.').pop();
+    const newPath = `${submissionId}/${Date.now()}_${fieldName.replace('_file_url', '')}.${ext}`;
+    const { error } = await supabase.storage.from('procurement-documents').upload(newPath, file, { upsert: true });
+    if (!error) {
+      await supabase.from('procurement_submissions').update({ [fieldName]: newPath }).eq('id', submissionId);
+    }
+    setUploading(false);
+    onUpdated?.();
+  };
+
+  if (!url && !allowManage) return null;
+
   return (
-    <a href={signedUrl || '#'} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-      <FileDown className="h-3 w-3" /> {label}
-    </a>
+    <div className="flex flex-col gap-0.5 mt-1">
+      {url && signedUrl ? (
+        <a href={signedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+          <FileDown className="h-3 w-3" /> {label}
+        </a>
+      ) : url && !signedUrl ? (
+        <span className="text-xs text-muted-foreground">Loading file...</span>
+      ) : null}
+      {allowManage && (
+        <div className="flex items-center gap-1.5">
+          <label className="cursor-pointer">
+            <Input type="file" accept=".pdf,.jpg,.png,image/*" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleReplace(file);
+            }} disabled={uploading} />
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:underline cursor-pointer">
+              <Upload className="h-3 w-3" /> {url ? 'Replace' : 'Upload'}
+              {uploading && '...'}
+            </span>
+          </label>
+          {url && (
+            <button onClick={handleDelete} disabled={deleting} className="inline-flex items-center gap-0.5 text-[10px] text-destructive hover:underline">
+              <Trash2 className="h-3 w-3" /> Remove{deleting && '...'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
 interface ProcSubmissionDetailsProps {
   submission: any;
+  allowFileManage?: boolean;
+  onFileUpdated?: () => void;
 }
 
-export default function ProcSubmissionDetails({ submission }: ProcSubmissionDetailsProps) {
+export default function ProcSubmissionDetails({ submission, allowFileManage, onFileUpdated }: ProcSubmissionDetailsProps) {
   return (
     <div className="space-y-3">
       {procSections.map((section) => (
@@ -81,7 +143,11 @@ export default function ProcSubmissionDetails({ submission }: ProcSubmissionDeta
                       {value ? 'Yes' : 'No'}
                     </span>
                   </div>
-                  {value && <FileLink url={fileUrl} label={item.fileLabel} />}
+                  {(value || allowFileManage) && (
+                    <FileLink url={fileUrl} label={item.fileLabel}
+                      submissionId={submission.id} fieldName={`${item.key}_file_url`}
+                      allowManage={allowFileManage} onUpdated={onFileUpdated} />
+                  )}
                 </div>
               );
             })}
