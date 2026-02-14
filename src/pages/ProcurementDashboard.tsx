@@ -140,8 +140,8 @@ export default function ProcurementDashboard() {
           const path = `${user!.id}/${formSite.id}/${item.key}_${Date.now()}.${ext}`;
           const { error } = await supabase.storage.from('procurement-documents').upload(path, file);
           if (!error) {
-            const { data: urlData } = supabase.storage.from('procurement-documents').getPublicUrl(path);
-            fileUrls[`${item.key}_file_url`] = urlData.publicUrl;
+            const { data: urlData } = await supabase.storage.from('procurement-documents').createSignedUrl(path, 3600);
+            fileUrls[`${item.key}_file_url`] = urlData?.signedUrl || null;
           }
         }
       }
