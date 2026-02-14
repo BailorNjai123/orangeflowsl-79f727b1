@@ -1,65 +1,98 @@
 
 
-# OrangeFlow SL — Premium BTS Site Approval Platform
+# Major Refactor: Full Parameter Visibility, Data Flow & PWA Fix
 
-## Overview
-A production-grade Progressive Web App (PWA) for Orange Sierra Leone to digitize the 3-stage BTS site approval workflow across Planning, Procurement, and Project (Admin) teams. Built on Lovable Cloud (Supabase) for easy migration to standalone Supabase at scale.
+## What This Plan Covers
+
+This refactor ensures that **all planning team parameters** are fully visible when the Admin and Procurement teams review sites, that **all procurement form parameters** flow correctly to the Admin team for final approval, and that the **PWA install prompt** works properly.
 
 ---
 
-## Phase 1: Foundation — Brand, Database & Auth
-- **Design System**: Orange brand (#f97316), Plus Jakarta Sans font (modern geometric sans-serif), dark mode support, glassmorphism headers, smooth animations (fade-in, slide-up, scale-in, hover lift), consistent rounded corners
-- **PWA Setup**: Install prompt banner ("Install OrangeFlow SL") with Accept/Dismiss buttons, service worker for offline support, BTS tower/antenna app icon in orange, manifest configuration
-- **Database Schema**: Tables for profiles, user_roles (separate table per security rules), sites (20+ fields), procurement_submissions (9 parameters + file references), procurement_feedback, notifications, activity_log — all with proper RLS policies and foreign keys
-- **File Storage**: Supabase Storage buckets for site photos, layout plans, approval letters, and procurement evidence documents (never stored in DB)
-- **Authentication**: Email/password auth with role-based access (planning_team, procurement_team, project_team), route protection via AuthGuard, session management
-- **Seed Data**: 6 test users across 3 roles + 4 sample BTS sites with varied statuses, pre-loaded via database
+## 1. Show ALL Planning Parameters in Admin Site Approvals & Procurement Site Feedback
 
-## Phase 2: Landing Page & Login
-- **Landing Page (/)**: Hero section with orange gradient accents and BTS tower illustration, 3 feature cards (Site Submission, Approval Workflow, Real-time Tracking), animated stats banner (98% faster approvals, 15 days saved, 100% digital tracking, real-time notifications), footer with © Orange Sierra Leone branding
-- **Login Page (/login)**: Polished card with email/password form, show/hide password toggle, 3 demo credential quick-fill buttons color-coded by role (🟦 Project Team, 🟩 Planning Team, 🟧 Procurement Team), role-based redirect after login, error handling with toast notifications
+**Problem**: Currently, the Admin "Site Approvals" review dialog only shows 6 fields (Site ID, Location, Tower Type, Height, Phase, Vendor). The Procurement "Site Feedback" expanded view also only shows 4 fields. The planning form captures 20+ fields -- all of them should be visible.
 
-## Phase 3: Planning Team Dashboard (/planning)
-- **Dashboard Tab**: Welcome banner with gradient, 4 animated stat cards (Total, Pending, Approved, Rejected), recent 5 submissions list with status badges, empty state messaging
-- **Submit New Site Tab**: Large multi-section form — Basic Info (11 fields), Technical Details (7 fields with dropdowns), Project & Vendor Details (5 fields with date pickers), File Attachments (3 drag-and-drop upload areas for site photo, layout plan, approval letter stored in Supabase Storage), Notes textarea. Edit mode for rejected/pending sites with pre-filled data, "Update Site" button text
-- **My Submissions Tab**: Desktop table → mobile card view of all user's sites, status badges, expandable details, edit button for rejected/pending sites, reviewer notes display
+**Fix**: Expand the detail views in both dashboards to show every field from the planning submission, organized into the same sections as the submission form:
 
-## Phase 4: Admin Dashboard (/admin)
-- **Overview Tab**: 4 stat cards (clickable Pending navigates to Approvals), side-by-side panels for Recent Submissions and Recent Activity with relative timestamps ("5m ago", "2h ago")
-- **Site Approvals Tab**: Full list of Planning submissions with status filter dropdown, expandable detail modal showing all site specs (Basic Info grid, Technical Details grid, Project Details grid, Notes, attached files), Approve/Reject actions with notes, desktop table → mobile card responsive layout
-- **User Management Tab**: Full CRUD — Add/Edit/Delete users with modal forms, role assignment via dropdown, password management (lock icon to change any user's password with confirmation), active/inactive toggle, role badges (Blue=Admin, Green=Planning, Orange=Procurement)
-- **Procurement Review Tab**: Stats bar (Total, Pending, Approved), expandable cards showing all 3 color-coded sections (Land Acquisition, Land Lease, Handover) with ✓/✗ indicators, downloadable file links from storage, Approve/Reject with review notes, decision display after review
-- **Activity Log Tab**: Chronological timeline with colored circle icons (green=approved, red=rejected, blue=submitted), description text, user name + relative timestamps, vertical connecting lines
+- **Basic Information**: Site ID, Location, Dimensions, Tower Height, Foundation Depth, Elevation, Distance from Nearest BTS
+- **Technical Details**: Tower Type, Tower Material, Transmission Type, Power Backup Type, Battery Bank Type, Number of Battery Banks, Earthing Resistance
+- **Project & Vendor Details**: Vendor Assigned, Current Phase, Planned Start Date, Expected Completion Date, Last Inspection Date
+- **Attachments**: Site Photo, Layout Plan, Approval Letter (as downloadable signed-URL links)
+- **Notes**: Any observations from the planning team
 
-## Phase 5: Procurement Dashboard (/procurement)
-- **Dashboard Tab**: 4 gradient stat cards (Pending Review, Accepted, Submissions, All Sites), "Sites Awaiting Feedback" section with amber badges, "Recent Submissions" with status badges
-- **Site Feedback Tab**: Expandable cards for admin-approved sites showing full technical specs, feedback textarea (required) + Accept/Reject buttons, "Recently Reviewed" section with color-coded left borders
-- **Procurement Submissions Tab**:
-  - "Sites Awaiting Procurement Action" grid with "Take Action" button per accepted site
-  - **The 9-Parameter Form** (key feature): Header card with site info on orange gradient, 3 color-coded sections each with numbered circle and 3 Yes/No toggle items:
-    - Section 1 — Land Acquisition (blue): Land Identified, Ownership Verified, Acquisition Approved
-    - Section 2 — Land Lease (purple): Lease Negotiation, Lease Signed, Lease Registration
-    - Section 3 — Handover to Vendor (green): Road Access, Vendor Contract, Site Handover
-    - Yes → green toggle + file upload area; No → red toggle + amber warning
-    - Additional notes textarea + "Submit to Project Team" button
-  - "My Submissions" history with expandable details showing all 9 parameters, files, and approval status
+**Files changed**:
+- `src/pages/AdminDashboard.tsx` -- rewrite the `selectedSite` review dialog (lines 271-308) to show all fields in organized sections
+- `src/pages/ProcurementDashboard.tsx` -- rewrite the feedback expanded view (lines 224-231) to show all planning fields
 
-## Phase 6: Shared Features & Polish
-- **Notification System**: Bell icon with unread count badge in all dashboard headers, dropdown panel with notification list (colored icons, 2-line message clamp, timestamps), "Mark all read" button, triggers on: site submitted (→admins), site approved/rejected (→submitter), procurement submitted (→admins)
-- **Password Management**: Settings gear icon → modal with account info display + password change form (current + new + confirm, min 6 chars), admin can change any user's password via lock icon in User Management
-- **Status Badges**: Consistent color-coded pills — Pending (amber), Approved (green), Rejected (red) — used throughout every dashboard
-- **Responsive Design**: Mobile-first — hamburger menu for navigation on all dashboards, table→card view transitions, touch-friendly drag-and-drop file uploads, no distortion/overflow on any screen, sticky headers with backdrop blur
-- **PWA Experience**: Install prompt on first visit, offline-capable service worker (with OAuth route excluded from cache), app icon featuring a BTS tower antenna on orange background, splash screen
+---
 
-## Backend Architecture (Lovable Cloud → Supabase-ready)
-- **profiles** table linked to auth.users with ON DELETE CASCADE
-- **user_roles** table (separate from profiles per security requirements) with `has_role()` security definer function
-- **sites** table with 20+ BTS specification columns, review fields, foreign keys to submitter/reviewer
-- **procurement_submissions** table with 9 boolean parameters + 9 file reference URLs (pointing to Storage)
-- **procurement_feedback** table for accept/reject decisions with notes
-- **notifications** table with user_id, type, read status
-- **activity_log** table for full audit trail
-- **Storage buckets** with RLS policies for site documents and procurement evidence
-- **Edge functions** for complex workflow logic (notification creation, status transitions)
-- All tables have proper RLS policies using the `has_role()` function pattern — making migration to standalone Supabase seamless
+## 2. Show ALL Procurement Parameters on Procurement Dashboard & Admin Review
+
+**Problem**: The procurement "My Submissions" section shows the 9 boolean indicators as tiny badges but does not show the full detail (file links, notes). The Admin "Procurement Review" dialog shows parameters but not the file attachments or section groupings.
+
+**Fix**:
+- On the **Procurement Dashboard "My Submissions"**, show expandable cards with the 3 color-coded sections (Land Acquisition/blue, Land Lease/purple, Handover/green), each parameter's Yes/No status, and clickable file links
+- On the **Admin Dashboard "Procurement Review"** dialog, show the same 3 color-coded sections with Yes/No status, file download links, submission notes, and the linked site's planning details -- then Approve/Reject
+
+**Files changed**:
+- `src/pages/ProcurementDashboard.tsx` -- enhance "My Submissions" cards to show grouped parameters with file links
+- `src/pages/AdminDashboard.tsx` -- enhance the procurement review dialog (lines 484-514) to show color-coded sections with file links, plus the original planning site details
+
+---
+
+## 3. Fix the PWA Install Prompt
+
+**Problem**: The `beforeinstallprompt` event only fires on Chromium-based browsers and requires the app to be served over HTTPS from the published URL. In the Lovable preview, it does not fire, so the install prompt never appears.
+
+**Fix**:
+- Keep the existing `InstallPrompt.tsx` component (it is correctly implemented)
+- Add a **fallback manual install banner** for browsers that don't support `beforeinstallprompt` (especially Safari/iOS). This will show a brief instruction: "Tap the Share button, then 'Add to Home Screen'" with a dismiss option
+- Ensure the manifest and service worker config remain correct
+- Use the existing `Radio` icon (the antenna/tower icon from the navbar) as the PWA icon in the install prompt -- this is already in place
+
+**Files changed**:
+- `src/components/InstallPrompt.tsx` -- add iOS/Safari fallback detection and instruction banner
+
+---
+
+## 4. Fix React `forwardRef` Console Warnings
+
+**Problem**: `StatCard` and `StatusBadge` are function components that receive refs from parent components (e.g., motion.div wrappers, Radix slots) but don't use `forwardRef`, causing console warnings.
+
+**Fix**: Wrap both components with `React.forwardRef`.
+
+**Files changed**:
+- `src/components/StatCard.tsx` -- wrap with `forwardRef`
+- `src/components/StatusBadge.tsx` -- wrap with `forwardRef`
+
+---
+
+## 5. Create a Reusable Site Details Component
+
+To avoid duplicating the full planning parameters display across Admin and Procurement dashboards, create a shared component.
+
+**New file**: `src/components/SiteDetailsView.tsx`
+- Accepts a site object and renders all fields in organized, labeled sections
+- Handles signed URL generation for file attachments
+- Used by both AdminDashboard (site approval dialog) and ProcurementDashboard (feedback expanded view)
+
+**New file**: `src/components/ProcSubmissionDetails.tsx`
+- Accepts a procurement submission object and renders the 3 color-coded sections with Yes/No indicators and file links
+- Used by both AdminDashboard (procurement review) and ProcurementDashboard (my submissions)
+
+---
+
+## Summary of All File Changes
+
+| File | Action |
+|------|--------|
+| `src/components/SiteDetailsView.tsx` | **Create** -- reusable full site details display |
+| `src/components/ProcSubmissionDetails.tsx` | **Create** -- reusable procurement parameters display |
+| `src/pages/AdminDashboard.tsx` | **Edit** -- use SiteDetailsView in approval dialog, use ProcSubmissionDetails in procurement review dialog |
+| `src/pages/ProcurementDashboard.tsx` | **Edit** -- use SiteDetailsView in feedback expanded view, use ProcSubmissionDetails in "My Submissions" |
+| `src/components/InstallPrompt.tsx` | **Edit** -- add iOS/Safari fallback install instructions |
+| `src/components/StatCard.tsx` | **Edit** -- wrap with forwardRef |
+| `src/components/StatusBadge.tsx` | **Edit** -- wrap with forwardRef |
+
+**No database changes required** -- all the data already exists in the `sites` and `procurement_submissions` tables. This is purely a frontend display refactor.
 
