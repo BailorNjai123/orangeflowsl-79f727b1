@@ -1,10 +1,50 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const validRoles = ['planning_team', 'procurement_team', 'project_team'] as const;
+
+const createUserSchema = z.object({
+  action: z.literal('create_user'),
+  email: z.string().email('Invalid email format').max(255, 'Email too long'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(100, 'Password too long')
+    .regex(/[a-z]/, 'Password must contain a lowercase letter')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/\d/, 'Password must contain a number'),
+  full_name: z.string().trim().min(1, 'Name is required').max(100, 'Name too long'),
+  role: z.enum(validRoles, { errorMap: () => ({ message: 'Invalid role' }) }),
+  department: z.string().max(100, 'Department too long').optional().default(''),
+  phone: z.string().max(20, 'Phone too long').optional().default(''),
+});
+
+const updateUserSchema = z.object({
+  action: z.literal('update_user'),
+  user_id: z.string().uuid('Invalid user_id'),
+  full_name: z.string().trim().min(1).max(100).optional(),
+  department: z.string().max(100).optional(),
+  phone: z.string().max(20).optional(),
+  role: z.enum(validRoles).optional(),
+});
+
+const toggleActiveSchema = z.object({
+  action: z.literal('toggle_active'),
+  user_id: z.string().uuid('Invalid user_id'),
+  is_active: z.boolean(),
+});
+
+const resetPasswordSchema = z.object({
+  action: z.literal('reset_password'),
+  user_id: z.string().uuid('Invalid user_id'),
+  new_password: z.string().min(8, 'Password must be at least 8 characters').max(100, 'Password too long')
+    .regex(/[a-z]/, 'Password must contain a lowercase letter')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/\d/, 'Password must contain a number'),
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
@@ -32,28 +72,27 @@ serve(async (req) => {
     const { action } = body;
 
     if (action === 'create_user') {
-      const { email, password, full_name, role, department, phone } = body;
-      if (!email || !password || !full_name || !role) throw new Error('Missing required fields');
+      const validated = createUserSchema.parse(body);
 
       const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
+        email: validated.email,
+        password: validated.password,
         email_confirm: true,
-        user_metadata: { full_name },
+        user_metadata: { full_name: validated.full_name },
       });
       if (createError) throw createError;
 
       // Update profile
       await supabaseAdmin.from('profiles').update({
-        full_name,
-        department: department || '',
-        phone: phone || '',
+        full_name: validated.full_name,
+        department: validated.department,
+        phone: validated.phone,
       }).eq('user_id', authData.user.id);
 
       // Assign role
       await supabaseAdmin.from('user_roles').insert({
         user_id: authData.user.id,
-        role,
+        role: validated.role,
       });
 
       return new Response(JSON.stringify({ success: true, user_id: authData.user.id }), {
@@ -62,22 +101,20 @@ serve(async (req) => {
     }
 
     if (action === 'update_user') {
-      const { user_id, full_name, department, phone, role } = body;
-      if (!user_id) throw new Error('Missing user_id');
+      const validated = updateUserSchema.parse(body);
 
       const updates: Record<string, any> = {};
-      if (full_name) updates.full_name = full_name;
-      if (department !== undefined) updates.department = department;
-      if (phone !== undefined) updates.phone = phone;
+      if (validated.full_name) updates.full_name = validated.full_name;
+      if (validated.department !== undefined) updates.department = validated.department;
+      if (validated.phone !== undefined) updates.phone = validated.phone;
 
       if (Object.keys(updates).length > 0) {
-        await supabaseAdmin.from('profiles').update(updates).eq('user_id', user_id);
+        await supabaseAdmin.from('profiles').update(updates).eq('user_id', validated.user_id);
       }
 
-      if (role) {
-        // Update role - delete old and insert new
-        await supabaseAdmin.from('user_roles').delete().eq('user_id', user_id);
-        await supabaseAdmin.from('user_roles').insert({ user_id, role });
+      if (validated.role) {
+        await supabaseAdmin.from('user_roles').delete().eq('user_id', validated.user_id);
+        await supabaseAdmin.from('user_roles').insert({ user_id: validated.user_id, role: validated.role });
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -86,16 +123,14 @@ serve(async (req) => {
     }
 
     if (action === 'toggle_active') {
-      const { user_id, is_active } = body;
-      if (!user_id) throw new Error('Missing user_id');
+      const validated = toggleActiveSchema.parse(body);
 
-      await supabaseAdmin.from('profiles').update({ is_active }).eq('user_id', user_id);
+      await supabaseAdmin.from('profiles').update({ is_active: validated.is_active }).eq('user_id', validated.user_id);
       
-      // Also ban/unban in auth
-      if (is_active) {
-        await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: 'none' });
+      if (validated.is_active) {
+        await supabaseAdmin.auth.admin.updateUserById(validated.user_id, { ban_duration: 'none' });
       } else {
-        await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: '876600h' }); // ~100 years
+        await supabaseAdmin.auth.admin.updateUserById(validated.user_id, { ban_duration: '876600h' });
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -104,10 +139,9 @@ serve(async (req) => {
     }
 
     if (action === 'reset_password') {
-      const { user_id, new_password } = body;
-      if (!user_id || !new_password) throw new Error('Missing fields');
+      const validated = resetPasswordSchema.parse(body);
 
-      await supabaseAdmin.auth.admin.updateUserById(user_id, { password: new_password });
+      await supabaseAdmin.auth.admin.updateUserById(validated.user_id, { password: validated.new_password });
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -116,8 +150,12 @@ serve(async (req) => {
 
     throw new Error('Unknown action');
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
+    const status = error instanceof z.ZodError ? 422 : 400;
+    const message = error instanceof z.ZodError
+      ? error.errors.map(e => e.message).join(', ')
+      : error.message;
+    return new Response(JSON.stringify({ error: message }), {
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
