@@ -85,7 +85,7 @@ export default function ProcurementDashboard() {
       supabase.from('sites').select('*').order('created_at', { ascending: false }),
       supabase.from('sites').select('*').eq('status', 'approved').order('updated_at', { ascending: false }),
       supabase.from('procurement_feedback').select('*, sites(site_name, site_id_code, region, district)').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('procurement_submissions').select('*, sites(site_name, site_id_code, region, district)').eq('submitted_by', user.id).order('created_at', { ascending: false }),
+      supabase.from('procurement_submissions').select('*, sites(*)').eq('submitted_by', user.id).order('created_at', { ascending: false }),
     ]);
     if (allSitesRes.data) setAllSites(allSitesRes.data);
     if (sitesRes.data) setApprovedSites(sitesRes.data);
@@ -353,6 +353,13 @@ export default function ProcurementDashboard() {
                       <h4 className="text-sm font-semibold">{proc.sites?.site_name || 'Site'}</h4>
                       <StatusBadge status={proc.status} />
                     </div>
+                    {proc.sites && (
+                      <div className="mb-3">
+                        <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Planning Site Details</h5>
+                        <SiteDetailsView site={proc.sites} />
+                      </div>
+                    )}
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Procurement Details</h5>
                     <ProcSubmissionDetails submission={proc} />
                   </CardContent>
                 </Card>

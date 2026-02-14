@@ -62,7 +62,7 @@ export default function AdminDashboard() {
     if (!user) return;
     const [sitesRes, procRes, actRes, profilesRes, rolesRes] = await Promise.all([
       supabase.from('sites').select('*').order('created_at', { ascending: false }),
-      supabase.from('procurement_submissions').select('*, sites(site_name, site_id_code, region, district)').order('created_at', { ascending: false }),
+      supabase.from('procurement_submissions').select('*, sites(*)').order('created_at', { ascending: false }),
       supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(50),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('user_roles').select('*'),
@@ -451,7 +451,16 @@ export default function AdminDashboard() {
           <DialogHeader><DialogTitle>Review Procurement: {selectedProc?.sites?.site_name}</DialogTitle></DialogHeader>
           {selectedProc && (
             <div className="space-y-4">
-              <ProcSubmissionDetails submission={selectedProc} />
+              {selectedProc.sites && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Planning Site Details</h3>
+                  <SiteDetailsView site={selectedProc.sites} />
+                </div>
+              )}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Procurement Submission</h3>
+                <ProcSubmissionDetails submission={selectedProc} />
+              </div>
               {selectedProc.status === 'pending' && (
                 <div className="space-y-3 border-t pt-4">
                   <Label>Review Notes</Label>
