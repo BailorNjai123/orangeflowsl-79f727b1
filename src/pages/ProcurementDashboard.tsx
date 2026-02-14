@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, MessageSquare, ClipboardList, Loader2, Check, X, Radio, Paperclip } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, ClipboardList, Loader2, Check, X, Radio, Paperclip, Eye } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -76,6 +77,7 @@ export default function ProcurementDashboard() {
   const [formValues, setFormValues] = useState<Record<string, boolean>>({});
   const [formFiles, setFormFiles] = useState<Record<string, File | null>>({});
   const [formNotes, setFormNotes] = useState('');
+  const [viewSubmission, setViewSubmission] = useState<ProcSubmission | null>(null);
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
@@ -132,7 +134,6 @@ export default function ProcurementDashboard() {
     if (!formSite) return;
     setSubmitting(true);
 
-    // Upload files
     const fileUrls: Record<string, string | null> = {};
     for (const section of procSections) {
       for (const item of section.items) {
@@ -141,9 +142,7 @@ export default function ProcurementDashboard() {
           const ext = file.name.split('.').pop();
           const path = `${user!.id}/${formSite.id}/${item.key}_${Date.now()}.${ext}`;
           const { error } = await supabase.storage.from('procurement-documents').upload(path, file, { upsert: true });
-          if (!error) {
-            fileUrls[`${item.key}_file_url`] = path;
-          }
+          if (!error) fileUrls[`${item.key}_file_url`] = path;
         }
       }
     }
@@ -166,11 +165,11 @@ export default function ProcurementDashboard() {
     } else toast({ variant: 'destructive', title: 'Error', description: error.message });
   };
 
-  // Sites pending feedback (all submitted sites, not just approved)
   const pendingSitesForFeedback = allSites.filter(s => s.status === 'pending' && !feedbacks.find(f => f.site_id === s.id));
   const acceptedFeedbacks = feedbacks.filter(f => f.status === 'accepted');
 
-  const sitesForProcForm = approvedSites.filter(s => {
+  // Sites eligible for procurement form: accepted feedback + not already submitted
+  const sitesForProcForm = allSites.filter(s => {
     const fb = feedbacks.find(f => f.site_id === s.id && f.status === 'accepted');
     const alreadySubmitted = mySubmissions.find(p => p.site_id === s.id);
     return fb && !alreadySubmitted;
@@ -199,6 +198,26 @@ export default function ProcurementDashboard() {
                   <p className="text-xs text-muted-foreground">{site.region}</p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setFeedbackNotes(''); setActiveTab('feedback'); }}>Review</Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent submissions on dashboard */}
+      {mySubmissions.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Recent Submissions</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {mySubmissions.slice(0, 3).map(proc => (
+              <div key={proc.id} className="flex items-center justify-between p-3 rounded-lg border gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{proc.sites?.site_name || 'Site'}</p>
+                  <StatusBadge status={proc.status} />
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setViewSubmission(proc)}>
+                  <Eye className="h-3 w-3 mr-1" /> View
+                </Button>
               </div>
             ))}
           </CardContent>
@@ -333,7 +352,7 @@ export default function ProcurementDashboard() {
                   <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{site.site_name}</p>
-                      <p className="text-xs text-muted-foreground">{site.region}</p>
+                      <p className="text-xs text-muted-foreground">{site.region} • <StatusBadge status={site.status} /></p>
                     </div>
                     <Button size="sm" className="gradient-orange border-0 text-primary-foreground" onClick={() => initForm(site)}>Take Action</Button>
                   </CardContent>
@@ -346,20 +365,20 @@ export default function ProcurementDashboard() {
             <div className="space-y-3">
               <h3 className="text-sm sm:text-base font-semibold">My Submissions</h3>
               {mySubmissions.map(proc => (
-                <Card key={proc.id}>
+                <Card key={proc.id} className="cursor-pointer hover:ring-1 hover:ring-primary/50 transition-all" onClick={() => setViewSubmission(proc)}>
                   <CardContent className="p-3 sm:p-4">
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <h4 className="text-sm font-semibold">{proc.sites?.site_name || 'Site'}</h4>
-                      <StatusBadge status={proc.status} />
-                    </div>
-                    {proc.sites && (
-                      <div className="mb-3">
-                        <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Planning Site Details</h5>
-                        <SiteDetailsView site={proc.sites} />
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-semibold">{proc.sites?.site_name || 'Site'}</h4>
+                        <StatusBadge status={proc.status} />
                       </div>
-                    )}
-                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Procurement Details</h5>
-                    <ProcSubmissionDetails submission={proc} />
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setViewSubmission(proc); }}>
+                        <Eye className="h-3 w-3 mr-1" /> View Details
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {proc.sites?.region} • Submitted {new Date(proc.created_at).toLocaleDateString()}
+                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -389,6 +408,32 @@ export default function ProcurementDashboard() {
         {activeTab === 'feedback' && renderFeedback()}
         {activeTab === 'submissions' && renderSubmissions()}
       </DashboardLayout>
+
+      {/* Submission Detail Dialog */}
+      <Dialog open={!!viewSubmission} onOpenChange={(open) => { if (!open) setViewSubmission(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 flex-wrap">
+              {viewSubmission?.sites?.site_name || 'Procurement Submission'}
+              {viewSubmission && <StatusBadge status={viewSubmission.status} />}
+            </DialogTitle>
+          </DialogHeader>
+          {viewSubmission && (
+            <div className="space-y-4">
+              {viewSubmission.sites && (
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Planning Site Details</h3>
+                  <SiteDetailsView site={viewSubmission.sites} />
+                </div>
+              )}
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Procurement Details</h3>
+                <ProcSubmissionDetails submission={viewSubmission} />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AuthGuard>
   );
 }
