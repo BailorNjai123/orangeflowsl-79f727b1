@@ -446,11 +446,19 @@ export default function AdminDashboard() {
                     <ProcSubmissionDetails submission={proc} />
                   </div>
                 </div>
-                <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5">
+                  <Button size="sm" variant="outline" onClick={() => { setSelectedProc(proc); setProcReviewNotes(''); }}>
+                    <Eye className="h-3 w-3 mr-1" /> {proc.status === 'pending' ? 'Review' : 'View'}
+                  </Button>
                   {proc.status === 'pending' && (
-                    <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => { setSelectedProc(proc); setProcReviewNotes(''); }}>
-                      Review
-                    </Button>
+                    <>
+                      <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" disabled={actionLoading} onClick={() => handleProcAction(proc, 'approved')}>
+                        <Check className="h-3 w-3 mr-1" /> Accept
+                      </Button>
+                      <Button size="sm" variant="destructive" disabled={actionLoading} onClick={() => handleProcAction(proc, 'rejected')}>
+                        <X className="h-3 w-3 mr-1" /> Reject
+                      </Button>
+                    </>
                   )}
                   <Button size="sm" variant="destructive" onClick={async () => {
                     if (!confirm('Delete this procurement submission?')) return;
