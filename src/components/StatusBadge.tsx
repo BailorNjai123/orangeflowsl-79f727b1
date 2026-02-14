@@ -1,3 +1,4 @@
+import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface StatusBadgeProps {
@@ -12,11 +13,16 @@ const statusConfig = {
   rejected: { label: 'Rejected', className: 'bg-destructive/15 text-destructive border-destructive/30' },
 };
 
-export default function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status];
-  return (
-    <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold', config.className, className)}>
-      {config.label}
-    </span>
-  );
-}
+const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
+  ({ status, className }, ref) => {
+    const config = statusConfig[status];
+    return (
+      <span ref={ref} className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold', config.className, className)}>
+        {config.label}
+      </span>
+    );
+  }
+);
+StatusBadge.displayName = 'StatusBadge';
+
+export default StatusBadge;

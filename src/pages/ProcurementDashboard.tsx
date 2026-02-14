@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, MessageSquare, ClipboardList, Loader2, Check, X, Radio, Paperclip } from 'lucide-react';
+import SiteDetailsView from '@/components/SiteDetailsView';
+import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
@@ -223,12 +225,7 @@ export default function ProcurementDashboard() {
             </div>
             {selectedSite?.id === site.id && (
               <div className="space-y-3 border-t pt-3">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div><span className="text-muted-foreground">Type:</span> {site.tower_type || '-'}</div>
-                  <div><span className="text-muted-foreground">Height:</span> {site.tower_height ? `${site.tower_height}m` : '-'}</div>
-                  <div><span className="text-muted-foreground">Phase:</span> {site.current_phase || '-'}</div>
-                  <div><span className="text-muted-foreground">Vendor:</span> {site.vendor_name || '-'}</div>
-                </div>
+                <SiteDetailsView site={site} />
                 <Textarea value={feedbackNotes} onChange={(e) => setFeedbackNotes(e.target.value)} placeholder="Your feedback notes (required)..." rows={3} />
                 <div className="flex gap-2">
                   <Button className="flex-1 bg-success hover:bg-success/90 text-success-foreground" disabled={submitting} onClick={() => handleFeedback('accepted')}>
@@ -356,14 +353,7 @@ export default function ProcurementDashboard() {
                       <h4 className="text-sm font-semibold">{proc.sites?.site_name || 'Site'}</h4>
                       <StatusBadge status={proc.status} />
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {procSections.flatMap(s => s.items).map(p => (
-                        <span key={p.key} className={`text-[10px] px-1.5 py-0.5 rounded ${proc[p.key] ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
-                          {proc[p.key] ? '✓' : '✗'} {p.label}
-                        </span>
-                      ))}
-                    </div>
-                    {proc.review_notes && <p className="text-xs mt-2 p-2 rounded bg-muted text-muted-foreground">Review: {proc.review_notes}</p>}
+                    <ProcSubmissionDetails submission={proc} />
                   </CardContent>
                 </Card>
               ))}
