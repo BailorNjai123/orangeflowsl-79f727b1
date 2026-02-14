@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, Lock, Plus, Pencil, Trash2 } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, Plus, UserCog, Lock, Unlock, KeyRound } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,7 +43,17 @@ export default function AdminDashboard() {
   const [selectedProc, setSelectedProc] = useState<ProcSubmission | null>(null);
   const [procReviewNotes, setProcReviewNotes] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const { user, profile } = useAuth();
+  
+  // User management state
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [showEditUser, setShowEditUser] = useState<any>(null);
+  const [showResetPw, setShowResetPw] = useState<any>(null);
+  const [newUser, setNewUser] = useState({ email: '', password: '', full_name: '', role: '', department: '', phone: '' });
+  const [editData, setEditData] = useState({ full_name: '', department: '', phone: '', role: '' });
+  const [newPassword, setNewPassword] = useState('');
+  const [userActionLoading, setUserActionLoading] = useState(false);
+
+  const { user, profile, session } = useAuth();
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -65,62 +75,106 @@ export default function AdminDashboard() {
 
   useEffect(() => { fetchData(); }, [user]);
 
+  const callManageUsers = async (body: any) => {
+    const res = await supabase.functions.invoke('manage-users', { body });
+    if (res.error) throw new Error(res.error.message);
+    if (res.data?.error) throw new Error(res.data.error);
+    return res.data;
+  };
+
   const handleSiteAction = async (site: Site, action: 'approved' | 'rejected') => {
     setActionLoading(true);
     const { error } = await supabase.from('sites').update({
-      status: action,
-      reviewed_by: user!.id,
-      review_notes: reviewNotes || null,
+      status: action, reviewed_by: user!.id, review_notes: reviewNotes || null,
     }).eq('id', site.id);
-
     if (!error) {
       await supabase.from('activity_log').insert({
         action: action === 'approved' ? 'site_approved' : 'site_rejected',
         description: `Site "${site.site_name}" was ${action}`,
-        user_id: user!.id,
-        user_name: profile?.full_name,
-        entity_type: 'site',
-        entity_id: site.id,
+        user_id: user!.id, user_name: profile?.full_name,
+        entity_type: 'site', entity_id: site.id,
       });
       toast({ title: `Site ${action}` });
-      setSelectedSite(null);
-      setReviewNotes('');
-      fetchData();
-    } else {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
-    }
+      setSelectedSite(null); setReviewNotes(''); fetchData();
+    } else toast({ variant: 'destructive', title: 'Error', description: error.message });
     setActionLoading(false);
   };
 
   const handleProcAction = async (proc: ProcSubmission, action: 'approved' | 'rejected') => {
     setActionLoading(true);
     const { error } = await supabase.from('procurement_submissions').update({
-      status: action,
-      reviewed_by: user!.id,
-      review_notes: procReviewNotes || null,
+      status: action, reviewed_by: user!.id, review_notes: procReviewNotes || null,
     }).eq('id', proc.id);
-
     if (!error) {
       await supabase.from('activity_log').insert({
         action: action === 'approved' ? 'procurement_approved' : 'procurement_rejected',
-        description: `Procurement submission for "${proc.sites?.site_name}" was ${action}`,
-        user_id: user!.id,
-        user_name: profile?.full_name,
-        entity_type: 'procurement_submission',
-        entity_id: proc.id,
+        description: `Procurement for "${proc.sites?.site_name}" was ${action}`,
+        user_id: user!.id, user_name: profile?.full_name,
+        entity_type: 'procurement_submission', entity_id: proc.id,
       });
       toast({ title: `Procurement ${action}` });
-      setSelectedProc(null);
-      setProcReviewNotes('');
-      fetchData();
+      setSelectedProc(null); setProcReviewNotes(''); fetchData();
     }
     setActionLoading(false);
   };
 
+  const handleCreateUser = async () => {
+    if (!newUser.email || !newUser.password || !newUser.full_name || !newUser.role) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Fill all required fields' }); return;
+    }
+    setUserActionLoading(true);
+    try {
+      await callManageUsers({ action: 'create_user', ...newUser });
+      toast({ title: 'User Created', description: `${newUser.full_name} has been added.` });
+      setShowCreateUser(false);
+      setNewUser({ email: '', password: '', full_name: '', role: '', department: '', phone: '' });
+      fetchData();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Error', description: e.message });
+    }
+    setUserActionLoading(false);
+  };
+
+  const handleEditUser = async () => {
+    if (!showEditUser) return;
+    setUserActionLoading(true);
+    try {
+      await callManageUsers({ action: 'update_user', user_id: showEditUser.user_id, ...editData });
+      toast({ title: 'User Updated' });
+      setShowEditUser(null); fetchData();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Error', description: e.message });
+    }
+    setUserActionLoading(false);
+  };
+
+  const handleToggleActive = async (p: any) => {
+    setUserActionLoading(true);
+    try {
+      await callManageUsers({ action: 'toggle_active', user_id: p.user_id, is_active: !p.is_active });
+      toast({ title: p.is_active ? 'Account Frozen' : 'Account Unfrozen' });
+      fetchData();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Error', description: e.message });
+    }
+    setUserActionLoading(false);
+  };
+
+  const handleResetPassword = async () => {
+    if (!showResetPw || !newPassword) return;
+    setUserActionLoading(true);
+    try {
+      await callManageUsers({ action: 'reset_password', user_id: showResetPw.user_id, new_password: newPassword });
+      toast({ title: 'Password Reset' });
+      setShowResetPw(null); setNewPassword('');
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Error', description: e.message });
+    }
+    setUserActionLoading(false);
+  };
+
   const getUserRole = (userId: string) => userRoles.find(r => r.user_id === userId)?.role || 'N/A';
-
   const filteredSites = statusFilter === 'all' ? sites : sites.filter(s => s.status === statusFilter);
-
   const pending = sites.filter(s => s.status === 'pending').length;
   const procPending = procSubmissions.filter(s => s.status === 'pending').length;
 
@@ -129,16 +183,20 @@ export default function AdminDashboard() {
     planning_team: 'bg-emerald-500/10 text-emerald-600',
     procurement_team: 'bg-primary/10 text-primary',
   };
+  const roleLabels: Record<string, string> = {
+    project_team: 'Project Team',
+    planning_team: 'Planning Team',
+    procurement_team: 'Procurement Team',
+  };
 
   const renderOverview = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard title="Total Sites" value={sites.length} icon={LayoutDashboard} />
         <StatCard title="Pending" value={pending} icon={CheckSquare} color="text-warning" onClick={() => { setActiveTab('approvals'); setStatusFilter('pending'); }} />
         <StatCard title="Users" value={profiles.length} icon={Users} />
         <StatCard title="Proc. Pending" value={procPending} icon={FileCheck} color="text-primary" />
       </div>
-
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="text-base">Recent Submissions</CardTitle></CardHeader>
@@ -152,6 +210,7 @@ export default function AdminDashboard() {
                 <StatusBadge status={site.status} />
               </div>
             ))}
+            {sites.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No sites yet</p>}
           </CardContent>
         </Card>
         <Card>
@@ -176,7 +235,7 @@ export default function AdminDashboard() {
   const renderApprovals = () => (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-xl font-bold">Site Approvals</h2>
+        <h2 className="text-lg sm:text-xl font-bold">Site Approvals</h2>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -190,20 +249,18 @@ export default function AdminDashboard() {
       <div className="space-y-3">
         {filteredSites.map(site => (
           <Card key={site.id}>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-sm">{site.site_name}</h3>
                     <StatusBadge status={site.status} />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">{site.site_id_code} • {site.region}, {site.district}, {site.town}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{site.site_id_code} • {site.region}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setReviewNotes(''); }}>
-                    <Eye className="h-3 w-3 mr-1" /> Review
-                  </Button>
-                </div>
+                <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setReviewNotes(''); }}>
+                  <Eye className="h-3 w-3 mr-1" /> Review
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -211,7 +268,6 @@ export default function AdminDashboard() {
         {filteredSites.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">No sites found.</CardContent></Card>}
       </div>
 
-      {/* Review Dialog */}
       <Dialog open={!!selectedSite} onOpenChange={(open) => { if (!open) setSelectedSite(null); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{selectedSite?.site_name}</DialogTitle></DialogHeader>
@@ -219,23 +275,23 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Site ID:</span> <span className="font-medium">{selectedSite.site_id_code}</span></div>
-                <div><span className="text-muted-foreground">Region:</span> <span className="font-medium">{selectedSite.region}</span></div>
-                <div><span className="text-muted-foreground">District:</span> <span className="font-medium">{selectedSite.district}</span></div>
-                <div><span className="text-muted-foreground">Town:</span> <span className="font-medium">{selectedSite.town}</span></div>
-                <div><span className="text-muted-foreground">Type:</span> <span className="font-medium">{selectedSite.site_type || '-'}</span></div>
-                <div><span className="text-muted-foreground">Tower:</span> <span className="font-medium">{selectedSite.tower_type || '-'}</span></div>
+                <div><span className="text-muted-foreground">Location:</span> <span className="font-medium">{selectedSite.region}</span></div>
+                <div><span className="text-muted-foreground">Tower Type:</span> <span className="font-medium">{selectedSite.tower_type || '-'}</span></div>
                 <div><span className="text-muted-foreground">Height:</span> <span className="font-medium">{selectedSite.tower_height ? `${selectedSite.tower_height}m` : '-'}</span></div>
-                <div><span className="text-muted-foreground">Power:</span> <span className="font-medium">{selectedSite.power_source || '-'}</span></div>
-                <div><span className="text-muted-foreground">Terrain:</span> <span className="font-medium">{selectedSite.terrain_type || '-'}</span></div>
-                <div><span className="text-muted-foreground">Cost:</span> <span className="font-medium">{selectedSite.estimated_cost ? `$${selectedSite.estimated_cost.toLocaleString()}` : '-'}</span></div>
+                <div><span className="text-muted-foreground">Phase:</span> <span className="font-medium">{selectedSite.current_phase || '-'}</span></div>
+                <div><span className="text-muted-foreground">Vendor:</span> <span className="font-medium">{selectedSite.vendor_name || '-'}</span></div>
               </div>
-              {selectedSite.notes && (
-                <div><span className="text-sm text-muted-foreground">Notes:</span><p className="text-sm mt-1 p-2 rounded bg-muted">{selectedSite.notes}</p></div>
-              )}
+              {selectedSite.notes && <div className="text-sm p-2 rounded bg-muted">{selectedSite.notes}</div>}
+              {/* File links */}
+              <div className="flex flex-wrap gap-2">
+                {selectedSite.site_photo_url && <a href={selectedSite.site_photo_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">📷 Site Photo</a>}
+                {selectedSite.layout_plan_url && <a href={selectedSite.layout_plan_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">📐 Layout Plan</a>}
+                {selectedSite.approval_letter_url && <a href={selectedSite.approval_letter_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">📄 Approval Letter</a>}
+              </div>
               {selectedSite.status === 'pending' && (
                 <div className="space-y-3 border-t pt-4">
                   <Label>Review Notes</Label>
-                  <Textarea value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} placeholder="Add notes for your decision..." />
+                  <Textarea value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} placeholder="Add notes..." />
                   <div className="flex gap-2">
                     <Button className="flex-1 bg-success hover:bg-success/90 text-success-foreground" disabled={actionLoading} onClick={() => handleSiteAction(selectedSite, 'approved')}>
                       <Check className="h-4 w-4 mr-1" /> Approve
@@ -255,30 +311,116 @@ export default function AdminDashboard() {
 
   const renderUsers = () => (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">User Management</h2>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-lg sm:text-xl font-bold">User Management</h2>
+        <Button size="sm" className="gradient-orange border-0 text-primary-foreground" onClick={() => setShowCreateUser(true)}>
+          <Plus className="h-4 w-4 mr-1" /> Add User
+        </Button>
+      </div>
       <div className="space-y-3">
-        {profiles.map(p => (
-          <Card key={p.id}>
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold">{p.full_name}</p>
-                  <p className="text-xs text-muted-foreground">{p.email}</p>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${roleBadgeColor[getUserRole(p.user_id)] || 'bg-muted text-muted-foreground'}`}>
-                      {getUserRole(p.user_id)}
-                    </span>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${p.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
-                      {p.is_active ? 'Active' : 'Inactive'}
-                    </span>
+        {profiles.map(p => {
+          const role = getUserRole(p.user_id);
+          return (
+            <Card key={p.id}>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold">{p.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{p.email} {p.phone ? `• ${p.phone}` : ''}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${roleBadgeColor[role] || 'bg-muted text-muted-foreground'}`}>
+                        {roleLabels[role] || role}
+                      </span>
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${p.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                        {p.is_active ? 'Active' : 'Frozen'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    <Button size="sm" variant="outline" onClick={() => { setShowEditUser(p); setEditData({ full_name: p.full_name, department: p.department || '', phone: p.phone || '', role }); }}>
+                      <UserCog className="h-3 w-3 mr-1" /> Edit
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleToggleActive(p)} disabled={userActionLoading}>
+                      {p.is_active ? <Lock className="h-3 w-3 mr-1" /> : <Unlock className="h-3 w-3 mr-1" />}
+                      {p.is_active ? 'Freeze' : 'Unfreeze'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setShowResetPw(p); setNewPassword(''); }}>
+                      <KeyRound className="h-3 w-3 mr-1" /> Reset PW
+                    </Button>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">{p.department || '-'}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Create User Dialog */}
+      <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Create New User</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2"><Label>Full Name *</Label><Input value={newUser.full_name} onChange={e => setNewUser(p => ({ ...p, full_name: e.target.value }))} placeholder="John Doe" /></div>
+            <div className="space-y-2"><Label>Email *</Label><Input type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} placeholder="user@orangeflow.sl" /></div>
+            <div className="space-y-2"><Label>Password *</Label><Input type="password" value={newUser.password} onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} placeholder="Min 6 characters" /></div>
+            <div className="space-y-2">
+              <Label>Role *</Label>
+              <Select value={newUser.role} onValueChange={v => setNewUser(p => ({ ...p, role: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="project_team">Project Team (Admin)</SelectItem>
+                  <SelectItem value="planning_team">Planning Team</SelectItem>
+                  <SelectItem value="procurement_team">Procurement Team</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Department</Label><Input value={newUser.department} onChange={e => setNewUser(p => ({ ...p, department: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input value={newUser.phone} onChange={e => setNewUser(p => ({ ...p, phone: e.target.value }))} /></div>
+            <Button className="w-full gradient-orange border-0 text-primary-foreground" onClick={handleCreateUser} disabled={userActionLoading}>
+              {userActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Create User
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!showEditUser} onOpenChange={o => { if (!o) setShowEditUser(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit User: {showEditUser?.full_name}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2"><Label>Full Name</Label><Input value={editData.full_name} onChange={e => setEditData(p => ({ ...p, full_name: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Department</Label><Input value={editData.department} onChange={e => setEditData(p => ({ ...p, department: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input value={editData.phone} onChange={e => setEditData(p => ({ ...p, phone: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={editData.role} onValueChange={v => setEditData(p => ({ ...p, role: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="project_team">Project Team (Admin)</SelectItem>
+                  <SelectItem value="planning_team">Planning Team</SelectItem>
+                  <SelectItem value="procurement_team">Procurement Team</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button className="w-full gradient-orange border-0 text-primary-foreground" onClick={handleEditUser} disabled={userActionLoading}>
+              {userActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!showResetPw} onOpenChange={o => { if (!o) setShowResetPw(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reset Password: {showResetPw?.full_name}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2"><Label>New Password</Label><Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" /></div>
+            <Button className="w-full gradient-orange border-0 text-primary-foreground" onClick={handleResetPassword} disabled={userActionLoading}>
+              {userActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Reset Password
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
@@ -296,7 +438,7 @@ export default function AdminDashboard() {
 
   const renderProcurement = () => (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">Procurement Review</h2>
+      <h2 className="text-lg sm:text-xl font-bold">Procurement Review</h2>
       <div className="grid grid-cols-3 gap-3">
         <StatCard title="Total" value={procSubmissions.length} icon={FileCheck} />
         <StatCard title="Pending" value={procPending} icon={FileCheck} color="text-warning" />
@@ -305,27 +447,32 @@ export default function AdminDashboard() {
       <div className="space-y-3">
         {procSubmissions.map(proc => (
           <Card key={proc.id}>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-sm">{proc.sites?.site_name || 'Site'}</h3>
                     <StatusBadge status={proc.status} />
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-1.5 mt-2">
                     {procParams.map(p => (
                       <span key={p.key} className={`text-[10px] px-1.5 py-0.5 rounded ${proc[p.key] ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
                         {proc[p.key] ? '✓' : '✗'} {p.label}
                       </span>
                     ))}
                   </div>
+                  {/* File links */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {procParams.map(p => {
+                      const url = proc[`${p.key}_file_url`];
+                      return url ? <a key={p.key} href={url} target="_blank" rel="noreferrer" className="text-[10px] text-primary underline">📄 {p.label}</a> : null;
+                    })}
+                  </div>
                 </div>
                 {proc.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => { setSelectedProc(proc); setProcReviewNotes(''); }}>
-                      Review
-                    </Button>
-                  </div>
+                  <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => { setSelectedProc(proc); setProcReviewNotes(''); }}>
+                    Review
+                  </Button>
                 )}
               </div>
             </CardContent>
@@ -370,7 +517,7 @@ export default function AdminDashboard() {
 
   const renderActivity = () => (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">Activity Log</h2>
+      <h2 className="text-lg sm:text-xl font-bold">Activity Log</h2>
       <div className="space-y-0">
         {activities.map((act, i) => (
           <div key={act.id} className="flex gap-3 relative">
