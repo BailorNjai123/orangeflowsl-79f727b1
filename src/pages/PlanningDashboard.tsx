@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Plus, FileText, Radio, MapPin, Building2, Loader2, Settings2, Paperclip } from 'lucide-react';
+import { LayoutDashboard, Plus, FileText, Radio, MapPin, Building2, Loader2, Settings2, Paperclip, Trash2 } from 'lucide-react';
+import SiteDetailsView from '@/components/SiteDetailsView';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
@@ -47,6 +48,8 @@ export default function PlanningDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewSite, setViewSite] = useState<SiteRow | null>(null);
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
@@ -81,13 +84,12 @@ export default function PlanningDashboard() {
       
       const ext = file.name.split('.').pop();
       const path = `${user!.id}/${Date.now()}_${fieldName}.${ext}`;
-      const { error } = await supabase.storage.from('site-documents').upload(path, file);
+      const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
       if (error) {
         console.error('Upload error:', error);
         return null;
       }
-      const { data: urlData } = await supabase.storage.from('site-documents').createSignedUrl(path, 3600);
-      return urlData?.signedUrl || null;
+      return path;
     };
 
     const [sitePhotoUrl, layoutPlanUrl, approvalLetterUrl] = await Promise.all([
@@ -147,6 +149,24 @@ export default function PlanningDashboard() {
   const startEdit = (site: SiteRow) => {
     setEditSite(site);
     setActiveTab('submit');
+  };
+
+  const handleDeleteSite = async (site: SiteRow) => {
+    if (!confirm(`Delete site "${site.site_name}"? This cannot be undone.`)) return;
+    setDeletingId(site.id);
+    // Delete associated storage files
+    const filePaths = [site.site_photo_url, site.layout_plan_url, site.approval_letter_url].filter(Boolean).filter((p: string) => !p.startsWith('http'));
+    if (filePaths.length > 0) {
+      await supabase.storage.from('site-documents').remove(filePaths);
+    }
+    const { error } = await supabase.from('sites').delete().eq('id', site.id);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } else {
+      toast({ title: 'Site deleted' });
+      fetchSites();
+    }
+    setDeletingId(null);
   };
 
   const renderDashboard = () => (
@@ -374,13 +394,34 @@ export default function PlanningDashboard() {
                       </p>
                     )}
                   </div>
-                  {(site.status === 'pending' || site.status === 'rejected') && (
-                    <Button size="sm" variant="outline" onClick={() => startEdit(site)}>Edit</Button>
-                  )}
+                  <div className="flex gap-1.5 flex-wrap">
+                    <Button size="sm" variant="outline" onClick={() => setViewSite(site)}>View</Button>
+                    {(site.status === 'pending' || site.status === 'rejected') && (
+                      <Button size="sm" variant="outline" onClick={() => startEdit(site)}>Edit</Button>
+                    )}
+                    {(site.status === 'pending' || site.status === 'rejected') && (
+                      <Button size="sm" variant="destructive" disabled={deletingId === site.id} onClick={() => handleDeleteSite(site)}>
+                        <Trash2 className="h-3 w-3 mr-1" /> {deletingId === site.id ? 'Deleting...' : 'Delete'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* View Site Dialog */}
+      {viewSite && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setViewSite(null)}>
+          <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">{viewSite.site_name}</h3>
+              <Button size="sm" variant="ghost" onClick={() => setViewSite(null)}>✕</Button>
+            </div>
+            <SiteDetailsView site={viewSite} allowFileManage={viewSite.status === 'pending' || viewSite.status === 'rejected'} onFileUpdated={fetchSites} />
+          </div>
         </div>
       )}
     </div>
