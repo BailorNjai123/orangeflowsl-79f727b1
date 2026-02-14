@@ -260,21 +260,36 @@ export type Database = {
           access_road_condition: string | null
           address: string | null
           antenna_type: string | null
+          approval_date: string | null
           approval_letter_url: string | null
           backup_power: string | null
+          battery_bank_type: string | null
           contractor_name: string | null
           created_at: string
+          current_phase: string | null
+          dimensions: string | null
+          distance_nearest_bts: number | null
           district: string
+          earthing_resistance: number | null
+          elevation: number | null
           equipment_shelter: string | null
           estimated_cost: number | null
+          final_approval_by: string | null
+          foundation_depth: number | null
           id: string
+          last_inspection_date: string | null
           latitude: number | null
           layout_plan_url: string | null
           longitude: number | null
           notes: string | null
           number_of_antennas: number | null
+          number_of_battery_banks: number | null
+          planned_start_date: string | null
+          planning_approval_status: string | null
+          power_backup_type: string | null
           power_source: string | null
           project_name: string | null
+          project_review_status: string | null
           region: string
           review_notes: string | null
           reviewed_by: string | null
@@ -287,8 +302,10 @@ export type Database = {
           target_completion_date: string | null
           terrain_type: string | null
           tower_height: number | null
+          tower_material: string | null
           tower_type: string | null
           town: string
+          transmission_type: string | null
           updated_at: string
           vendor_name: string | null
         }
@@ -296,21 +313,36 @@ export type Database = {
           access_road_condition?: string | null
           address?: string | null
           antenna_type?: string | null
+          approval_date?: string | null
           approval_letter_url?: string | null
           backup_power?: string | null
+          battery_bank_type?: string | null
           contractor_name?: string | null
           created_at?: string
+          current_phase?: string | null
+          dimensions?: string | null
+          distance_nearest_bts?: number | null
           district?: string
+          earthing_resistance?: number | null
+          elevation?: number | null
           equipment_shelter?: string | null
           estimated_cost?: number | null
+          final_approval_by?: string | null
+          foundation_depth?: number | null
           id?: string
+          last_inspection_date?: string | null
           latitude?: number | null
           layout_plan_url?: string | null
           longitude?: number | null
           notes?: string | null
           number_of_antennas?: number | null
+          number_of_battery_banks?: number | null
+          planned_start_date?: string | null
+          planning_approval_status?: string | null
+          power_backup_type?: string | null
           power_source?: string | null
           project_name?: string | null
+          project_review_status?: string | null
           region?: string
           review_notes?: string | null
           reviewed_by?: string | null
@@ -323,8 +355,10 @@ export type Database = {
           target_completion_date?: string | null
           terrain_type?: string | null
           tower_height?: number | null
+          tower_material?: string | null
           tower_type?: string | null
           town?: string
+          transmission_type?: string | null
           updated_at?: string
           vendor_name?: string | null
         }
@@ -332,21 +366,36 @@ export type Database = {
           access_road_condition?: string | null
           address?: string | null
           antenna_type?: string | null
+          approval_date?: string | null
           approval_letter_url?: string | null
           backup_power?: string | null
+          battery_bank_type?: string | null
           contractor_name?: string | null
           created_at?: string
+          current_phase?: string | null
+          dimensions?: string | null
+          distance_nearest_bts?: number | null
           district?: string
+          earthing_resistance?: number | null
+          elevation?: number | null
           equipment_shelter?: string | null
           estimated_cost?: number | null
+          final_approval_by?: string | null
+          foundation_depth?: number | null
           id?: string
+          last_inspection_date?: string | null
           latitude?: number | null
           layout_plan_url?: string | null
           longitude?: number | null
           notes?: string | null
           number_of_antennas?: number | null
+          number_of_battery_banks?: number | null
+          planned_start_date?: string | null
+          planning_approval_status?: string | null
+          power_backup_type?: string | null
           power_source?: string | null
           project_name?: string | null
+          project_review_status?: string | null
           region?: string
           review_notes?: string | null
           reviewed_by?: string | null
@@ -359,8 +408,10 @@ export type Database = {
           target_completion_date?: string | null
           terrain_type?: string | null
           tower_height?: number | null
+          tower_material?: string | null
           tower_type?: string | null
           town?: string
+          transmission_type?: string | null
           updated_at?: string
           vendor_name?: string | null
         }
