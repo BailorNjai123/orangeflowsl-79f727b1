@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, Plus, UserCog, Lock, Unlock, KeyRound, Trash2 } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2 } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -54,6 +54,8 @@ export default function AdminDashboard() {
   const [editData, setEditData] = useState({ full_name: '', department: '', phone: '', role: '' });
   const [newPassword, setNewPassword] = useState('');
   const [userActionLoading, setUserActionLoading] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showResetPwVisible, setShowResetPwVisible] = useState(false);
 
   const { user, profile, session } = useAuth();
   const { toast } = useToast();
@@ -79,7 +81,19 @@ export default function AdminDashboard() {
 
   const callManageUsers = async (body: any) => {
     const res = await supabase.functions.invoke('manage-users', { body });
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) {
+      // Try to extract detailed error from the response context
+      let errorMsg = res.error.message;
+      try {
+        if (res.error.context && typeof res.error.context.json === 'function') {
+          const errorBody = await res.error.context.json();
+          if (errorBody?.error) errorMsg = errorBody.error;
+        }
+      } catch {}
+      // Also check if res.data has an error (some versions return it there)
+      if (res.data?.error) errorMsg = res.data.error;
+      throw new Error(errorMsg);
+    }
     if (res.data?.error) throw new Error(res.data.error);
     return res.data;
   };
@@ -376,7 +390,16 @@ export default function AdminDashboard() {
           <div className="space-y-3">
             <div className="space-y-2"><Label>Full Name *</Label><Input value={newUser.full_name} onChange={e => setNewUser(p => ({ ...p, full_name: e.target.value }))} placeholder="John Doe" /></div>
             <div className="space-y-2"><Label>Email *</Label><Input type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} placeholder="user@orangeflow.sl" /></div>
-            <div className="space-y-2"><Label>Password *</Label><Input type="password" value={newUser.password} onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} placeholder="Min 6 characters" /></div>
+            <div className="space-y-2">
+              <Label>Password *</Label>
+              <div className="relative">
+                <Input type={showNewPw ? 'text' : 'password'} value={newUser.password} onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} placeholder="Min 8 chars, uppercase, lowercase, number" />
+                <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowNewPw(!showNewPw)}>
+                  {showNewPw ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Must be 8+ characters with uppercase, lowercase, and a number</p>
+            </div>
             <div className="space-y-2">
               <Label>Role *</Label>
               <Select value={newUser.role} onValueChange={v => setNewUser(p => ({ ...p, role: v }))}>
@@ -428,7 +451,16 @@ export default function AdminDashboard() {
         <DialogContent>
           <DialogHeader><DialogTitle>Reset Password: {showResetPw?.full_name}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-2"><Label>New Password</Label><Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" /></div>
+            <div className="space-y-2">
+              <Label>New Password</Label>
+              <div className="relative">
+                <Input type={showResetPwVisible ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 8 chars, uppercase, lowercase, number" />
+                <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowResetPwVisible(!showResetPwVisible)}>
+                  {showResetPwVisible ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Must be 8+ characters with uppercase, lowercase, and a number</p>
+            </div>
             <Button className="w-full gradient-orange border-0 text-primary-foreground" onClick={handleResetPassword} disabled={userActionLoading}>
               {userActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Reset Password
             </Button>
