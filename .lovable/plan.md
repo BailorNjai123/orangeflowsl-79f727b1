@@ -1,98 +1,45 @@
 
+# Fix: User Creation and Login Flow
 
-# Major Refactor: Full Parameter Visibility, Data Flow & PWA Fix
+## Problem
+When the admin creates a new user through the User Management panel, the created user cannot log in with the credentials they were given. This is caused by multiple issues working together.
 
-## What This Plan Covers
+## Root Causes Identified
 
-This refactor ensures that **all planning team parameters** are fully visible when the Admin and Procurement teams review sites, that **all procurement form parameters** flow correctly to the Admin team for final approval, and that the **PWA install prompt** works properly.
+1. **Incomplete CORS Headers**: The backend function is missing required headers (`x-supabase-client-platform`, etc.) that the app's client sends. This can cause the request to silently fail on some browsers.
 
----
+2. **Profile Creation Race Condition**: The backend function tries to UPDATE a profile row, but the automatic profile creation trigger may not have completed yet, causing 0 rows to be updated and the user ending up without proper profile data.
 
-## 1. Show ALL Planning Parameters in Admin Site Approvals & Procurement Site Feedback
+3. **Misleading Password Requirements**: The form says "Min 6 characters" but the backend requires at least 8 characters PLUS an uppercase letter, a lowercase letter, and a number. This mismatch causes validation errors that may not be clearly shown.
 
-**Problem**: Currently, the Admin "Site Approvals" review dialog only shows 6 fields (Site ID, Location, Tower Type, Height, Phase, Vendor). The Procurement "Site Feedback" expanded view also only shows 4 fields. The planning form captures 20+ fields -- all of them should be visible.
+4. **Poor Error Handling**: When the backend function returns an error, the app may not properly extract and display the error message, making it seem like creation succeeded when it actually failed.
 
-**Fix**: Expand the detail views in both dashboards to show every field from the planning submission, organized into the same sections as the submission form:
+## Plan
 
-- **Basic Information**: Site ID, Location, Dimensions, Tower Height, Foundation Depth, Elevation, Distance from Nearest BTS
-- **Technical Details**: Tower Type, Tower Material, Transmission Type, Power Backup Type, Battery Bank Type, Number of Battery Banks, Earthing Resistance
-- **Project & Vendor Details**: Vendor Assigned, Current Phase, Planned Start Date, Expected Completion Date, Last Inspection Date
-- **Attachments**: Site Photo, Layout Plan, Approval Letter (as downloadable signed-URL links)
-- **Notes**: Any observations from the planning team
+### 1. Fix Backend Function (`supabase/functions/manage-users/index.ts`)
+- Update CORS headers to include all required Supabase client headers
+- Change profile handling from UPDATE to UPSERT to handle timing issues
+- Add a small delay or retry logic for profile creation
+- Add better error responses with clear messages
 
-**Files changed**:
-- `src/pages/AdminDashboard.tsx` -- rewrite the `selectedSite` review dialog (lines 271-308) to show all fields in organized sections
-- `src/pages/ProcurementDashboard.tsx` -- rewrite the feedback expanded view (lines 224-231) to show all planning fields
+### 2. Fix Frontend User Creation UI (`src/pages/AdminDashboard.tsx`)
+- Update password placeholder to show real requirements: "Min 8 chars, uppercase, lowercase, number"
+- Improve error handling in `callManageUsers` to properly extract error messages from failed responses
+- Add password visibility toggle for the create user and reset password forms
+- Show password requirements as helper text below the input
 
----
+### 3. Fix Frontend Error Handling
+- Update `callManageUsers` to handle `FunctionsHttpError` properly by reading the response body
+- Show clear, user-friendly error messages when creation fails
 
-## 2. Show ALL Procurement Parameters on Procurement Dashboard & Admin Review
+## Technical Details
 
-**Problem**: The procurement "My Submissions" section shows the 9 boolean indicators as tiny badges but does not show the full detail (file links, notes). The Admin "Procurement Review" dialog shows parameters but not the file attachments or section groupings.
+**Edge Function Changes:**
+- CORS: Add `x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version` to allowed headers
+- Profile: Use `upsert` instead of `update` with `onConflict: 'user_id'` to guarantee the profile row exists
+- Add email to profile upsert data since the trigger might set it to empty string
 
-**Fix**:
-- On the **Procurement Dashboard "My Submissions"**, show expandable cards with the 3 color-coded sections (Land Acquisition/blue, Land Lease/purple, Handover/green), each parameter's Yes/No status, and clickable file links
-- On the **Admin Dashboard "Procurement Review"** dialog, show the same 3 color-coded sections with Yes/No status, file download links, submission notes, and the linked site's planning details -- then Approve/Reject
-
-**Files changed**:
-- `src/pages/ProcurementDashboard.tsx` -- enhance "My Submissions" cards to show grouped parameters with file links
-- `src/pages/AdminDashboard.tsx` -- enhance the procurement review dialog (lines 484-514) to show color-coded sections with file links, plus the original planning site details
-
----
-
-## 3. Fix the PWA Install Prompt
-
-**Problem**: The `beforeinstallprompt` event only fires on Chromium-based browsers and requires the app to be served over HTTPS from the published URL. In the Lovable preview, it does not fire, so the install prompt never appears.
-
-**Fix**:
-- Keep the existing `InstallPrompt.tsx` component (it is correctly implemented)
-- Add a **fallback manual install banner** for browsers that don't support `beforeinstallprompt` (especially Safari/iOS). This will show a brief instruction: "Tap the Share button, then 'Add to Home Screen'" with a dismiss option
-- Ensure the manifest and service worker config remain correct
-- Use the existing `Radio` icon (the antenna/tower icon from the navbar) as the PWA icon in the install prompt -- this is already in place
-
-**Files changed**:
-- `src/components/InstallPrompt.tsx` -- add iOS/Safari fallback detection and instruction banner
-
----
-
-## 4. Fix React `forwardRef` Console Warnings
-
-**Problem**: `StatCard` and `StatusBadge` are function components that receive refs from parent components (e.g., motion.div wrappers, Radix slots) but don't use `forwardRef`, causing console warnings.
-
-**Fix**: Wrap both components with `React.forwardRef`.
-
-**Files changed**:
-- `src/components/StatCard.tsx` -- wrap with `forwardRef`
-- `src/components/StatusBadge.tsx` -- wrap with `forwardRef`
-
----
-
-## 5. Create a Reusable Site Details Component
-
-To avoid duplicating the full planning parameters display across Admin and Procurement dashboards, create a shared component.
-
-**New file**: `src/components/SiteDetailsView.tsx`
-- Accepts a site object and renders all fields in organized, labeled sections
-- Handles signed URL generation for file attachments
-- Used by both AdminDashboard (site approval dialog) and ProcurementDashboard (feedback expanded view)
-
-**New file**: `src/components/ProcSubmissionDetails.tsx`
-- Accepts a procurement submission object and renders the 3 color-coded sections with Yes/No indicators and file links
-- Used by both AdminDashboard (procurement review) and ProcurementDashboard (my submissions)
-
----
-
-## Summary of All File Changes
-
-| File | Action |
-|------|--------|
-| `src/components/SiteDetailsView.tsx` | **Create** -- reusable full site details display |
-| `src/components/ProcSubmissionDetails.tsx` | **Create** -- reusable procurement parameters display |
-| `src/pages/AdminDashboard.tsx` | **Edit** -- use SiteDetailsView in approval dialog, use ProcSubmissionDetails in procurement review dialog |
-| `src/pages/ProcurementDashboard.tsx` | **Edit** -- use SiteDetailsView in feedback expanded view, use ProcSubmissionDetails in "My Submissions" |
-| `src/components/InstallPrompt.tsx` | **Edit** -- add iOS/Safari fallback install instructions |
-| `src/components/StatCard.tsx` | **Edit** -- wrap with forwardRef |
-| `src/components/StatusBadge.tsx` | **Edit** -- wrap with forwardRef |
-
-**No database changes required** -- all the data already exists in the `sites` and `procurement_submissions` tables. This is purely a frontend display refactor.
-
+**Frontend Changes:**
+- Extract error body from `FunctionsHttpError` using `res.error.context` or by checking `res.data` for error messages
+- Add helper text showing password requirements
+- Update placeholder text to accurately reflect validation rules
