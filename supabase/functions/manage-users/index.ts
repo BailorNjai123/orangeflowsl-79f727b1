@@ -4,7 +4,7 @@ import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 const validRoles = ['planning_team', 'procurement_team', 'project_team'] as const;
@@ -82,18 +82,27 @@ serve(async (req) => {
       });
       if (createError) throw createError;
 
-      // Update profile
-      await supabaseAdmin.from('profiles').update({
+      // Small delay to let the handle_new_user trigger complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Upsert profile to handle race condition with trigger
+      const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
+        user_id: authData.user.id,
+        email: validated.email,
         full_name: validated.full_name,
         department: validated.department,
         phone: validated.phone,
-      }).eq('user_id', authData.user.id);
+      }, { onConflict: 'user_id' });
+
+      if (profileError) {
+        console.error('Profile upsert error:', profileError);
+      }
 
       // Assign role
-      await supabaseAdmin.from('user_roles').insert({
+      await supabaseAdmin.from('user_roles').upsert({
         user_id: authData.user.id,
         role: validated.role,
-      });
+      }, { onConflict: 'user_id' });
 
       return new Response(JSON.stringify({ success: true, user_id: authData.user.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
