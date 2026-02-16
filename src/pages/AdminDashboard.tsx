@@ -134,9 +134,21 @@ export default function AdminDashboard() {
     setActionLoading(false);
   };
 
+  const validatePassword = (pw: string): string | null => {
+    if (pw.length < 8) return 'Password must be at least 8 characters';
+    if (!/[a-z]/.test(pw)) return 'Password must contain a lowercase letter';
+    if (!/[A-Z]/.test(pw)) return 'Password must contain an uppercase letter';
+    if (!/\d/.test(pw)) return 'Password must contain a number';
+    return null;
+  };
+
   const handleCreateUser = async () => {
     if (!newUser.email || !newUser.password || !newUser.full_name || !newUser.role) {
       toast({ variant: 'destructive', title: 'Error', description: 'Fill all required fields' }); return;
+    }
+    const pwError = validatePassword(newUser.password);
+    if (pwError) {
+      toast({ variant: 'destructive', title: 'Invalid Password', description: pwError }); return;
     }
     setUserActionLoading(true);
     try {
@@ -178,6 +190,10 @@ export default function AdminDashboard() {
 
   const handleResetPassword = async () => {
     if (!showResetPw || !newPassword) return;
+    const pwError = validatePassword(newPassword);
+    if (pwError) {
+      toast({ variant: 'destructive', title: 'Invalid Password', description: pwError }); return;
+    }
     setUserActionLoading(true);
     try {
       await callManageUsers({ action: 'reset_password', user_id: showResetPw.user_id, new_password: newPassword });
@@ -394,9 +410,9 @@ export default function AdminDashboard() {
               <Label>Password *</Label>
               <div className="relative">
                 <Input type={showNewPw ? 'text' : 'password'} value={newUser.password} onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} placeholder="Min 8 chars, uppercase, lowercase, number" />
-                <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowNewPw(!showNewPw)}>
-                  {showNewPw ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-                </Button>
+                <button type="button" className="absolute right-0 top-0 h-full px-3 flex items-center justify-center z-10 text-muted-foreground hover:text-foreground" onClick={() => setShowNewPw(!showNewPw)}>
+                  {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               <p className="text-xs text-muted-foreground">Must be 8+ characters with uppercase, lowercase, and a number</p>
             </div>
@@ -455,9 +471,9 @@ export default function AdminDashboard() {
               <Label>New Password</Label>
               <div className="relative">
                 <Input type={showResetPwVisible ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 8 chars, uppercase, lowercase, number" />
-                <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowResetPwVisible(!showResetPwVisible)}>
-                  {showResetPwVisible ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-                </Button>
+                <button type="button" className="absolute right-0 top-0 h-full px-3 flex items-center justify-center z-10 text-muted-foreground hover:text-foreground" onClick={() => setShowResetPwVisible(!showResetPwVisible)}>
+                  {showResetPwVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               <p className="text-xs text-muted-foreground">Must be 8+ characters with uppercase, lowercase, and a number</p>
             </div>

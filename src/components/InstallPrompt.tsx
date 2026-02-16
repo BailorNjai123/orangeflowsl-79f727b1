@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Radio, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,9 +24,8 @@ export default function InstallPrompt() {
 
   useEffect(() => {
     if (isInStandaloneMode()) return;
-    if (sessionStorage.getItem('pwa-install-dismissed')) return;
+    if (localStorage.getItem('pwa-install-dismissed')) return;
 
-    // Chromium browsers
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -34,10 +33,9 @@ export default function InstallPrompt() {
     };
     window.addEventListener('beforeinstallprompt', handler);
 
-    // iOS Safari fallback
-    if (isIOS() && !deferredPrompt) {
+    if (isIOS()) {
       setTimeout(() => {
-        if (!deferredPrompt) setShowIOSBanner(true);
+        setShowIOSBanner(true);
       }, 3000);
     }
 
@@ -54,12 +52,14 @@ export default function InstallPrompt() {
     setDeferredPrompt(null);
   };
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setShow(false);
     setShowIOSBanner(false);
     setDismissed(true);
-    sessionStorage.setItem('pwa-install-dismissed', 'true');
-  };
+    localStorage.setItem('pwa-install-dismissed', 'true');
+  }, []);
 
   if (dismissed) return null;
 
@@ -98,12 +98,24 @@ export default function InstallPrompt() {
                       Install
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost" className="text-xs h-8 text-muted-foreground" onClick={handleDismiss}>
+                  <button
+                    type="button"
+                    className="text-xs h-8 px-3 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent pointer-events-auto"
+                    style={{ touchAction: 'manipulation' }}
+                    onClick={handleDismiss}
+                    onTouchEnd={handleDismiss}
+                  >
                     {showIOSBanner ? 'Got it' : 'Not now'}
-                  </Button>
+                  </button>
                 </div>
               </div>
-              <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground shrink-0">
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md pointer-events-auto"
+                style={{ touchAction: 'manipulation' }}
+                onClick={handleDismiss}
+                onTouchEnd={handleDismiss}
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
