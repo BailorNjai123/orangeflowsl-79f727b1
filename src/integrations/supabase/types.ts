@@ -47,6 +47,51 @@ export type Database = {
         }
         Relationships: []
       }
+      deleted_users_archive: {
+        Row: {
+          deleted_at: string
+          deleted_by: string | null
+          deleted_by_name: string | null
+          department: string | null
+          email: string
+          full_name: string
+          id: string
+          original_user_id: string
+          phone: string | null
+          reason: string | null
+          role: string | null
+          was_active: boolean | null
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by?: string | null
+          deleted_by_name?: string | null
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          original_user_id: string
+          phone?: string | null
+          reason?: string | null
+          role?: string | null
+          was_active?: boolean | null
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string | null
+          deleted_by_name?: string | null
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          original_user_id?: string
+          phone?: string | null
+          reason?: string | null
+          role?: string | null
+          was_active?: boolean | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
