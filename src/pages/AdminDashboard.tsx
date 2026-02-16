@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,6 +57,7 @@ export default function AdminDashboard() {
   const [userActionLoading, setUserActionLoading] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [showResetPwVisible, setShowResetPwVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   const { user, profile, session } = useAuth();
   const { toast } = useToast();
@@ -201,6 +203,38 @@ export default function AdminDashboard() {
       setShowResetPw(null); setNewPassword('');
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Error', description: e.message });
+    }
+    setUserActionLoading(false);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.user_id === user?.id) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You cannot delete your own account.' });
+      setDeleteTarget(null);
+      return;
+    }
+    setUserActionLoading(true);
+    try {
+      await callManageUsers({
+        action: 'delete_user',
+        user_id: deleteTarget.user_id,
+        deleted_by_name: profile?.full_name || '',
+        reason: 'Removed by admin',
+      });
+      toast({ title: 'User Deleted', description: `${deleteTarget.full_name} has been removed. Their history is archived.` });
+      await supabase.from('activity_log').insert({
+        action: 'user_deleted',
+        description: `User "${deleteTarget.full_name}" (${deleteTarget.email}) was deleted`,
+        user_id: user!.id,
+        user_name: profile?.full_name,
+        entity_type: 'user',
+        entity_id: deleteTarget.user_id,
+      });
+      setDeleteTarget(null);
+      fetchData();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Delete Failed', description: e.message });
     }
     setUserActionLoading(false);
   };
@@ -391,6 +425,11 @@ export default function AdminDashboard() {
                     <Button size="sm" variant="outline" onClick={() => { setShowResetPw(p); setNewPassword(''); }}>
                       <KeyRound className="h-3 w-3 mr-1" /> Reset PW
                     </Button>
+                    {p.user_id !== user?.id && (
+                      <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(p)} disabled={userActionLoading}>
+                        <Trash2 className="h-3 w-3 mr-1" /> Delete
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -483,6 +522,25 @@ export default function AdminDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User: {deleteTarget?.full_name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove <strong>{deleteTarget?.email}</strong> from the system. They will no longer be able to log in. Their history will be archived for record-keeping. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={userActionLoading}>
+              {userActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 

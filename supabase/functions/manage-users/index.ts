@@ -46,6 +46,13 @@ const resetPasswordSchema = z.object({
     .regex(/\d/, 'Password must contain a number'),
 });
 
+const deleteUserSchema = z.object({
+  action: z.literal('delete_user'),
+  user_id: z.string().uuid('Invalid user_id'),
+  reason: z.string().max(500).optional().default(''),
+  deleted_by_name: z.string().max(100).optional().default(''),
+});
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -153,6 +160,52 @@ serve(async (req) => {
       await supabaseAdmin.auth.admin.updateUserById(validated.user_id, { password: validated.new_password });
 
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'delete_user') {
+      const validated = deleteUserSchema.parse(body);
+
+      // Prevent self-deletion
+      if (validated.user_id === caller.id) throw new Error('Cannot delete your own account');
+
+      // Fetch user profile and role for archiving
+      const [profileRes, roleRes] = await Promise.all([
+        supabaseAdmin.from('profiles').select('*').eq('user_id', validated.user_id).single(),
+        supabaseAdmin.from('user_roles').select('role').eq('user_id', validated.user_id).single(),
+      ]);
+
+      const userProfile = profileRes.data;
+      const userRole = roleRes.data;
+
+      if (!userProfile) throw new Error('User profile not found');
+
+      // Archive user data
+      await supabaseAdmin.from('deleted_users_archive').insert({
+        original_user_id: validated.user_id,
+        email: userProfile.email || '',
+        full_name: userProfile.full_name || '',
+        department: userProfile.department || '',
+        phone: userProfile.phone || '',
+        role: userRole?.role || '',
+        was_active: userProfile.is_active,
+        deleted_by: caller.id,
+        deleted_by_name: validated.deleted_by_name,
+        reason: validated.reason,
+      });
+
+      // Delete profile and role (these don't cascade from auth)
+      await Promise.all([
+        supabaseAdmin.from('profiles').delete().eq('user_id', validated.user_id),
+        supabaseAdmin.from('user_roles').delete().eq('user_id', validated.user_id),
+      ]);
+
+      // Delete the auth user (this is permanent)
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(validated.user_id);
+      if (deleteError) throw deleteError;
+
+      return new Response(JSON.stringify({ success: true, archived: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
