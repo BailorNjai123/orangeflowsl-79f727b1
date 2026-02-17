@@ -103,13 +103,22 @@ serve(async (req) => {
 
       if (profileError) {
         console.error('Profile upsert error:', profileError);
+        throw new Error(`Profile creation failed: ${profileError.message}. Auth user was created (id: ${authData.user.id}) but needs manual role assignment.`);
       }
+      console.log('Profile upserted for user:', authData.user.id);
 
-      // Assign role
-      await supabaseAdmin.from('user_roles').upsert({
+      // Assign role: delete any existing then insert
+      await supabaseAdmin.from('user_roles').delete().eq('user_id', authData.user.id);
+      const { error: roleError } = await supabaseAdmin.from('user_roles').insert({
         user_id: authData.user.id,
         role: validated.role,
-      }, { onConflict: 'user_id' });
+      });
+
+      if (roleError) {
+        console.error('Role insert error:', roleError);
+        throw new Error(`Role assignment failed: ${roleError.message}. Auth user was created (id: ${authData.user.id}) but needs manual role assignment.`);
+      }
+      console.log('Role assigned:', validated.role, 'for user:', authData.user.id);
 
       return new Response(JSON.stringify({ success: true, user_id: authData.user.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
