@@ -1,72 +1,43 @@
 
 
-# Fix: Install Prompt Dismissal, Password Toggle, and System-Wide Bug Audit
+# Fix: User Creation Failing Silently (Role Not Being Assigned)
 
-## Issues Identified
+## Problem
+When the admin creates a new user, the system reports success but the user's **role is never saved**. This is confirmed by the database showing user "pro@orangeflow.sl" with NO role assigned. Without a role, the login flow breaks because the app can't determine where to redirect the user.
 
-### 1. Install Prompt Cannot Be Dismissed (Critical)
-The "Install OrangeFlow SL" banner's X button and "Got it" button don't work on mobile. The root cause is that the `motion.div` with `AnimatePresence` captures touch events, and the dismiss button lacks `type="button"`. Additionally, on iOS Safari, touch events on small tap targets inside animated containers can be unreliable. The component also uses `sessionStorage` which resets every session -- users see the banner again and again.
+## Root Cause
+The edge function uses `upsert` with `onConflict: 'user_id'` for the `user_roles` table, but the table's unique constraint is on `(user_id, role)` -- not just `user_id`. PostgreSQL rejects this silently, and the edge function does not check for the error. It returns `{ success: true }` even though the role was never saved.
 
-**Fixes:**
-- Add `type="button"` to the X close button
-- Increase the tap target size of the X button (min 44x44px for mobile)
-- Use `localStorage` instead of `sessionStorage` so dismissal persists across sessions
-- Add `touch-action: manipulation` to prevent double-tap zoom delays on mobile
-- Add `pointer-events: auto` explicitly on interactive elements
+## Fix
 
-### 2. Password Visibility Toggle Not Working
-From the screenshot, the password field on the admin Create User form doesn't show/hide text. The Login page toggle looks correct in code but may have the same z-index/pointer-events issue on mobile. The admin form's eye button uses a `Button` component with `variant="ghost"` inside a `relative` div -- the button's hover styles may interfere.
+### 1. Edge Function (`supabase/functions/manage-users/index.ts`)
 
-**Fixes:**
-- Ensure the eye toggle button on all password fields uses `type="button"` explicitly
-- Use a plain `button` element (not the Button component) for the toggle to avoid style interference
-- Verify the `z-index` of the toggle is above the input
+**Role assignment fix (create_user action):**
+- Replace the broken `upsert` with a safer pattern: DELETE existing roles for the user, then INSERT the new role
+- Add proper error checking on BOTH the profile upsert AND the role insert -- if either fails, throw an error so the admin sees it
+- Add console logging for every step so failures are visible in logs
 
-### 3. Edge Function Error on User Creation (Screenshot)
-The screenshot shows "Edge Function returned a non-2xx status code" when creating a user with password "6 dots" (likely < 8 chars). The error message is not user-friendly.
+**Same fix for update_user action:**
+- The update_user action already uses delete-then-insert, which is correct -- no change needed there
 
-**Fixes:**
-- Add client-side password validation before calling the edge function (min 8 chars, uppercase, lowercase, number)
-- Show inline validation errors instead of generic toast
-- Improve the error extraction in `callManageUsers` to properly display Zod validation messages from the edge function
+### 2. Fix the Orphaned User
+- The user "pro@orangeflow.sl" exists with no role. The edge function fix will prevent this from happening again
+- The admin can use the Edit User feature to assign a role to this user, or delete and recreate them
 
-### 4. System-Wide Audit Findings
-- Login page password toggle: looks correct but needs `type="button"` for safety
-- All pages reviewed: Landing, Login, NotFound, PlanningDashboard, ProcurementDashboard, AdminDashboard -- no other critical bugs found
-- The `useOnlineSync` hook and offline queue are not causing issues
+### 3. Improved Error Handling
+- Wrap all database operations in proper error checks
+- Return detailed error messages so the admin sees exactly what went wrong
+- If profile or role creation fails after auth user is created, include the user_id in the error so the admin knows the auth account exists but needs manual role assignment
 
-## Changes
+## Files Changed
 
-### File: `src/components/InstallPrompt.tsx`
-- Replace `sessionStorage` with `localStorage` for persistent dismissal
-- Add `type="button"` to the X button
-- Increase X button tap target to 44x44px with padding
-- Add `touch-action: manipulation` on interactive elements
-- Stop event propagation on dismiss to prevent motion container interference
+| File | Change |
+|------|--------|
+| `supabase/functions/manage-users/index.ts` | Fix role assignment from broken upsert to delete+insert with error checking |
 
-### File: `src/pages/AdminDashboard.tsx`
-- Add client-side password validation before calling edge function
-- Replace `Button` component for eye toggles with plain `button` elements for reliability
-- Add inline validation feedback for password requirements (real-time check as user types)
-- Improve `callManageUsers` error handling to parse JSON error body properly
-
-### File: `src/pages/Login.tsx`
-- Add `type="button"` to the password toggle button (defensive fix)
-
-## Technical Details
-
-**InstallPrompt fixes:**
-- `localStorage.getItem('pwa-install-dismissed')` instead of `sessionStorage`
-- X button: `<button type="button" onClick={handleDismiss} className="... min-w-[44px] min-h-[44px] flex items-center justify-center">`
-- Add `onTouchEnd` handler as fallback for iOS Safari
-
-**Password validation (AdminDashboard):**
-- Validate password client-side before API call using the same rules as the Zod schema
-- Show color-coded requirement checklist (green check / red x for each rule)
-- Prevent form submission if validation fails
-
-**Error handling improvement:**
-- In `callManageUsers`, check `res.data?.error` first (edge function returns JSON with error field)
-- If `res.error` exists, try `await res.error.context?.json()` to get detailed message
-- Display the specific validation error (e.g., "Password must contain an uppercase letter") instead of generic "Edge Function returned a non-2xx status code"
+## What This Fixes
+- New users will have their roles properly assigned
+- Admins will see clear error messages if anything fails
+- New users will be able to log in with the credentials the admin gives them
+- The login redirect will work correctly because the role will exist
 
