@@ -677,6 +677,7 @@ export default function AdminDashboard() {
     <AuthGuard allowedRoles={['project_team']}>
       <DashboardLayout title="Admin Dashboard" navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab}>
         {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'monitor' && <SiteMonitorTable sites={sites} onFileUpdated={fetchData} />}
         {activeTab === 'approvals' && renderApprovals()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'procurement' && renderProcurement()}
