@@ -23,6 +23,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
+  { label: 'Site Monitor', icon: TableProperties, value: 'monitor' },
   { label: 'Site Approvals', icon: CheckSquare, value: 'approvals' },
   { label: 'User Management', icon: Users, value: 'users' },
   { label: 'Procurement Review', icon: FileCheck, value: 'procurement' },
