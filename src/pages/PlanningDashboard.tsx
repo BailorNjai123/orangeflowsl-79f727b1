@@ -99,10 +99,11 @@ export default function PlanningDashboard() {
     ]);
 
     const siteData = {
+      site_id_code: get('site_id_code'),
       site_name: get('site_name'),
       region: get('region'),
-      district: get('district') || '',
-      town: get('town') || '',
+      district: get('district'),
+      town: get('town'),
       dimensions: get('dimensions') || null,
       tower_height: getNum('tower_height'),
       foundation_depth: getNum('foundation_depth'),

@@ -319,10 +319,10 @@ export default function AdminDashboard() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-sm">{site.site_name}</h3>
+                    <h3 className="font-semibold text-sm">{site.site_id_code} — {site.site_name}</h3>
                     <StatusBadge status={site.status} />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">{site.site_id_code} • {site.region}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{site.region}{site.district ? `, ${site.district}` : ''}{site.town ? `, ${site.town}` : ''} • {new Date(site.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="flex gap-1.5 flex-wrap">
                   <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setReviewNotes(''); }}>
