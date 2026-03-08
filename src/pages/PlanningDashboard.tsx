@@ -42,6 +42,8 @@ const powerSources = [
 const backupPowerOptions = ['Generator', 'Battery', 'Solar', 'None'];
 const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
 const siteConfigurations = ['Standalone', 'Co-located', 'Rooftop', 'Underground', 'Hybrid'];
+const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
+const scopeOptions = ['New Site', 'Upgrade', 'Swap', 'Expansion'];
 
 type SiteRow = {
   id: string;
@@ -148,6 +150,15 @@ export default function PlanningDashboard() {
       target_completion_date: get('target_completion_date') || null,
       last_inspection_date: get('last_inspection_date') || null,
       approval_date: get('approval_date') || null,
+      scope: get('scope') || null,
+      handover_to_vendor: get('handover_to_vendor') || null,
+      soil_test: get('soil_test') || 'Not Started',
+      site_implementation_design: get('site_implementation_design') || 'Not Started',
+      cast_status: get('cast_status') || 'Not Started',
+      tower_rig: get('tower_rig') || 'Not Started',
+      civil_rfi: get('civil_rfi') || 'Not Started',
+      power_rfi: get('power_rfi') || 'Not Started',
+      on_air: get('on_air') || 'Not Started',
       notes: get('notes') || null,
       submitted_by: user!.id,
       status: 'pending' as const,
@@ -401,8 +412,19 @@ export default function PlanningDashboard() {
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" /> 🏗️ Project & Vendor Details</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
           <div className="space-y-2">
+            <Label>Scope</Label>
+            <Select name="scope" defaultValue={editSite?.scope || ''}>
+              <SelectTrigger><SelectValue placeholder="Select scope" /></SelectTrigger>
+              <SelectContent>{scopeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="vendor_name">Vendor Assigned *</Label>
             <Input id="vendor_name" name="vendor_name" required placeholder="e.g. Huawei, ZTE" defaultValue={editSite?.vendor_name || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="handover_to_vendor">Handover to Vendor</Label>
+            <Input id="handover_to_vendor" name="handover_to_vendor" type="date" defaultValue={editSite?.handover_to_vendor || ''} />
           </div>
           <div className="space-y-2">
             <Label>Site Type</Label>
@@ -473,11 +495,35 @@ export default function PlanningDashboard() {
         </CardContent>
       </Card>
 
+      {/* Deployment Progress */}
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2">🚀 Deployment Progress</CardTitle></CardHeader>
+        <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+          {[
+            { name: 'soil_test', label: 'Soil Test' },
+            { name: 'site_implementation_design', label: 'Site Implementation Design' },
+            { name: 'cast_status', label: 'Cast' },
+            { name: 'tower_rig', label: 'Tower Rig' },
+            { name: 'civil_rfi', label: 'Civil RFI' },
+            { name: 'power_rfi', label: 'Power RFI' },
+            { name: 'on_air', label: 'On Air' },
+          ].map(field => (
+            <div key={field.name} className="space-y-2">
+              <Label>{field.label}</Label>
+              <Select name={field.name} defaultValue={editSite?.[field.name] || 'Not Started'}>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>{deploymentStatuses.map(s => <SelectItem key={s} value={s}>{s === 'Not Started' ? '🔴' : s === 'In Progress' ? '🟡' : '🟢'} {s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       {/* Notes */}
       <Card>
         <CardContent className="pt-6">
-          <Label htmlFor="notes">📝 Notes / Observations</Label>
-          <Textarea id="notes" name="notes" className="mt-2" rows={4} defaultValue={editSite?.notes || ''} placeholder="Enter any important notes..." />
+          <Label htmlFor="notes">📝 Comments</Label>
+          <Textarea id="notes" name="notes" className="mt-2" rows={4} defaultValue={editSite?.notes || ''} placeholder="Enter any comments..." />
         </CardContent>
       </Card>
 
