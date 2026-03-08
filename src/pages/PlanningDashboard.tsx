@@ -28,6 +28,13 @@ const transmissionTypes = ['Microwave', 'Fiber', 'Satellite'];
 const powerBackupTypes = ['Solar', 'Generator', 'Hybrid'];
 const batteryBankTypes = ['Lithium', 'Lead-acid'];
 const currentPhases = ['Planning', 'Foundation', 'Tower Erection', 'Integration'];
+const siteTypes = ['Greenfield', 'Rooftop', 'Indoor', 'COW'];
+const terrainTypes = ['Flat', 'Hilly', 'Swampy', 'Coastal'];
+const accessRoadConditions = ['Good', 'Fair', 'Poor', 'No Road'];
+const antennaTypes = ['Omni', 'Sector', 'Directional'];
+const powerSources = ['Grid', 'Solar', 'Generator', 'Hybrid'];
+const backupPowerOptions = ['Generator', 'Battery', 'Solar', 'None'];
+const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
 
 type SiteRow = {
   id: string;
@@ -109,6 +116,8 @@ export default function PlanningDashboard() {
       foundation_depth: getNum('foundation_depth'),
       elevation: getNum('elevation'),
       distance_nearest_bts: getNum('distance_nearest_bts'),
+      latitude: getNum('latitude'),
+      longitude: getNum('longitude'),
       tower_type: get('tower_type') || null,
       tower_material: get('tower_material') || null,
       transmission_type: get('transmission_type') || null,
@@ -116,11 +125,20 @@ export default function PlanningDashboard() {
       battery_bank_type: get('battery_bank_type') || null,
       number_of_battery_banks: getNum('number_of_battery_banks'),
       earthing_resistance: getNum('earthing_resistance'),
+      antenna_type: get('antenna_type') || null,
+      number_of_antennas: getNum('number_of_antennas'),
+      power_source: get('power_source') || null,
+      backup_power: get('backup_power') || null,
+      equipment_shelter: get('equipment_shelter') || null,
+      site_type: get('site_type') || null,
+      terrain_type: get('terrain_type') || null,
+      access_road_condition: get('access_road_condition') || null,
       vendor_name: get('vendor_name') || null,
       current_phase: get('current_phase') || null,
       planned_start_date: get('planned_start_date') || null,
       target_completion_date: get('target_completion_date') || null,
       last_inspection_date: get('last_inspection_date') || null,
+      approval_date: get('approval_date') || null,
       notes: get('notes') || null,
       submitted_by: user!.id,
       status: 'pending' as const,
@@ -265,6 +283,14 @@ export default function PlanningDashboard() {
             <Label htmlFor="distance_nearest_bts">Distance from Nearest BTS (km)</Label>
             <Input id="distance_nearest_bts" name="distance_nearest_bts" type="number" step="0.1" placeholder="e.g. 2.5" defaultValue={editSite?.distance_nearest_bts || ''} />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="latitude">Latitude</Label>
+            <Input id="latitude" name="latitude" type="number" step="0.000001" placeholder="e.g. 8.4657" defaultValue={editSite?.latitude || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="longitude">Longitude</Label>
+            <Input id="longitude" name="longitude" type="number" step="0.000001" placeholder="e.g. -13.2317" defaultValue={editSite?.longitude || ''} />
+          </div>
         </CardContent>
       </Card>
 
@@ -315,6 +341,38 @@ export default function PlanningDashboard() {
             <Label htmlFor="earthing_resistance">Earthing Resistance (Ohm)</Label>
             <Input id="earthing_resistance" name="earthing_resistance" type="number" placeholder="e.g. 5" defaultValue={editSite?.earthing_resistance || ''} />
           </div>
+          <div className="space-y-2">
+            <Label>Antenna Type</Label>
+            <Select name="antenna_type" defaultValue={editSite?.antenna_type || ''}>
+              <SelectTrigger><SelectValue placeholder="Select antenna type" /></SelectTrigger>
+              <SelectContent>{antennaTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="number_of_antennas">Number of Antennas</Label>
+            <Input id="number_of_antennas" name="number_of_antennas" type="number" placeholder="e.g. 3" defaultValue={editSite?.number_of_antennas || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label>Power Source</Label>
+            <Select name="power_source" defaultValue={editSite?.power_source || ''}>
+              <SelectTrigger><SelectValue placeholder="Select power source" /></SelectTrigger>
+              <SelectContent>{powerSources.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Backup Power</Label>
+            <Select name="backup_power" defaultValue={editSite?.backup_power || ''}>
+              <SelectTrigger><SelectValue placeholder="Select backup power" /></SelectTrigger>
+              <SelectContent>{backupPowerOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Equipment Shelter</Label>
+            <Select name="equipment_shelter" defaultValue={editSite?.equipment_shelter || ''}>
+              <SelectTrigger><SelectValue placeholder="Select shelter type" /></SelectTrigger>
+              <SelectContent>{equipmentShelterTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
@@ -325,6 +383,27 @@ export default function PlanningDashboard() {
           <div className="space-y-2">
             <Label htmlFor="vendor_name">Vendor Assigned *</Label>
             <Input id="vendor_name" name="vendor_name" required placeholder="e.g. Huawei, ZTE" defaultValue={editSite?.vendor_name || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label>Site Type</Label>
+            <Select name="site_type" defaultValue={editSite?.site_type || ''}>
+              <SelectTrigger><SelectValue placeholder="Select site type" /></SelectTrigger>
+              <SelectContent>{siteTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Terrain Type</Label>
+            <Select name="terrain_type" defaultValue={editSite?.terrain_type || ''}>
+              <SelectTrigger><SelectValue placeholder="Select terrain type" /></SelectTrigger>
+              <SelectContent>{terrainTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Access Road Condition</Label>
+            <Select name="access_road_condition" defaultValue={editSite?.access_road_condition || ''}>
+              <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
+              <SelectContent>{accessRoadConditions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Current Phase *</Label>
@@ -344,6 +423,10 @@ export default function PlanningDashboard() {
           <div className="space-y-2">
             <Label htmlFor="last_inspection_date">Last Inspection Date</Label>
             <Input id="last_inspection_date" name="last_inspection_date" type="date" defaultValue={editSite?.last_inspection_date || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="approval_date">Approval Date</Label>
+            <Input id="approval_date" name="approval_date" type="date" defaultValue={editSite?.approval_date || ''} />
           </div>
         </CardContent>
       </Card>
