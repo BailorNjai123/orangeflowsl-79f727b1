@@ -272,6 +272,14 @@ export default function PlanningDashboard() {
             <Label htmlFor="distance_nearest_bts">Distance from Nearest BTS (km)</Label>
             <Input id="distance_nearest_bts" name="distance_nearest_bts" type="number" step="0.1" placeholder="e.g. 2.5" defaultValue={editSite?.distance_nearest_bts || ''} />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="latitude">Latitude</Label>
+            <Input id="latitude" name="latitude" type="number" step="0.000001" placeholder="e.g. 8.4657" defaultValue={editSite?.latitude || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="longitude">Longitude</Label>
+            <Input id="longitude" name="longitude" type="number" step="0.000001" placeholder="e.g. -13.2317" defaultValue={editSite?.longitude || ''} />
+          </div>
         </CardContent>
       </Card>
 
