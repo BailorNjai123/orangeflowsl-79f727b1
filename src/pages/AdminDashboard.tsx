@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2 } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
+import SiteMonitorTable from '@/components/SiteMonitorTable';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
@@ -22,6 +23,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
+  { label: 'Site Monitor', icon: TableProperties, value: 'monitor' },
   { label: 'Site Approvals', icon: CheckSquare, value: 'approvals' },
   { label: 'User Management', icon: Users, value: 'users' },
   { label: 'Procurement Review', icon: FileCheck, value: 'procurement' },
@@ -675,6 +677,7 @@ export default function AdminDashboard() {
     <AuthGuard allowedRoles={['project_team']}>
       <DashboardLayout title="Admin Dashboard" navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab}>
         {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'monitor' && <SiteMonitorTable sites={sites} onFileUpdated={fetchData} />}
         {activeTab === 'approvals' && renderApprovals()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'procurement' && renderProcurement()}
