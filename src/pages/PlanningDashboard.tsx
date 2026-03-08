@@ -64,7 +64,7 @@ export default function PlanningDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  
   const [viewSite, setViewSite] = useState<SiteRow | null>(null);
   const { user, profile } = useAuth();
   const { toast } = useToast();
