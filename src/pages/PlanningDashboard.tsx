@@ -413,6 +413,10 @@ export default function PlanningDashboard() {
             <Label htmlFor="last_inspection_date">Last Inspection Date</Label>
             <Input id="last_inspection_date" name="last_inspection_date" type="date" defaultValue={editSite?.last_inspection_date || ''} />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="approval_date">Approval Date</Label>
+            <Input id="approval_date" name="approval_date" type="date" defaultValue={editSite?.approval_date || ''} />
+          </div>
         </CardContent>
       </Card>
 
