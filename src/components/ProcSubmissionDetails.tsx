@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, extractStoragePath } from '@/lib/storageUtils';
-import { Check, X, FileDown, Trash2, Upload, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Check, X, Trash2, Upload, ExternalLink, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 const procSections = [
@@ -44,13 +44,32 @@ function FileLink({ url, label, submissionId, fieldName, allowManage, onUpdated 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loadingUrl, setLoadingUrl] = useState(false);
+  const [urlError, setUrlError] = useState(false);
 
   const bucket = 'procurement-documents';
 
+  const loadSignedUrl = async () => {
+    const storagePath = extractStoragePath(url, bucket);
+    if (!storagePath) return;
+    
+    setLoadingUrl(true);
+    setUrlError(false);
+    try {
+      const signed = await getSignedUrl(bucket, url);
+      setSignedUrl(signed);
+      if (!signed) setUrlError(true);
+    } catch {
+      setUrlError(true);
+    } finally {
+      setLoadingUrl(false);
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
-    getSignedUrl(bucket, url).then(u => { if (!cancelled) setSignedUrl(u); });
-    return () => { cancelled = true; };
+    setSignedUrl(null);
+    setUrlError(false);
+    loadSignedUrl();
   }, [url]);
 
   const handleDelete = async () => {
@@ -85,8 +104,21 @@ function FileLink({ url, label, submissionId, fieldName, allowManage, onUpdated 
         <a href={signedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium">
           <ExternalLink className="h-3 w-3" /> {label}
         </a>
+      ) : hasFile && loadingUrl ? (
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" /> Loading file...
+        </span>
+      ) : hasFile && urlError ? (
+        <span className="inline-flex items-center gap-1 text-xs text-destructive">
+          <AlertTriangle className="h-3 w-3" /> Failed to load file
+          <button onClick={loadSignedUrl} className="text-primary hover:underline ml-1 inline-flex items-center gap-0.5">
+            <RefreshCw className="h-3 w-3" /> Retry
+          </button>
+        </span>
       ) : hasFile ? (
-        <span className="text-xs text-muted-foreground">Loading file...</span>
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" /> Loading file...
+        </span>
       ) : (
         <span className="inline-flex items-center gap-1 text-xs text-amber-600">
           <AlertTriangle className="h-3 w-3" /> No file attached
