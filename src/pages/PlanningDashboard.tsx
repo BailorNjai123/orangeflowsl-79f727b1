@@ -330,6 +330,38 @@ export default function PlanningDashboard() {
             <Label htmlFor="earthing_resistance">Earthing Resistance (Ohm)</Label>
             <Input id="earthing_resistance" name="earthing_resistance" type="number" placeholder="e.g. 5" defaultValue={editSite?.earthing_resistance || ''} />
           </div>
+          <div className="space-y-2">
+            <Label>Antenna Type</Label>
+            <Select name="antenna_type" defaultValue={editSite?.antenna_type || ''}>
+              <SelectTrigger><SelectValue placeholder="Select antenna type" /></SelectTrigger>
+              <SelectContent>{antennaTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="number_of_antennas">Number of Antennas</Label>
+            <Input id="number_of_antennas" name="number_of_antennas" type="number" placeholder="e.g. 3" defaultValue={editSite?.number_of_antennas || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label>Power Source</Label>
+            <Select name="power_source" defaultValue={editSite?.power_source || ''}>
+              <SelectTrigger><SelectValue placeholder="Select power source" /></SelectTrigger>
+              <SelectContent>{powerSources.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Backup Power</Label>
+            <Select name="backup_power" defaultValue={editSite?.backup_power || ''}>
+              <SelectTrigger><SelectValue placeholder="Select backup power" /></SelectTrigger>
+              <SelectContent>{backupPowerOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Equipment Shelter</Label>
+            <Select name="equipment_shelter" defaultValue={editSite?.equipment_shelter || ''}>
+              <SelectTrigger><SelectValue placeholder="Select shelter type" /></SelectTrigger>
+              <SelectContent>{equipmentShelterTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
