@@ -224,13 +224,25 @@ export default function PlanningDashboard() {
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> 📍 Basic Information</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2 space-y-2">
-            <Label htmlFor="site_name">Site ID *</Label>
-            <Input id="site_name" name="site_name" required placeholder="e.g. SITE003" defaultValue={editSite?.site_name || ''} />
+          <div className="space-y-2">
+            <Label htmlFor="site_id_code">Site ID Code *</Label>
+            <Input id="site_id_code" name="site_id_code" required placeholder="e.g. SITE003" defaultValue={editSite?.site_id_code || ''} />
           </div>
-          <div className="sm:col-span-2 space-y-2">
-            <Label htmlFor="region">Location *</Label>
-            <Input id="region" name="region" required placeholder="e.g. Lumley, Freetown" defaultValue={editSite?.region || ''} />
+          <div className="space-y-2">
+            <Label htmlFor="site_name">Site Name *</Label>
+            <Input id="site_name" name="site_name" required placeholder="e.g. Lumley Tower" defaultValue={editSite?.site_name || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="region">Region *</Label>
+            <Input id="region" name="region" required placeholder="e.g. Western Area" defaultValue={editSite?.region || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="district">District *</Label>
+            <Input id="district" name="district" required placeholder="e.g. Freetown" defaultValue={editSite?.district || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="town">Town *</Label>
+            <Input id="town" name="town" required placeholder="e.g. Lumley" defaultValue={editSite?.town || ''} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="dimensions">Dimensions (m)</Label>
