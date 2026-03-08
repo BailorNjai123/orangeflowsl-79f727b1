@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Planning can delete own sites" ON public.sites;

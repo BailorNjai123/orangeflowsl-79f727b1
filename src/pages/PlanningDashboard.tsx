@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Plus, FileText, Radio, MapPin, Building2, Loader2, Settings2, Paperclip, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Plus, FileText, Radio, MapPin, Building2, Loader2, Settings2, Paperclip } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
@@ -64,7 +64,7 @@ export default function PlanningDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  
   const [viewSite, setViewSite] = useState<SiteRow | null>(null);
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -190,28 +190,6 @@ export default function PlanningDashboard() {
     setActiveTab('submit');
   };
 
-  const handleDeleteSite = async (site: SiteRow) => {
-    if (!confirm(`Delete site "${site.site_name}"? This cannot be undone.`)) return;
-    setDeletingId(site.id);
-    // Clean up associated storage files
-    const filePaths = [site.site_photo_url, site.layout_plan_url, site.approval_letter_url].filter(Boolean).filter((p: string) => !p.startsWith('http'));
-    if (filePaths.length > 0) {
-      await supabase.storage.from('site-documents').remove(filePaths);
-    }
-    // Delete site (cascades to related procurement data)
-    const { error } = await supabase.from('sites').delete().eq('id', site.id);
-    if (error) {
-      toast({ variant: 'destructive', title: 'Delete failed', description: error.message });
-    } else {
-      await supabase.from('activity_log').insert({
-        action: 'site_deleted', description: `Site "${site.site_name}" was deleted by submitter`,
-        user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: site.id,
-      });
-      toast({ title: 'Site deleted successfully' });
-      fetchSites();
-    }
-    setDeletingId(null);
-  };
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -565,11 +543,6 @@ export default function PlanningDashboard() {
                     <Button size="sm" variant="outline" onClick={() => setViewSite(site)}>View</Button>
                     {(site.status === 'pending' || site.status === 'rejected') && (
                       <Button size="sm" variant="outline" onClick={() => startEdit(site)}>Edit</Button>
-                    )}
-                    {(site.status === 'pending' || site.status === 'rejected') && (
-                      <Button size="sm" variant="destructive" disabled={deletingId === site.id} onClick={() => handleDeleteSite(site)}>
-                        <Trash2 className="h-3 w-3 mr-1" /> {deletingId === site.id ? 'Deleting...' : 'Delete'}
-                      </Button>
                     )}
                   </div>
                 </div>
