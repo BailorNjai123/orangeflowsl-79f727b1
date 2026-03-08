@@ -134,6 +134,8 @@ export default function PlanningDashboard() {
       earthing_resistance: getNum('earthing_resistance'),
       antenna_type: get('antenna_type') || null,
       number_of_antennas: getNum('number_of_antennas'),
+      site_configuration: get('site_configuration') || null,
+      power_requirement: get('power_requirement') || null,
       power_source: get('power_source') || null,
       backup_power: get('backup_power') || null,
       equipment_shelter: get('equipment_shelter') || null,
