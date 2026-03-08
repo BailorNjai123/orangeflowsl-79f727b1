@@ -140,26 +140,28 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
-      {/* Technical Details */}
-      <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-          <Radio className="h-3.5 w-3.5" /> Technical Details
-        </h4>
-        <div className="rounded-lg border bg-card p-3">
-          <AlwaysShowRow label="Tower Type" value={site.tower_type} />
-          <AlwaysShowRow label="Tower Material" value={site.tower_material} />
-          <DetailRow label="Transmission Type" value={site.transmission_type} />
-          <DetailRow label="Power Backup Type" value={site.power_backup_type} />
-          <DetailRow label="Battery Bank Type" value={site.battery_bank_type} />
-          <DetailRow label="No. of Battery Banks" value={site.number_of_battery_banks} />
-          <DetailRow label="Earthing Resistance" value={site.earthing_resistance ? `${site.earthing_resistance}Ω` : null} />
-          <DetailRow label="Antenna Type" value={site.antenna_type} />
-          <DetailRow label="No. of Antennas" value={site.number_of_antennas} />
-          <DetailRow label="Power Source" value={site.power_source} />
-          <DetailRow label="Backup Power" value={site.backup_power} />
-          <DetailRow label="Equipment Shelter" value={site.equipment_shelter} />
-        </div>
-      </div>
+       {/* Technical Details */}
+       <div>
+         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+           <Radio className="h-3.5 w-3.5" /> Technical Details
+         </h4>
+         <div className="rounded-lg border bg-card p-3">
+           <AlwaysShowRow label="Tower Type" value={site.tower_type} />
+           <AlwaysShowRow label="Tower Material" value={site.tower_material} />
+           <DetailRow label="Transmission Type" value={site.transmission_type} />
+           <DetailRow label="Site Configuration" value={site.site_configuration} />
+           <DetailRow label="Power Requirement" value={site.power_requirement ? `${site.power_requirement} kW` : null} />
+           <DetailRow label="Power Source" value={site.power_source} />
+           <DetailRow label="Power Backup Type" value={site.power_backup_type} />
+           <DetailRow label="Battery Bank Type" value={site.battery_bank_type} />
+           <DetailRow label="No. of Battery Banks" value={site.number_of_battery_banks} />
+           <DetailRow label="Earthing Resistance" value={site.earthing_resistance ? `${site.earthing_resistance}Ω` : null} />
+           <DetailRow label="Antenna Type" value={site.antenna_type} />
+           <DetailRow label="No. of Antennas" value={site.number_of_antennas} />
+           <DetailRow label="Backup Power" value={site.backup_power} />
+           <DetailRow label="Equipment Shelter" value={site.equipment_shelter} />
+         </div>
+       </div>
 
       {/* Project & Vendor Details */}
       <div>

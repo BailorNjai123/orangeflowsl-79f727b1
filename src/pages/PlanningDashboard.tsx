@@ -32,9 +32,16 @@ const siteTypes = ['Greenfield', 'Rooftop', 'Indoor', 'COW'];
 const terrainTypes = ['Flat', 'Hilly', 'Swampy', 'Coastal'];
 const accessRoadConditions = ['Good', 'Fair', 'Poor', 'No Road'];
 const antennaTypes = ['Omni', 'Sector', 'Directional'];
-const powerSources = ['Grid', 'Solar', 'Generator', 'Hybrid'];
+const powerSources = [
+  'Solar – Gen – EDSA/Grid and Batteries',
+  'Solar, Gen and Batteries',
+  'Gen and Batteries',
+  'Solar Only',
+  'Gen, EDSA/Grid and Batteries'
+];
 const backupPowerOptions = ['Generator', 'Battery', 'Solar', 'None'];
 const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
+const siteConfigurations = ['Standalone', 'Co-located', 'Rooftop', 'Underground', 'Hybrid'];
 
 type SiteRow = {
   id: string;
@@ -127,6 +134,8 @@ export default function PlanningDashboard() {
       earthing_resistance: getNum('earthing_resistance'),
       antenna_type: get('antenna_type') || null,
       number_of_antennas: getNum('number_of_antennas'),
+      site_configuration: get('site_configuration') || null,
+      power_requirement: get('power_requirement') || null,
       power_source: get('power_source') || null,
       backup_power: get('backup_power') || null,
       equipment_shelter: get('equipment_shelter') || null,
@@ -351,6 +360,17 @@ export default function PlanningDashboard() {
           <div className="space-y-2">
             <Label htmlFor="number_of_antennas">Number of Antennas</Label>
             <Input id="number_of_antennas" name="number_of_antennas" type="number" placeholder="e.g. 3" defaultValue={editSite?.number_of_antennas || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label>Site Configuration</Label>
+            <Select name="site_configuration" defaultValue={editSite?.site_configuration || ''}>
+              <SelectTrigger><SelectValue placeholder="Select configuration" /></SelectTrigger>
+              <SelectContent>{siteConfigurations.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="power_requirement">Power Requirement (kW)</Label>
+            <Input id="power_requirement" name="power_requirement" placeholder="e.g. 5 or 5.5" defaultValue={editSite?.power_requirement || ''} />
           </div>
           <div className="space-y-2">
             <Label>Power Source</Label>
