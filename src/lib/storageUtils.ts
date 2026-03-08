@@ -35,6 +35,15 @@ export async function getSignedUrl(bucket: string, path: string | null | undefin
   const storagePath = extractStoragePath(path, bucket);
   if (!storagePath) return null;
   
-  const { data } = await supabase.storage.from(bucket).createSignedUrl(storagePath, 3600);
-  return data?.signedUrl ?? null;
+  try {
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(storagePath, 3600);
+    if (error) {
+      console.error('[Storage] Failed to create signed URL:', error.message, 'path:', storagePath);
+      return null;
+    }
+    return data?.signedUrl ?? null;
+  } catch (err) {
+    console.error('[Storage] Error creating signed URL:', err);
+    return null;
+  }
 }
