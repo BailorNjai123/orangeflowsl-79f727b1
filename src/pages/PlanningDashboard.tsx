@@ -28,6 +28,13 @@ const transmissionTypes = ['Microwave', 'Fiber', 'Satellite'];
 const powerBackupTypes = ['Solar', 'Generator', 'Hybrid'];
 const batteryBankTypes = ['Lithium', 'Lead-acid'];
 const currentPhases = ['Planning', 'Foundation', 'Tower Erection', 'Integration'];
+const siteTypes = ['Greenfield', 'Rooftop', 'Indoor', 'COW'];
+const terrainTypes = ['Flat', 'Hilly', 'Swampy', 'Coastal'];
+const accessRoadConditions = ['Good', 'Fair', 'Poor', 'No Road'];
+const antennaTypes = ['Omni', 'Sector', 'Directional'];
+const powerSources = ['Grid', 'Solar', 'Generator', 'Hybrid'];
+const backupPowerOptions = ['Generator', 'Battery', 'Solar', 'None'];
+const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
 
 type SiteRow = {
   id: string;
