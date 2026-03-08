@@ -42,6 +42,8 @@ const powerSources = [
 const backupPowerOptions = ['Generator', 'Battery', 'Solar', 'None'];
 const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
 const siteConfigurations = ['Standalone', 'Co-located', 'Rooftop', 'Underground', 'Hybrid'];
+const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
+const scopeOptions = ['New Site', 'Upgrade', 'Swap', 'Expansion'];
 
 type SiteRow = {
   id: string;
