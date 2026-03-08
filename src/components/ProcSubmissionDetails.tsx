@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getSignedUrl, extractStoragePath } from '@/lib/storageUtils';
-import { Check, X, Trash2, Upload, ExternalLink, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { Check, X, Trash2, Upload, ExternalLink, AlertTriangle, Loader2, RefreshCw, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const procSections = [
   {
@@ -37,6 +37,22 @@ const procSections = [
   },
 ];
 
+const BUCKET = 'procurement-documents';
+
+function getStoragePath(value: string | null | undefined): string | null {
+  if (!value || value.trim() === '') return null;
+  // If it looks like a URL, try to extract path
+  if (value.includes('supabase.co/storage/')) {
+    try {
+      const url = new URL(value);
+      const pathParts = url.pathname.split(`/${BUCKET}/`);
+      if (pathParts.length > 1) return decodeURIComponent(pathParts[1]);
+    } catch { /* ignore */ }
+    return null;
+  }
+  return value;
+}
+
 function FileLink({ url, label, submissionId, fieldName, allowManage, onUpdated }: {
   url: string | null | undefined; label: string;
   submissionId?: string; fieldName?: string; allowManage?: boolean; onUpdated?: () => void;
@@ -44,39 +60,63 @@ function FileLink({ url, label, submissionId, fieldName, allowManage, onUpdated 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [loadingUrl, setLoadingUrl] = useState(false);
-  const [urlError, setUrlError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
-  const bucket = 'procurement-documents';
+  const storagePath = getStoragePath(url);
+  const hasFile = storagePath !== null;
 
-  const loadSignedUrl = async () => {
-    const storagePath = extractStoragePath(url, bucket);
+  const loadSignedUrl = useCallback(async () => {
     if (!storagePath) return;
-    
-    setLoadingUrl(true);
-    setUrlError(false);
+    setLoading(true);
+    setError(false);
     try {
-      const signed = await getSignedUrl(bucket, url);
-      setSignedUrl(signed);
-      if (!signed) setUrlError(true);
-    } catch {
-      setUrlError(true);
+      const { data, error: err } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, 3600);
+      if (err || !data?.signedUrl) {
+        console.error('[Storage] Signed URL error:', err?.message, 'path:', storagePath);
+        setError(true);
+      } else {
+        setSignedUrl(data.signedUrl);
+      }
+    } catch (e) {
+      console.error('[Storage] Exception:', e);
+      setError(true);
     } finally {
-      setLoadingUrl(false);
+      setLoading(false);
     }
-  };
+  }, [storagePath]);
 
   useEffect(() => {
     setSignedUrl(null);
-    setUrlError(false);
-    loadSignedUrl();
-  }, [url]);
+    setError(false);
+    if (hasFile) loadSignedUrl();
+  }, [url, hasFile, loadSignedUrl]);
+
+  const handleDownload = async () => {
+    if (!storagePath) return;
+    try {
+      const { data, error: err } = await supabase.storage.from(BUCKET).download(storagePath);
+      if (err || !data) {
+        console.error('[Storage] Download error:', err?.message);
+        return;
+      }
+      const blobUrl = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = storagePath.split('/').pop() || 'document';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.error('[Storage] Download exception:', e);
+    }
+  };
 
   const handleDelete = async () => {
-    if (!url || !submissionId || !fieldName) return;
+    if (!storagePath || !submissionId || !fieldName) return;
     setDeleting(true);
-    const storagePath = extractStoragePath(url, bucket);
-    if (storagePath) await supabase.storage.from(bucket).remove([storagePath]);
+    await supabase.storage.from(BUCKET).remove([storagePath]);
     await supabase.from('procurement_submissions').update({ [fieldName]: null }).eq('id', submissionId);
     setDeleting(false);
     onUpdated?.();
@@ -85,30 +125,33 @@ function FileLink({ url, label, submissionId, fieldName, allowManage, onUpdated 
   const handleReplace = async (file: File) => {
     if (!submissionId || !fieldName) return;
     setUploading(true);
-    const storagePath = extractStoragePath(url, bucket);
-    if (storagePath) await supabase.storage.from(bucket).remove([storagePath]);
+    if (storagePath) await supabase.storage.from(BUCKET).remove([storagePath]);
     const ext = file.name.split('.').pop();
     const newPath = `${submissionId}/${Date.now()}_${fieldName.replace('_file_url', '')}.${ext}`;
-    const { error } = await supabase.storage.from(bucket).upload(newPath, file, { upsert: true });
-    if (!error) await supabase.from('procurement_submissions').update({ [fieldName]: newPath }).eq('id', submissionId);
+    const { error: uploadErr } = await supabase.storage.from(BUCKET).upload(newPath, file, { upsert: true });
+    if (!uploadErr) await supabase.from('procurement_submissions').update({ [fieldName]: newPath }).eq('id', submissionId);
     setUploading(false);
     onUpdated?.();
   };
 
-  const hasFile = extractStoragePath(url, bucket) !== null;
   if (!hasFile && !allowManage) return null;
 
   return (
-    <div className="flex items-center gap-2 mt-1 ml-6">
+    <div className="flex items-center gap-2 mt-1 ml-6 flex-wrap">
       {hasFile && signedUrl ? (
-        <a href={signedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium">
-          <ExternalLink className="h-3 w-3" /> {label}
-        </a>
-      ) : hasFile && loadingUrl ? (
+        <div className="flex items-center gap-2">
+          <a href={signedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium">
+            <ExternalLink className="h-3 w-3" /> {label}
+          </a>
+          <button onClick={handleDownload} className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:underline" title="Download file">
+            <Download className="h-3 w-3" /> Download
+          </button>
+        </div>
+      ) : hasFile && loading ? (
         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" /> Loading file...
         </span>
-      ) : hasFile && urlError ? (
+      ) : hasFile && error ? (
         <span className="inline-flex items-center gap-1 text-xs text-destructive">
           <AlertTriangle className="h-3 w-3" /> Failed to load file
           <button onClick={loadSignedUrl} className="text-primary hover:underline ml-1 inline-flex items-center gap-0.5">
@@ -153,7 +196,6 @@ interface ProcSubmissionDetailsProps {
 }
 
 export default function ProcSubmissionDetails({ submission, allowFileManage, onFileUpdated }: ProcSubmissionDetailsProps) {
-  // Count completed items
   const totalItems = procSections.reduce((acc, s) => acc + s.items.length, 0);
   const completedItems = procSections.reduce((acc, s) => acc + s.items.filter(i => submission[i.key]).length, 0);
   const progress = Math.round((completedItems / totalItems) * 100);
@@ -191,6 +233,7 @@ export default function ProcSubmissionDetails({ submission, allowFileManage, onF
             {section.items.map((item) => {
               const value = submission[item.key];
               const fileUrl = submission[`${item.key}_file_url`];
+              const hasFileUrl = getStoragePath(fileUrl) !== null;
               return (
                 <div key={item.key} className="px-3 py-2">
                   <div className="flex items-center justify-between">
@@ -202,7 +245,8 @@ export default function ProcSubmissionDetails({ submission, allowFileManage, onF
                       {value ? 'Yes' : 'No'}
                     </span>
                   </div>
-                  {(value || allowFileManage) && (
+                  {/* Show file link when: item is checked and has file, OR allowFileManage is true, OR item has a file regardless of check */}
+                  {(value || allowFileManage || hasFileUrl) && (
                     <FileLink url={fileUrl} label={item.fileLabel}
                       submissionId={submission.id} fieldName={`${item.key}_file_url`}
                       allowManage={allowFileManage} onUpdated={onFileUpdated} />
