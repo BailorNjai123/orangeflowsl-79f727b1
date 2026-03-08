@@ -374,6 +374,27 @@ export default function PlanningDashboard() {
             <Input id="vendor_name" name="vendor_name" required placeholder="e.g. Huawei, ZTE" defaultValue={editSite?.vendor_name || ''} />
           </div>
           <div className="space-y-2">
+            <Label>Site Type</Label>
+            <Select name="site_type" defaultValue={editSite?.site_type || ''}>
+              <SelectTrigger><SelectValue placeholder="Select site type" /></SelectTrigger>
+              <SelectContent>{siteTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Terrain Type</Label>
+            <Select name="terrain_type" defaultValue={editSite?.terrain_type || ''}>
+              <SelectTrigger><SelectValue placeholder="Select terrain type" /></SelectTrigger>
+              <SelectContent>{terrainTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Access Road Condition</Label>
+            <Select name="access_road_condition" defaultValue={editSite?.access_road_condition || ''}>
+              <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
+              <SelectContent>{accessRoadConditions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label>Current Phase *</Label>
             <Select name="current_phase" defaultValue={editSite?.current_phase || ''} required>
               <SelectTrigger><SelectValue placeholder="Select phase" /></SelectTrigger>
