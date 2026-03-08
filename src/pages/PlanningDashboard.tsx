@@ -362,6 +362,17 @@ export default function PlanningDashboard() {
             <Input id="number_of_antennas" name="number_of_antennas" type="number" placeholder="e.g. 3" defaultValue={editSite?.number_of_antennas || ''} />
           </div>
           <div className="space-y-2">
+            <Label>Site Configuration</Label>
+            <Select name="site_configuration" defaultValue={editSite?.site_configuration || ''}>
+              <SelectTrigger><SelectValue placeholder="Select configuration" /></SelectTrigger>
+              <SelectContent>{siteConfigurations.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="power_requirement">Power Requirement (kW)</Label>
+            <Input id="power_requirement" name="power_requirement" placeholder="e.g. 5 or 5.5" defaultValue={editSite?.power_requirement || ''} />
+          </div>
+          <div className="space-y-2">
             <Label>Power Source</Label>
             <Select name="power_source" defaultValue={editSite?.power_source || ''}>
               <SelectTrigger><SelectValue placeholder="Select power source" /></SelectTrigger>
