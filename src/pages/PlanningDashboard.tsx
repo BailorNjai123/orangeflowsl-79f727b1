@@ -32,9 +32,16 @@ const siteTypes = ['Greenfield', 'Rooftop', 'Indoor', 'COW'];
 const terrainTypes = ['Flat', 'Hilly', 'Swampy', 'Coastal'];
 const accessRoadConditions = ['Good', 'Fair', 'Poor', 'No Road'];
 const antennaTypes = ['Omni', 'Sector', 'Directional'];
-const powerSources = ['Grid', 'Solar', 'Generator', 'Hybrid'];
+const powerSources = [
+  'Solar – Gen – EDSA/Grid and Batteries',
+  'Solar, Gen and Batteries',
+  'Gen and Batteries',
+  'Solar Only',
+  'Gen, EDSA/Grid and Batteries'
+];
 const backupPowerOptions = ['Generator', 'Battery', 'Solar', 'None'];
 const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
+const siteConfigurations = ['Standalone', 'Co-located', 'Rooftop', 'Underground', 'Hybrid'];
 
 type SiteRow = {
   id: string;
