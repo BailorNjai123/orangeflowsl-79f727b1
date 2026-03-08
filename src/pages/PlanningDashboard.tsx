@@ -566,11 +566,6 @@ export default function PlanningDashboard() {
                     {(site.status === 'pending' || site.status === 'rejected') && (
                       <Button size="sm" variant="outline" onClick={() => startEdit(site)}>Edit</Button>
                     )}
-                    {(site.status === 'pending' || site.status === 'rejected') && (
-                      <Button size="sm" variant="destructive" disabled={deletingId === site.id} onClick={() => handleDeleteSite(site)}>
-                        <Trash2 className="h-3 w-3 mr-1" /> {deletingId === site.id ? 'Deleting...' : 'Delete'}
-                      </Button>
-                    )}
                   </div>
                 </div>
               </CardContent>
