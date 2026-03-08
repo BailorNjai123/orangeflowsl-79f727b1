@@ -309,6 +309,8 @@ export type Database = {
           approval_letter_url: string | null
           backup_power: string | null
           battery_bank_type: string | null
+          cast_status: string | null
+          civil_rfi: string | null
           contractor_name: string | null
           created_at: string
           current_phase: string | null
@@ -321,6 +323,7 @@ export type Database = {
           estimated_cost: number | null
           final_approval_by: string | null
           foundation_depth: number | null
+          handover_to_vendor: string | null
           id: string
           last_inspection_date: string | null
           latitude: number | null
@@ -329,27 +332,33 @@ export type Database = {
           notes: string | null
           number_of_antennas: number | null
           number_of_battery_banks: number | null
+          on_air: string | null
           planned_start_date: string | null
           planning_approval_status: string | null
           power_backup_type: string | null
           power_requirement: string | null
+          power_rfi: string | null
           power_source: string | null
           project_name: string | null
           project_review_status: string | null
           region: string
           review_notes: string | null
           reviewed_by: string | null
+          scope: string | null
           site_configuration: string | null
           site_id_code: string
+          site_implementation_design: string | null
           site_name: string
           site_photo_url: string | null
           site_type: string | null
+          soil_test: string | null
           status: Database["public"]["Enums"]["site_status"]
           submitted_by: string | null
           target_completion_date: string | null
           terrain_type: string | null
           tower_height: number | null
           tower_material: string | null
+          tower_rig: string | null
           tower_type: string | null
           town: string
           transmission_type: string | null
@@ -364,6 +373,8 @@ export type Database = {
           approval_letter_url?: string | null
           backup_power?: string | null
           battery_bank_type?: string | null
+          cast_status?: string | null
+          civil_rfi?: string | null
           contractor_name?: string | null
           created_at?: string
           current_phase?: string | null
@@ -376,6 +387,7 @@ export type Database = {
           estimated_cost?: number | null
           final_approval_by?: string | null
           foundation_depth?: number | null
+          handover_to_vendor?: string | null
           id?: string
           last_inspection_date?: string | null
           latitude?: number | null
@@ -384,27 +396,33 @@ export type Database = {
           notes?: string | null
           number_of_antennas?: number | null
           number_of_battery_banks?: number | null
+          on_air?: string | null
           planned_start_date?: string | null
           planning_approval_status?: string | null
           power_backup_type?: string | null
           power_requirement?: string | null
+          power_rfi?: string | null
           power_source?: string | null
           project_name?: string | null
           project_review_status?: string | null
           region?: string
           review_notes?: string | null
           reviewed_by?: string | null
+          scope?: string | null
           site_configuration?: string | null
           site_id_code?: string
+          site_implementation_design?: string | null
           site_name: string
           site_photo_url?: string | null
           site_type?: string | null
+          soil_test?: string | null
           status?: Database["public"]["Enums"]["site_status"]
           submitted_by?: string | null
           target_completion_date?: string | null
           terrain_type?: string | null
           tower_height?: number | null
           tower_material?: string | null
+          tower_rig?: string | null
           tower_type?: string | null
           town?: string
           transmission_type?: string | null
@@ -419,6 +437,8 @@ export type Database = {
           approval_letter_url?: string | null
           backup_power?: string | null
           battery_bank_type?: string | null
+          cast_status?: string | null
+          civil_rfi?: string | null
           contractor_name?: string | null
           created_at?: string
           current_phase?: string | null
@@ -431,6 +451,7 @@ export type Database = {
           estimated_cost?: number | null
           final_approval_by?: string | null
           foundation_depth?: number | null
+          handover_to_vendor?: string | null
           id?: string
           last_inspection_date?: string | null
           latitude?: number | null
@@ -439,27 +460,33 @@ export type Database = {
           notes?: string | null
           number_of_antennas?: number | null
           number_of_battery_banks?: number | null
+          on_air?: string | null
           planned_start_date?: string | null
           planning_approval_status?: string | null
           power_backup_type?: string | null
           power_requirement?: string | null
+          power_rfi?: string | null
           power_source?: string | null
           project_name?: string | null
           project_review_status?: string | null
           region?: string
           review_notes?: string | null
           reviewed_by?: string | null
+          scope?: string | null
           site_configuration?: string | null
           site_id_code?: string
+          site_implementation_design?: string | null
           site_name?: string
           site_photo_url?: string | null
           site_type?: string | null
+          soil_test?: string | null
           status?: Database["public"]["Enums"]["site_status"]
           submitted_by?: string | null
           target_completion_date?: string | null
           terrain_type?: string | null
           tower_height?: number | null
           tower_material?: string | null
+          tower_rig?: string | null
           tower_type?: string | null
           town?: string
           transmission_type?: string | null
