@@ -317,6 +317,11 @@ export default function ProcurementDashboard() {
                         <Label className="text-xs flex items-center gap-1"><Paperclip className="h-3 w-3" /> {item.fileLabel}</Label>
                         <Input type="file" accept=".pdf,.jpg,.png" className="text-xs" onChange={(e) => {
                           const file = e.target.files?.[0] || null;
+                          if (file && file.size > 50 * 1024 * 1024) {
+                            toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 50MB.' });
+                            e.target.value = '';
+                            return;
+                          }
                           setFormFiles(prev => ({ ...prev, [item.key]: file }));
                         }} />
                       </div>
