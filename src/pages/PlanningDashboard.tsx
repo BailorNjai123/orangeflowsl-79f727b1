@@ -412,8 +412,19 @@ export default function PlanningDashboard() {
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" /> 🏗️ Project & Vendor Details</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
           <div className="space-y-2">
+            <Label>Scope</Label>
+            <Select name="scope" defaultValue={editSite?.scope || ''}>
+              <SelectTrigger><SelectValue placeholder="Select scope" /></SelectTrigger>
+              <SelectContent>{scopeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="vendor_name">Vendor Assigned *</Label>
             <Input id="vendor_name" name="vendor_name" required placeholder="e.g. Huawei, ZTE" defaultValue={editSite?.vendor_name || ''} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="handover_to_vendor">Handover to Vendor</Label>
+            <Input id="handover_to_vendor" name="handover_to_vendor" type="date" defaultValue={editSite?.handover_to_vendor || ''} />
           </div>
           <div className="space-y-2">
             <Label>Site Type</Label>
