@@ -495,11 +495,35 @@ export default function PlanningDashboard() {
         </CardContent>
       </Card>
 
+      {/* Deployment Progress */}
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2">🚀 Deployment Progress</CardTitle></CardHeader>
+        <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+          {[
+            { name: 'soil_test', label: 'Soil Test' },
+            { name: 'site_implementation_design', label: 'Site Implementation Design' },
+            { name: 'cast_status', label: 'Cast' },
+            { name: 'tower_rig', label: 'Tower Rig' },
+            { name: 'civil_rfi', label: 'Civil RFI' },
+            { name: 'power_rfi', label: 'Power RFI' },
+            { name: 'on_air', label: 'On Air' },
+          ].map(field => (
+            <div key={field.name} className="space-y-2">
+              <Label>{field.label}</Label>
+              <Select name={field.name} defaultValue={editSite?.[field.name] || 'Not Started'}>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>{deploymentStatuses.map(s => <SelectItem key={s} value={s}>{s === 'Not Started' ? '🔴' : s === 'In Progress' ? '🟡' : '🟢'} {s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       {/* Notes */}
       <Card>
         <CardContent className="pt-6">
-          <Label htmlFor="notes">📝 Notes / Observations</Label>
-          <Textarea id="notes" name="notes" className="mt-2" rows={4} defaultValue={editSite?.notes || ''} placeholder="Enter any important notes..." />
+          <Label htmlFor="notes">📝 Comments</Label>
+          <Textarea id="notes" name="notes" className="mt-2" rows={4} defaultValue={editSite?.notes || ''} placeholder="Enter any comments..." />
         </CardContent>
       </Card>
 
