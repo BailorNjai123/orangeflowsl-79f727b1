@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
+import SiteMonitorTable from '@/components/SiteMonitorTable';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
