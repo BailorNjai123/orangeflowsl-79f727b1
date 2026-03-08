@@ -332,12 +332,14 @@ export type Database = {
           planned_start_date: string | null
           planning_approval_status: string | null
           power_backup_type: string | null
+          power_requirement: string | null
           power_source: string | null
           project_name: string | null
           project_review_status: string | null
           region: string
           review_notes: string | null
           reviewed_by: string | null
+          site_configuration: string | null
           site_id_code: string
           site_name: string
           site_photo_url: string | null
@@ -385,12 +387,14 @@ export type Database = {
           planned_start_date?: string | null
           planning_approval_status?: string | null
           power_backup_type?: string | null
+          power_requirement?: string | null
           power_source?: string | null
           project_name?: string | null
           project_review_status?: string | null
           region?: string
           review_notes?: string | null
           reviewed_by?: string | null
+          site_configuration?: string | null
           site_id_code?: string
           site_name: string
           site_photo_url?: string | null
@@ -438,12 +442,14 @@ export type Database = {
           planned_start_date?: string | null
           planning_approval_status?: string | null
           power_backup_type?: string | null
+          power_requirement?: string | null
           power_source?: string | null
           project_name?: string | null
           project_review_status?: string | null
           region?: string
           review_notes?: string | null
           reviewed_by?: string | null
+          site_configuration?: string | null
           site_id_code?: string
           site_name?: string
           site_photo_url?: string | null
