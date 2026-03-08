@@ -1,38 +1,43 @@
 
 
-# Fix: Planning Form to Admin View Field Mapping
+# Fix: User Creation Failing Silently (Role Not Being Assigned)
 
 ## Problem
+When the admin creates a new user, the system reports success but the user's **role is never saved**. This is confirmed by the database showing user "pro@orangeflow.sl" with NO role assigned. Without a role, the login flow breaks because the app can't determine where to redirect the user.
 
-There are field mapping mismatches between the Planning form and what the Admin sees:
-
-1. **"Site ID" label in form maps to `site_name` column** -- but `SiteDetailsView` shows `site_id_code` as "Site ID" and `site_name` as "Site Name". So the admin sees an empty "Site ID" field and the entered value under "Site Name".
-2. **`site_id_code` is never set** -- it's a required column (defaults to empty string) but the form never populates it. The admin's site list also displays `site.site_id_code` which shows blank.
-3. **`district` and `town` have no form inputs** -- the form only has a single "Location" field mapped to `region`. District and town always show "-" in admin view.
-4. **`SiteDetailsView` shows many extra fields** (latitude, longitude, antenna_type, contractor_name, etc.) that the Planning form doesn't collect -- these show "-" which is fine, but clutters the admin view with irrelevant empty rows.
+## Root Cause
+The edge function uses `upsert` with `onConflict: 'user_id'` for the `user_roles` table, but the table's unique constraint is on `(user_id, role)` -- not just `user_id`. PostgreSQL rejects this silently, and the edge function does not check for the error. It returns `{ success: true }` even though the role was never saved.
 
 ## Fix
 
-### 1. Update Planning Form (`PlanningDashboard.tsx`)
-- Rename "Site ID" field to properly save to `site_id_code`
-- Add a separate "Site Name" field that saves to `site_name`
-- Split "Location" into three fields: Region, District, Town (matching the DB columns and admin display)
-- Update the `handleSubmit` data mapping accordingly
+### 1. Edge Function (`supabase/functions/manage-users/index.ts`)
 
-### 2. Update `SiteDetailsView` Display
-- Add a "Submitted" date row showing `created_at` so the admin can see when it was submitted
-- Add a "Submitted By" display (the form stores `submitted_by` but it's not shown)
-- Only show fields that have values OR are part of the core submission, to reduce clutter from unused fields like latitude/longitude/antenna_type that the Planning form doesn't collect
+**Role assignment fix (create_user action):**
+- Replace the broken `upsert` with a safer pattern: DELETE existing roles for the user, then INSERT the new role
+- Add proper error checking on BOTH the profile upsert AND the role insert -- if either fails, throw an error so the admin sees it
+- Add console logging for every step so failures are visible in logs
 
-### 3. Update Admin Site List Card
-- Show `site_id_code` AND `site_name` in the approval cards so both are visible at a glance
-- Show submission date on the card
+**Same fix for update_user action:**
+- The update_user action already uses delete-then-insert, which is correct -- no change needed there
+
+### 2. Fix the Orphaned User
+- The user "pro@orangeflow.sl" exists with no role. The edge function fix will prevent this from happening again
+- The admin can use the Edit User feature to assign a role to this user, or delete and recreate them
+
+### 3. Improved Error Handling
+- Wrap all database operations in proper error checks
+- Return detailed error messages so the admin sees exactly what went wrong
+- If profile or role creation fails after auth user is created, include the user_id in the error so the admin knows the auth account exists but needs manual role assignment
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/PlanningDashboard.tsx` | Fix form fields: separate Site ID Code + Site Name, split Location into Region/District/Town, update data mapping |
-| `src/components/SiteDetailsView.tsx` | Add created_at display, show submitted_by, reduce clutter from always-empty fields |
-| `src/pages/AdminDashboard.tsx` | Update site cards in approvals to show both site_id_code and site_name |
+| `supabase/functions/manage-users/index.ts` | Fix role assignment from broken upsert to delete+insert with error checking |
+
+## What This Fixes
+- New users will have their roles properly assigned
+- Admins will see clear error messages if anything fails
+- New users will be able to log in with the credentials the admin gives them
+- The login redirect will work correctly because the role will exist
 

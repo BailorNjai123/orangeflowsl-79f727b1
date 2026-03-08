@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, extractStoragePath } from '@/lib/storageUtils';
-import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink } from 'lucide-react';
+import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -12,6 +12,16 @@ interface SiteDetailsViewProps {
 }
 
 function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
+  if (value === null || value === undefined || value === '') return null;
+  return (
+    <div className="flex justify-between items-start gap-2 py-1.5 border-b border-border/50 last:border-0">
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+      <span className="text-xs font-medium text-right">{value}</span>
+    </div>
+  );
+}
+
+function AlwaysShowRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   const display = value === null || value === undefined || value === '' ? '-' : value;
   return (
     <div className="flex justify-between items-start gap-2 py-1.5 border-b border-border/50 last:border-0">
@@ -97,19 +107,31 @@ function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdat
 export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }: SiteDetailsViewProps) {
   return (
     <div className="space-y-4">
+      {/* Submission Info */}
+      <div>
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5" /> Submission Info
+        </h4>
+        <div className="rounded-lg border bg-card p-3">
+          <AlwaysShowRow label="Site ID Code" value={site.site_id_code} />
+          <AlwaysShowRow label="Site Name" value={site.site_name} />
+          <AlwaysShowRow label="Status" value={site.status} />
+          <AlwaysShowRow label="Submitted" value={site.created_at ? new Date(site.created_at).toLocaleDateString() : null} />
+        </div>
+      </div>
+
+      {/* Basic Information */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <MapPin className="h-3.5 w-3.5" /> Basic Information
         </h4>
         <div className="rounded-lg border bg-card p-3">
-          <DetailRow label="Site ID" value={site.site_id_code} />
-          <DetailRow label="Site Name" value={site.site_name} />
-          <DetailRow label="Region" value={site.region} />
-          <DetailRow label="District" value={site.district} />
-          <DetailRow label="Town" value={site.town} />
+          <AlwaysShowRow label="Region" value={site.region} />
+          <AlwaysShowRow label="District" value={site.district} />
+          <AlwaysShowRow label="Town" value={site.town} />
           <DetailRow label="Address" value={site.address} />
           <DetailRow label="Dimensions" value={site.dimensions} />
-          <DetailRow label="Tower Height" value={site.tower_height ? `${site.tower_height}m` : null} />
+          <AlwaysShowRow label="Tower Height" value={site.tower_height ? `${site.tower_height}m` : null} />
           <DetailRow label="Foundation Depth" value={site.foundation_depth ? `${site.foundation_depth}m` : null} />
           <DetailRow label="Elevation" value={site.elevation ? `${site.elevation}m` : null} />
           <DetailRow label="Distance from Nearest BTS" value={site.distance_nearest_bts ? `${site.distance_nearest_bts}km` : null} />
@@ -118,13 +140,14 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
+      {/* Technical Details */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <Radio className="h-3.5 w-3.5" /> Technical Details
         </h4>
         <div className="rounded-lg border bg-card p-3">
-          <DetailRow label="Tower Type" value={site.tower_type} />
-          <DetailRow label="Tower Material" value={site.tower_material} />
+          <AlwaysShowRow label="Tower Type" value={site.tower_type} />
+          <AlwaysShowRow label="Tower Material" value={site.tower_material} />
           <DetailRow label="Transmission Type" value={site.transmission_type} />
           <DetailRow label="Power Backup Type" value={site.power_backup_type} />
           <DetailRow label="Battery Bank Type" value={site.battery_bank_type} />
@@ -138,15 +161,16 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
+      {/* Project & Vendor Details */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <User className="h-3.5 w-3.5" /> Project & Vendor Details
         </h4>
         <div className="rounded-lg border bg-card p-3">
-          <DetailRow label="Vendor Assigned" value={site.vendor_name} />
+          <AlwaysShowRow label="Vendor Assigned" value={site.vendor_name} />
           <DetailRow label="Contractor" value={site.contractor_name} />
           <DetailRow label="Project Name" value={site.project_name} />
-          <DetailRow label="Current Phase" value={site.current_phase} />
+          <AlwaysShowRow label="Current Phase" value={site.current_phase} />
           <DetailRow label="Site Type" value={site.site_type} />
           <DetailRow label="Terrain Type" value={site.terrain_type} />
           <DetailRow label="Access Road Condition" value={site.access_road_condition} />
@@ -154,6 +178,7 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
+      {/* Key Dates */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5" /> Key Dates
@@ -166,6 +191,7 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
+      {/* Attachments */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
           <FileDown className="h-3.5 w-3.5" /> Attachments
