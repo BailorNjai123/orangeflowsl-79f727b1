@@ -40,30 +40,30 @@ function cellValue(site: Site, key: string): string {
 
 const columns: { key: string; label: string; group: string; minW?: string }[] = [
   // Site Information
-  { key: 'site_name', label: 'Site Name', group: 'Site Info', minW: '140px' },
-  { key: 'district', label: 'District', group: 'Site Info', minW: '100px' },
-  { key: 'town', label: 'Town', group: 'Site Info', minW: '100px' },
-  { key: 'latitude', label: 'Lat', group: 'Site Info', minW: '80px' },
-  { key: 'longitude', label: 'Long', group: 'Site Info', minW: '80px' },
-  // Technical
-  { key: 'site_type', label: 'Site Type', group: 'Technical', minW: '100px' },
-  { key: 'site_configuration', label: 'Config', group: 'Technical', minW: '110px' },
-  { key: 'antenna_type', label: 'Antenna', group: 'Technical', minW: '100px' },
-  { key: 'number_of_antennas', label: '# Ant.', group: 'Technical', minW: '60px' },
-  { key: 'equipment_shelter', label: 'Shelter', group: 'Technical', minW: '100px' },
-  // Power
-  { key: 'power_source', label: 'Power Source', group: 'Power', minW: '180px' },
-  { key: 'power_requirement', label: 'Power Req.', group: 'Power', minW: '90px' },
-  { key: 'backup_power', label: 'Backup', group: 'Power', minW: '100px' },
+  { key: 'site_name', label: 'Site Name', group: 'Site Information', minW: '160px' },
+  { key: 'district', label: 'District', group: 'Site Information', minW: '120px' },
+  { key: 'town', label: 'Town', group: 'Site Information', minW: '120px' },
+  { key: 'latitude', label: 'Latitude', group: 'Site Information', minW: '100px' },
+  { key: 'longitude', label: 'Longitude', group: 'Site Information', minW: '100px' },
+  // Technical Details
+  { key: 'site_type', label: 'Site Type', group: 'Technical Details', minW: '120px' },
+  { key: 'site_configuration', label: 'Site Configuration', group: 'Technical Details', minW: '150px' },
+  { key: 'antenna_type', label: 'Antenna Type', group: 'Technical Details', minW: '120px' },
+  { key: 'number_of_antennas', label: 'Number of Antennas', group: 'Technical Details', minW: '140px' },
+  { key: 'equipment_shelter', label: 'Equipment Shelter', group: 'Technical Details', minW: '140px' },
+  // Power Details
+  { key: 'power_source', label: 'Power Source', group: 'Power Details', minW: '220px' },
+  { key: 'power_requirement', label: 'Power Requirement', group: 'Power Details', minW: '140px' },
+  { key: 'backup_power', label: 'Backup Power', group: 'Power Details', minW: '120px' },
   // Access & Terrain
-  { key: 'terrain_type', label: 'Terrain', group: 'Access', minW: '100px' },
-  { key: 'access_road_condition', label: 'Road', group: 'Access', minW: '100px' },
+  { key: 'terrain_type', label: 'Terrain Type', group: 'Access & Terrain', minW: '120px' },
+  { key: 'access_road_condition', label: 'Access Road Condition', group: 'Access & Terrain', minW: '160px' },
   // Approval & Monitoring
-  { key: 'created_at', label: 'Submitted', group: 'Approval', minW: '95px' },
-  { key: 'last_inspection_date', label: 'Last Inspect.', group: 'Approval', minW: '95px' },
-  { key: 'status', label: 'Status', group: 'Approval', minW: '90px' },
-  { key: 'approval_date', label: 'Approved', group: 'Approval', minW: '95px' },
-  { key: 'notes', label: 'Comments', group: 'Approval', minW: '140px' },
+  { key: 'created_at', label: 'Planning Submission Date', group: 'Approval & Monitoring', minW: '160px' },
+  { key: 'last_inspection_date', label: 'Last Inspection Date', group: 'Approval & Monitoring', minW: '150px' },
+  { key: 'status', label: 'Approval Status', group: 'Approval & Monitoring', minW: '120px' },
+  { key: 'approval_date', label: 'Approved Date', group: 'Approval & Monitoring', minW: '120px' },
+  { key: 'notes', label: 'Comments', group: 'Approval & Monitoring', minW: '180px' },
 ];
 
 export default function SiteMonitorTable({ sites, onFileUpdated }: SiteMonitorTableProps) {
