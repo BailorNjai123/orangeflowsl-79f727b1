@@ -21,7 +21,7 @@ export function useOnlineSync() {
         toast({ variant: 'destructive', title: 'Sync issues', description: `${failed} item(s) failed to sync. Will retry.` });
       }
     } catch (e) {
-      console.error('[OnlineSync] error:', e);
+      if (import.meta.env.DEV) console.error('[OnlineSync] error:', e);
     } finally {
       syncing.current = false;
     }
