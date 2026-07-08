@@ -281,7 +281,7 @@ export default function AdminDashboard() {
             {sites.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No sites yet</p>}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader><CardTitle className="text-base">Recent Activity</CardTitle></CardHeader>
           <CardContent>
             {activities.slice(0, 5).map(act => (
