@@ -265,8 +265,8 @@ export default function AdminDashboard() {
         <StatCard title="Users" value={profiles.length} icon={Users} />
         <StatCard title="Proc. Pending" value={procPending} icon={FileCheck} color="text-primary" />
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader><CardTitle className="text-base">Recent Submissions</CardTitle></CardHeader>
           <CardContent>
             {sites.slice(0, 5).map(site => (
