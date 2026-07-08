@@ -96,7 +96,7 @@ serve(async (req) => {
         role: u.role,
       });
 
-      results.push({ email: u.email, status: 'created' });
+      results.push({ email: u.email, status: 'created', password: u.password });
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
