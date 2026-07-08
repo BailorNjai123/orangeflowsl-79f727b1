@@ -102,7 +102,7 @@ export default function PlanningDashboard() {
       const path = `${user!.id}/${Date.now()}_${fieldName}.${ext}`;
       const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
       if (error) {
-        console.error('Upload error:', error);
+        if (import.meta.env.DEV) console.error('Upload error:', error);
         return null;
       }
       return path;

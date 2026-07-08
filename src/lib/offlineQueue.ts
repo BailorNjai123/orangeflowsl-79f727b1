@@ -52,14 +52,14 @@ export async function processQueue(): Promise<{ processed: number; failed: numbe
       }
 
       if (result?.error) {
-        console.error('[OfflineSync] Failed to sync:', entry, result.error);
+        if (import.meta.env.DEV) console.error('[OfflineSync] Failed to sync:', entry, result.error);
         failed++;
       } else {
         await del(entry.id);
         processed++;
       }
     } catch (err) {
-      console.error('[OfflineSync] Error processing:', entry, err);
+      if (import.meta.env.DEV) console.error('[OfflineSync] Error processing:', entry, err);
       failed++;
     }
   }

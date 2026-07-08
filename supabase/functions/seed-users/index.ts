@@ -6,14 +6,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const users = [
-  { email: 'admin@orangeflow.sl', password: 'admin123', full_name: 'Admin User', role: 'project_team', department: 'Project Management' },
-  { email: 'admin2@orangeflow.sl', password: 'admin123', full_name: 'Sarah Johnson', role: 'project_team', department: 'Project Management' },
-  { email: 'planning@orangeflow.sl', password: 'planning123', full_name: 'James Kamara', role: 'planning_team', department: 'Network Planning' },
-  { email: 'planning2@orangeflow.sl', password: 'planning123', full_name: 'Fatmata Sesay', role: 'planning_team', department: 'Network Planning' },
-  { email: 'procurement@orangeflow.sl', password: 'procurement123', full_name: 'Mohamed Bangura', role: 'procurement_team', department: 'Procurement' },
-  { email: 'procurement2@orangeflow.sl', password: 'procurement123', full_name: 'Aminata Koroma', role: 'procurement_team', department: 'Procurement' },
+function generateStrongPassword(): string {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const symbols = '!@#$%^&*';
+  const all = upper + lower + digits + symbols;
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  let pw = upper[bytes[0] % upper.length] + lower[bytes[1] % lower.length] + digits[bytes[2] % digits.length] + symbols[bytes[3] % symbols.length];
+  for (let i = 4; i < bytes.length; i++) pw += all[bytes[i] % all.length];
+  return pw;
+}
+
+const userTemplates = [
+  { email: 'admin@orangeflow.sl', full_name: 'Admin User', role: 'project_team', department: 'Project Management' },
+  { email: 'admin2@orangeflow.sl', full_name: 'Sarah Johnson', role: 'project_team', department: 'Project Management' },
+  { email: 'planning@orangeflow.sl', full_name: 'James Kamara', role: 'planning_team', department: 'Network Planning' },
+  { email: 'planning2@orangeflow.sl', full_name: 'Fatmata Sesay', role: 'planning_team', department: 'Network Planning' },
+  { email: 'procurement@orangeflow.sl', full_name: 'Mohamed Bangura', role: 'procurement_team', department: 'Procurement' },
+  { email: 'procurement2@orangeflow.sl', full_name: 'Aminata Koroma', role: 'procurement_team', department: 'Procurement' },
 ];
+const users = userTemplates.map(u => ({ ...u, password: generateStrongPassword() }));
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
@@ -82,7 +96,7 @@ serve(async (req) => {
         role: u.role,
       });
 
-      results.push({ email: u.email, status: 'created' });
+      results.push({ email: u.email, status: 'created', password: u.password });
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
