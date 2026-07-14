@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <style>
+    .t{font-size:24px;font-weight:700;fill:#0f172a}
+    .actor{font-size:13px;font-weight:600;fill:#0f172a}
+    .uc{font-size:12px;fill:#0f172a}
+    .box{fill:none;stroke:#334155;stroke-width:2}
+    .oval{fill:#fff7ed;stroke:#f97316;stroke-width:1.5}
+    .line{stroke:#475569;stroke-width:1.3;fill:none}
+    .stick{stroke:#0f172a;stroke-width:2;fill:none}
+  </style>
+  <rect width="1100" height="780" fill="#fff"/>
+  <text class="t" x="550" y="38" text-anchor="middle">OrangeFlow — Use Case Diagram</text>
+
+  <!-- System boundary -->
+  <rect class="box" x="280" y="80" width="540" height="670" rx="12"/>
+  <text class="actor" x="550" y="105" text-anchor="middle" font-size="15">OrangeFlow System</text>
+
+  <!-- Planning actor left -->
+  <g transform="translate(90,180)">
+    <circle class="stick" cx="30" cy="0" r="16" fill="#fff"/>
+    <line class="stick" x1="30" y1="16" x2="30" y2="60"/>
+    <line class="stick" x1="30" y1="30" x2="5" y2="50"/>
+    <line class="stick" x1="30" y1="30" x2="55" y2="50"/>
+    <line class="stick" x1="30" y1="60" x2="10" y2="95"/>
+    <line class="stick" x1="30" y1="60" x2="50" y2="95"/>
+    <text class="actor" x="30" y="118" text-anchor="middle">Planning Team</text>
+  </g>
+
+  <!-- Procurement actor left bottom -->
+  <g transform="translate(90,520)">
+    <circle class="stick" cx="30" cy="0" r="16" fill="#fff"/>
+    <line class="stick" x1="30" y1="16" x2="30" y2="60"/>
+    <line class="stick" x1="30" y1="30" x2="5" y2="50"/>
+    <line class="stick" x1="30" y1="30" x2="55" y2="50"/>
+    <line class="stick" x1="30" y1="60" x2="10" y2="95"/>
+    <line class="stick" x1="30" y1="60" x2="50" y2="95"/>
+    <text class="actor" x="30" y="118" text-anchor="middle">Procurement Team</text>
+  </g>
+
+  <!-- Admin actor right -->
+  <g transform="translate(950,360)">
+    <circle class="stick" cx="30" cy="0" r="16" fill="#fff"/>
+    <line class="stick" x1="30" y1="16" x2="30" y2="60"/>
+    <line class="stick" x1="30" y1="30" x2="5" y2="50"/>
+    <line class="stick" x1="30" y1="30" x2="55" y2="50"/>
+    <line class="stick" x1="30" y1="60" x2="10" y2="95"/>
+    <line class="stick" x1="30" y1="60" x2="50" y2="95"/>
+    <text class="actor" x="30" y="118" text-anchor="middle">Project Admin</text>
+  </g>
+
+  <!-- Use cases -->
+  <g id="ucs">
+    <!-- Shared -->
+    <ellipse class="oval" cx="550" cy="140" rx="100" ry="26"/><text class="uc" x="550" y="145" text-anchor="middle">Authenticate</text>
+
+    <!-- Planning -->
+    <ellipse class="oval" cx="440" cy="200" rx="115" ry="26"/><text class="uc" x="440" y="205" text-anchor="middle">Submit New Site Request</text>
+    <ellipse class="oval" cx="440" cy="260" rx="115" ry="26"/><text class="uc" x="440" y="265" text-anchor="middle">Edit Pending Request</text>
+    <ellipse class="oval" cx="440" cy="320" rx="115" ry="26"/><text class="uc" x="440" y="325" text-anchor="middle">View Own Dashboard</text>
+
+    <!-- Procurement -->
+    <ellipse class="oval" cx="440" cy="440" rx="115" ry="26"/><text class="uc" x="440" y="445" text-anchor="middle">Access Site Details</text>
+    <ellipse class="oval" cx="440" cy="500" rx="125" ry="26"/><text class="uc" x="440" y="505" text-anchor="middle">Complete 9-point Checklist</text>
+    <ellipse class="oval" cx="440" cy="560" rx="120" ry="26"/><text class="uc" x="440" y="565" text-anchor="middle">Upload Supporting Docs</text>
+    <ellipse class="oval" cx="440" cy="620" rx="105" ry="26"/><text class="uc" x="440" y="625" text-anchor="middle">Save Feedback</text>
+
+    <!-- Admin -->
+    <ellipse class="oval" cx="700" cy="240" rx="115" ry="26"/><text class="uc" x="700" y="245" text-anchor="middle">Review All Requests</text>
+    <ellipse class="oval" cx="700" cy="330" rx="130" ry="26"/><text class="uc" x="700" y="335" text-anchor="middle">Approve / Reject Actions</text>
+    <ellipse class="oval" cx="700" cy="420" rx="140" ry="26"/><text class="uc" x="700" y="425" text-anchor="middle">Manage Users &amp; Roles</text>
+    <ellipse class="oval" cx="700" cy="510" rx="135" ry="26"/><text class="uc" x="700" y="515" text-anchor="middle">Access Activity Logs</text>
+  </g>
+
+  <!-- Planning lines -->
+  <path class="line" d="M150,210 C 260,180 340,150 450,140"/>
+  <path class="line" d="M150,215 L 325,200"/>
+  <path class="line" d="M150,225 L 325,260"/>
+  <path class="line" d="M150,240 L 325,320"/>
+
+  <!-- Procurement lines -->
+  <path class="line" d="M150,550 C 260,300 300,180 450,140"/>
+  <path class="line" d="M150,545 L 325,440"/>
+  <path class="line" d="M150,555 L 320,500"/>
+  <path class="line" d="M150,565 L 320,560"/>
+  <path class="line" d="M150,575 L 335,620"/>
+
+  <!-- Admin lines -->
+  <path class="line" d="M950,385 C 800,280 700,200 650,140"/>
+  <path class="line" d="M950,390 L 815,240"/>
+  <path class="line" d="M950,395 L 830,330"/>
+  <path class="line" d="M950,410 L 840,420"/>
+  <path class="line" d="M950,425 L 835,510"/>
+</svg>
