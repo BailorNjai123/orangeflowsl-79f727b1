@@ -1,43 +1,48 @@
+## Goal
+Produce a complete BSc (Electrical & Electronics Engineering) dissertation for the **OrangeFlow SL** project — a role-based, mobile-first PWA that digitises the Base Transceiver Station (BTS) site rollout workflow for Orange SL. Everything saved to `/dissertation/` in the repo, chapter-by-chapter for staged review, plus one consolidated file.
 
+## Grounding (no invented facts)
+All content will be drawn strictly from what actually exists in this repo:
+- **Stack:** React 18 + Vite + TypeScript + Tailwind + shadcn/ui, PWA (service worker + `idb-keyval` offline queue), TanStack Query.
+- **Backend (Lovable Cloud / Supabase):** PostgreSQL with RLS, JWT auth, private storage buckets `site-documents` and `procurement-documents`, Deno Edge Functions (`manage-users`, `seed-users`).
+- **Roles:** Planning Team, Procurement Team, Project Team (Admin).
+- **Domain workflow:** Site submission → 9-point procurement checklist with document upload → approval/rejection → activity log + notifications.
+- **Security posture:** RLS on all public tables, `has_role` / `get_user_role` functions, `prevent_role_self_escalation` trigger, owner-or-team scoped storage policies, private buckets with 1-hr signed URLs.
+- **Existing diagrams:** the SVGs already in `/public/dissertation/` (architecture, ERD, use-case, activity, flowchart, DB schema, dashboard mockup) will be referenced, not regenerated.
+- Reference PDFs the user uploaded will inform *style and structure only*; no verbatim copying.
 
-# Fix: User Creation Failing Silently (Role Not Being Assigned)
+The friend's prompt is about a QR attendance system — that project domain is discarded. Only the dissertation **structure** is reused and adapted to OrangeFlow SL, BSc EEE framing (telecom / BTS rollout angle).
 
-## Problem
-When the admin creates a new user, the system reports success but the user's **role is never saved**. This is confirmed by the database showing user "pro@orangeflow.sl" with NO role assigned. Without a role, the login flow breaks because the app can't determine where to redirect the user.
+## Deliverables in `/dissertation/`
+Each chapter is a separate Markdown file so you can review one at a time. A final combined file stitches them all.
 
-## Root Cause
-The edge function uses `upsert` with `onConflict: 'user_id'` for the `user_roles` table, but the table's unique constraint is on `(user_id, role)` -- not just `user_id`. PostgreSQL rejects this silently, and the edge function does not check for the error. It returns `{ success: true }` even though the role was never saved.
+1. `abstract.md` — 150–300 word formal academic abstract.
+2. `00_front_matter.md` — Title page, Declaration, Certification, Dedication, Acknowledgements, Abstract, Table of Contents.
+3. `chapter_01_introduction.md` — Background, Problem Statement, Aim & Objectives, Research Questions, Significance, Scope & Limitations.
+4. `chapter_02_literature_review.md` — BTS rollout workflows, digital transformation in telecom operations, PWA & offline-first paradigms, RBAC & RLS in web systems, review of adjacent systems, research gap.
+5. `chapter_03_methodology.md` — Refactored from the existing `CHAPTER_THREE_METHODOLOGY.md` + `src/components/dissertation/ChapterThree.tsx`; re-embeds the existing SVGs.
+6. `chapter_04_system_implementation.md` — System overview, feature-by-feature implementation (auth, planning form, procurement checklist, admin pipeline, offline sync, notifications, activity log), UI description, high-level code logic, challenges & solutions. Aligned with existing `ChapterFour.tsx` content.
+7. `chapter_05_results_and_discussion.md` — Functional test matrix, RLS/security verification, offline replay behaviour, responsive/mobile verification, comparison with the prior manual workflow.
+8. `chapter_06_conclusion_and_recommendations.md` — Summary, conclusion, future work (native mobile shell, richer analytics, integration with GIS/NetOps tooling, multi-tenant expansion).
+9. `references.md` — Formal reference list (IEEE style) for cited works, including the uploaded PDFs where relevant.
+10. `full_dissertation.md` — Single consolidated file concatenating 00 → 06 + references, with a single continuous Table of Contents.
 
-## Fix
+## Review workflow
+After the plan is approved, chapters will be created in this order, and I will pause between each so you can review:
+1. Front matter + Abstract
+2. Chapter 1
+3. Chapter 2
+4. Chapter 3
+5. Chapter 4
+6. Chapter 5
+7. Chapter 6 + References
+8. `full_dissertation.md` (concatenation only — no new prose)
 
-### 1. Edge Function (`supabase/functions/manage-users/index.ts`)
+## What will NOT be done
+- No changes to `/src` application code, database schema, or SVG diagrams.
+- No fabricated features, tables, screenshots, quantitative results, or citations.
+- No mention of the build platform or AI tooling in the dissertation text.
+- GitHub push happens automatically via the existing Git sync — no manual git commands.
 
-**Role assignment fix (create_user action):**
-- Replace the broken `upsert` with a safer pattern: DELETE existing roles for the user, then INSERT the new role
-- Add proper error checking on BOTH the profile upsert AND the role insert -- if either fails, throw an error so the admin sees it
-- Add console logging for every step so failures are visible in logs
-
-**Same fix for update_user action:**
-- The update_user action already uses delete-then-insert, which is correct -- no change needed there
-
-### 2. Fix the Orphaned User
-- The user "pro@orangeflow.sl" exists with no role. The edge function fix will prevent this from happening again
-- The admin can use the Edit User feature to assign a role to this user, or delete and recreate them
-
-### 3. Improved Error Handling
-- Wrap all database operations in proper error checks
-- Return detailed error messages so the admin sees exactly what went wrong
-- If profile or role creation fails after auth user is created, include the user_id in the error so the admin knows the auth account exists but needs manual role assignment
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `supabase/functions/manage-users/index.ts` | Fix role assignment from broken upsert to delete+insert with error checking |
-
-## What This Fixes
-- New users will have their roles properly assigned
-- Admins will see clear error messages if anything fails
-- New users will be able to log in with the credentials the admin gives them
-- The login redirect will work correctly because the role will exist
-
+## Open question (optional — I can proceed with sensible defaults)
+Do you want me to also generate a printable PDF export of `full_dissertation.md`, or is Markdown in `/dissertation/` sufficient for now?
