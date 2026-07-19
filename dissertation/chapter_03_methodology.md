@@ -2,129 +2,146 @@
 
 ## 3.1 Introduction
 
-This chapter presents the systematic methodology adopted for the design, engineering and evaluation of **OrangeFlow SL**, a role‑based, mobile‑first Progressive Web Application (PWA) developed to centralise the Base Transceiver Station (BTS) site rollout workflow. The chapter articulates the research paradigm, data collection strategy, requirements analysis, architectural blueprint, and validation protocol used to transform an unstructured, paper‑driven telecommunications rollout process into an auditable, offline‑capable digital pipeline.
+This chapter sets out the methodology by which OrangeFlow SL was designed, implemented and evaluated. It documents the research paradigm and design, the data‑collection methods used to characterise the incumbent workflow, the resulting existing‑system analysis and the specific problems that motivate the proposed system. It then states, in enumerated form, the functional and non‑functional requirements against which the implementation is subsequently verified, and presents the system architecture, database design, use‑case, activity, flowchart and entity‑relationship models that jointly specify the artefact. Finally, it documents the software‑development methodology adopted, the technology stack chosen, and the testing strategy applied.
 
 ## 3.2 Research Design
 
-The study adopts an **applied, design‑science research** approach fusing descriptive, constructive and evaluative components. Descriptive analysis was used to model the incumbent manual workflow. Constructive research produced the OrangeFlow SL artefact itself. Evaluative research validated the artefact against the elicited functional and non‑functional requirements. The paradigm is appropriate because the primary contribution is an engineered artefact whose value is judged by fitness for the stated operational purpose rather than by falsification of a hypothesis.
+The study adopts a **design‑science research** paradigm. Design‑science research is distinguished from purely descriptive or explanatory research by its central deliverable: an artefact — in this case, a software system — whose creation and evaluation constitute the research contribution. Within this paradigm the study is organised into three interlocking activities: **descriptive** analysis of the incumbent manual workflow; **constructive** engineering of the OrangeFlow SL artefact through iterative‑incremental delivery; and **evaluative** verification of the artefact against explicit functional, non‑functional and security requirements.
 
-## 3.3 Data Collection Methods
+## 3.3 Research Methodology
 
-Data was gathered through four complementary techniques:
+The methodological structure of the study proceeds in five sequential stages.
 
-- **Process observation** of the current BTS site rollout lifecycle, documenting each handover and the artefacts produced at each stage.
-- **Document review** of internal handover forms, procurement checklists and correspondence, to extract the fields that participants already treat as authoritative.
-- **Structured requirements elicitation** with prospective Planning, Procurement and Project Administration users, capturing both functional expectations and non‑functional constraints such as offline operation.
-- **Iterative implementation feedback** taken directly from the running system as it was developed, using observed behaviour rather than speculative reasoning to inform subsequent design decisions.
+1. **Situational analysis.** The incumbent BTS rollout coordination workflow is characterised, its participants identified and its failure modes enumerated.
+2. **Requirements elicitation.** From the situational analysis, functional and non‑functional requirements are drawn out and stated in a form suitable for verification.
+3. **Design.** A three‑tier architecture, a relational data model, an RBAC scheme and a set of RLS policies are designed to satisfy the requirements.
+4. **Implementation.** The system is implemented in iterative sprints, each sprint delivering a vertically integrated slice of functionality from user interface through middleware to database.
+5. **Evaluation.** The completed system is verified against the stated requirements through functional, security, offline and responsive testing, and is compared against the incumbent workflow.
 
-## 3.4 Analysis of the Existing System
+## 3.4 Data Collection Methods
 
-The existing workflow relied on printed forms, disparate spreadsheets and informal messaging channels. The consequences observed were:
+Data to inform the situational analysis and requirements elicitation were gathered through three complementary methods, each chosen for its appropriateness to the class of information sought.
 
-- Fragmented handover between Planning, Procurement and Project Administration, with no single authoritative record of a site.
-- Silent data loss and duplication as documents were forwarded, edited and re‑forwarded.
-- Absence of a chronological audit trail that identified the actor, the action and the timestamp for each state change.
-- Insecure handling of evidentiary documents, which circulated as unprotected email attachments.
-- No technical enforcement of role separation; any participant with access to a shared folder could alter another team's submissions.
-- Poor field usability and no offline support, forcing field engineers to re‑enter data on return to the office.
-- No real‑time status visibility for supervisors, who had to reconstruct workflow status by asking each participant.
+- **Structured observation of the incumbent workflow.** The stages through which a candidate BTS site currently passes were observed and mapped, including the artefacts produced at each stage, the participants involved and the communication channels between them.
+- **Document review.** The printed forms, spreadsheet workbooks and template contracts currently used were inspected in order to identify the specific data fields carried through the pipeline, and thereby to inform the schema of the relational data model.
+- **Informal semi‑structured interviews.** Prospective users of each of the three intended roles were consulted regarding their pain points with the incumbent workflow and their usability expectations of a replacement. These interviews were conducted informally and their outputs treated as design input rather than as primary research data; consequently no personally identifying information from those interviews is reproduced in this dissertation.
 
-## 3.5 Proposed System (OrangeFlow SL)
+## 3.5 Existing System Analysis
 
-OrangeFlow SL is proposed as a mobile‑first, role‑scoped PWA that consolidates site submission, procurement feedback and approval into one auditable pipeline shared by three roles: **Planning Team**, **Procurement Team** and **Project Administrator**. Access is enforced at the database layer through Row‑Level Security, evidentiary documents are held in private storage buckets and delivered via short‑lived signed URLs, and user actions initiated while offline are captured to an IndexedDB queue and replayed idempotently on reconnection.
+The incumbent BTS rollout coordination workflow at Orange Sierra Leone comprises three functionally distinct roles operating through three uncoupled tool sets:
 
-## 3.6 Functional Requirements
+- The **Planning Team** records candidate sites on printed forms in the field and later transcribes them into spreadsheet workbooks held on individual workstations.
+- The **Procurement Team** works from copies of those workbooks emailed by Planning, and maintains a parallel spreadsheet in which land documentation, ownership verification, lease negotiation and vendor contracting are tracked.
+- The **Project Administrator** reconstructs the current state of the pipeline by querying each team individually and by inspecting attachments in email and instant‑messaging threads.
 
-The elicited functional requirements are:
+There is no single authoritative record of any given site, no chronological audit trail, no computationally enforced role separation, no accommodation for field workers who cannot assume connectivity and no real‑time supervisory view of the pipeline.
 
-1. Authenticated login for all users.
-2. Deterministic role assignment across Planning, Procurement and Project Administrator.
-3. Site proposal submission with structured technical, geographic and power data.
-4. A nine‑point procurement compliance checklist with document upload.
-5. A final approval or rejection stage with reason capture.
-6. Offline capture of user actions with queued replay on reconnection.
-7. Real‑time in‑app notifications on state transitions.
-8. An immutable, chronological activity log.
-9. Administrator user management via a secure server‑side function.
-10. Signed, time‑limited URLs for private document retrieval.
-11. Auto‑refreshing dashboards for supervisory visibility.
+## 3.6 Problems Identified
 
-## 3.7 Non‑Functional Requirements
+From the existing‑system analysis, five specific problems are identified, corresponding to those already stated in Section 1.2 of Chapter One and reproduced here for reference:
 
-- **Security.** Row‑Level Security on every table containing operational data; private storage buckets; privileged operations behind server‑side functions; least‑privilege GRANTs on public tables.
-- **Usability.** Mobile‑first layout with no horizontal scrolling on any supported viewport.
-- **Availability.** Service‑worker‑enabled PWA with offline capture and automatic replay.
-- **Performance.** Background auto‑refresh at a 30‑second cadence on supervisory dashboards.
-- **Maintainability.** TypeScript throughout, modular components, a normalised relational schema and migration‑versioned database changes.
-- **Auditability.** Chronological activity log covering every workflow state change.
-- **Data integrity.** Referential constraints, non‑null validation and idempotent offline replay.
+1. **Version divergence.** Multiple diverging copies of every document.
+2. **Audit opacity.** No tamper‑evident chronological record of decisions.
+3. **Absent role separation.** No computational enforcement of least privilege.
+4. **Absent offline usability.** Field capture requires connectivity that is often absent.
+5. **Absent supervisory visibility.** Pipeline state must be manually reconstructed.
 
-## 3.8 System Architecture
+## 3.7 Proposed System
 
-![System Architecture](../public/dissertation/system_architecture.svg)
+The proposed system, OrangeFlow SL, is a role‑based, mobile‑first Progressive Web Application that consolidates the BTS rollout workflow into a single, auditable pipeline. Each site becomes a single row in a `sites` table, submitted by an authenticated Planning user, subjected to a nine‑point compliance checklist by an authenticated Procurement user, and approved or rejected — with mandatory reason capture on rejection — by an authenticated Project Administrator. Every state transition writes to a chronological `activity_log`. Mutations captured offline are queued in the browser's IndexedDB and replayed automatically on reconnection. Access to every table and every storage object is enforced at the database layer.
 
-*Figure 3.1 — Three‑tier system architecture of OrangeFlow SL.*
+## 3.8 Functional Requirements
 
-OrangeFlow SL uses a three‑tier architecture:
+The following functional requirements were elicited and are subsequently used in Chapter Five as the basis of verification:
 
-- **Presentation tier.** A React 18 and Vite PWA written in TypeScript, styled with Tailwind CSS and shadcn/ui, and delivered with a service worker that enables installability and offline navigation.
-- **Middleware tier.** A backend‑as‑a‑service composed of PostgREST endpoints, JWT authentication, Deno Edge Functions for privileged operations and an IndexedDB offline queue on the client.
-- **Data tier.** A PostgreSQL database secured by Row‑Level Security, with two private storage buckets — `site-documents` and `procurement-documents` — for evidentiary artefacts.
+**FR‑01.** The system shall authenticate users via email and password and shall issue a JWT for use in subsequent requests.
+**FR‑02.** The system shall assign each user exactly one of the roles: Planning Team, Procurement Team, Project Administrator.
+**FR‑03.** The system shall permit an authenticated Planning user to submit a structured site record capturing identification, location, technical and power‑system fields.
+**FR‑04.** The system shall permit an authenticated Procurement user to complete a nine‑point compliance checklist for any site, uploading an evidentiary document per completed item.
+**FR‑05.** The system shall permit an authenticated Project Administrator to approve or reject a site, requiring a written reason on rejection.
+**FR‑06.** The system shall capture, offline, any writable mutation issued while the network is unavailable, and shall replay those mutations, in insertion order, upon reconnection.
+**FR‑07.** The system shall deliver in‑application notifications to the recipient of each significant state transition (submission, checklist completion, approval, rejection).
+**FR‑08.** The system shall record, in a chronological activity log, every significant state transition, attributed to the acting user.
+**FR‑09.** The system shall permit an authenticated Project Administrator to create, update and deactivate user accounts and to assign roles.
+**FR‑10.** The system shall deliver every uploaded document exclusively through a short‑lived signed URL issued at the moment of authorised request.
+**FR‑11.** The system shall present, to each role, a dashboard summarising the pipeline items pertinent to that role and refreshed at a periodic cadence.
 
-## 3.9 Database Design
+## 3.9 Non‑Functional Requirements
 
-![Database Schema](../public/dissertation/database_schema.svg)
+**NFR‑01. Security.** Access to every user‑facing table and every storage object shall be enforced at the database layer by RLS policies bound to roles held in a dedicated `user_roles` table; no user may self‑assign a role.
+**NFR‑02. Availability under intermittent connectivity.** The application shall remain fully usable for capture operations when the network is unavailable and shall reconcile automatically on reconnection.
+**NFR‑03. Responsiveness.** The application shall render without horizontal overflow at viewport widths of 390, 820 and 1440 CSS pixels and shall be installable as a PWA on modern evergreen browsers.
+**NFR‑04. Auditability.** Every state transition shall be preserved indefinitely in the activity log with the identity of the acting user and a wall‑clock timestamp.
+**NFR‑05. Performance.** Dashboard refresh shall complete within an operationally reasonable interval; a target cadence of thirty seconds is adopted.
+**NFR‑06. Maintainability.** The application shall be organised into small, focused components and modules; the database schema shall evolve through immutable, forward‑only migrations under version control.
+**NFR‑07. Confidentiality of documents.** Uploaded documents shall never be served from a publicly readable URL; access shall be granted exclusively through short‑lived signed URLs.
+**NFR‑08. Compliance posture.** The system shall observe the OWASP Top Ten [19] with particular attention to access control, cryptographic storage, and injection.
 
-*Figure 3.2 — Normalised relational schema.*
+## 3.10 System Architecture
 
-The schema comprises the following operational tables: `profiles`, `user_roles`, `sites`, `procurement_submissions`, `procurement_feedback`, `activity_log`, `notifications` and `deleted_users_archive`. Each is protected by explicit Row‑Level Security policies and by GRANTs scoped to the roles that the policies permit.
+The system is realised as a three‑tier architecture:
 
-## 3.10 Use Case Diagram
+- **Presentation tier.** A React 18 single‑page application, compiled by Vite, written in TypeScript and styled with Tailwind CSS and the shadcn/ui component library. Delivered as an installable PWA with a service worker for network mediation and IndexedDB for offline capture.
+- **Middleware tier.** JWT‑authenticated PostgREST endpoints exposed by the managed backend, together with privileged Deno Edge Functions for operations requiring elevated authority (notably administrative user management).
+- **Data tier.** A PostgreSQL relational database in which every user‑facing table is protected by RLS, complemented by two private object‑storage buckets — `site-documents` and `procurement-documents` — accessed exclusively through signed URLs.
 
-![Use Case Diagram](../public/dissertation/use_case_diagram.svg)
+![System Architecture](../system_architecture.svg)
 
-*Figure 3.3 — Actor–use case model.*
+## 3.11 Database Design
 
-The diagram captures the three actors and their permitted operations across authentication, submission, review, approval and administration.
+Seven principal relations model the domain: `profiles`, `user_roles`, `sites`, `procurement_submissions`, `procurement_feedback`, `notifications` and `activity_log`. Two enumerations — `app_role` and `site_status` — constrain the closed vocabularies of role membership and workflow state. Two security‑definer helper functions, `has_role` and `get_user_role`, expose role queries to RLS policies without triggering recursive evaluation, and a `prevent_role_self_escalation` trigger defends the `user_roles` table against privilege‑escalation attempts. The complete schema is reproduced in Appendix A.
 
-## 3.11 Activity Diagram
+![Database Design](../database_schema.svg)
 
-![Activity Diagram](../public/dissertation/activity_diagram.svg)
+## 3.12 Use Case Diagram
 
-*Figure 3.4 — Swimlane activity flow across Planning, Procurement and Project Administration lanes.*
+Three principal actors — Planning Team, Procurement Team, Project Administrator — interact with the system through a bounded set of use cases: submit site, complete checklist, upload document, approve, reject, review dashboard, receive notification, manage users.
 
-## 3.12 System Flowchart
+![Use Case Diagram](../use_case_diagram.svg)
 
-![System Flowchart](../public/dissertation/system_flowchart.svg)
+## 3.13 Activity Diagram
 
-*Figure 3.5 — Runtime online/offline flow: session check → role dashboard → action → online/offline branch → direct API mutation or IndexedDB queue replay.*
+The activity diagram traces the lifecycle of a single site from the moment of its offline or online capture by Planning, through Procurement checklist completion and evidentiary upload, to administrative approval or rejection. Each transition writes an entry to the activity log and dispatches a notification to the downstream recipient.
 
-## 3.13 Entity Relationship Diagram
+![Activity Diagram](../activity_diagram.svg)
 
-![Entity Relationship Diagram](../public/dissertation/entity_relationship_diagram.svg)
+## 3.14 Flowchart
 
-*Figure 3.6 — Crow's‑foot Entity Relationship Diagram.*
+The system flowchart illustrates the sequence of decisions taken by the application in response to a user action, including the branch on network availability that either issues the mutation to the backend or enqueues it into IndexedDB for later replay.
 
-## 3.14 Software Development Methodology
+![System Flowchart](../system_flowchart.svg)
 
-An iterative, agile‑inspired workflow was employed. Each increment was integrated continuously into the managed backend, permitting rapid validation of migrations, RLS policies and user‑interface changes. Successive increments narrowed the gap between the current implementation and the elicited requirements until each requirement was demonstrably satisfied.
+## 3.15 Entity Relationship Diagram
 
-## 3.15 Technologies Used
+The entity relationship diagram documents the primary‑key and foreign‑key relationships among the seven principal relations. Every child relation carries a cascade‑on‑delete or set‑null foreign key on its parent user account, so that the deletion of a user does not orphan authored records.
 
-- **Frontend.** React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, PWA service worker, `idb-keyval`.
-- **Backend.** PostgreSQL, PostgREST, JWT authentication, Deno Edge Functions, private object storage.
+![Entity Relationship Diagram](../entity_relationship_diagram.svg)
 
-## 3.16 Testing Strategy
+## 3.16 Software Development Methodology
 
-The system was verified using:
+The system was developed under an **iterative‑incremental** methodology drawn from the agile family. Each iteration delivered a vertically integrated slice of functionality — one user‑facing feature from interface through middleware to database, together with the RLS policies necessary to secure it. Iteration boundaries were marked by verification of the delivered slice against its subset of the functional requirements. This methodology was chosen in preference to a strictly waterfall approach because it exposes integration risk early — most notably the risk of RLS policies being inconsistent between the query patterns of the frontend and the intent of the requirements — and because it accommodates the incremental elicitation of usability requirements that only become visible once a working slice is available for review.
 
-- Static analysis with TypeScript and ESLint.
-- Vitest unit tests for isolated logic.
-- Manual role‑based end‑to‑end scenarios covering each actor's permitted and forbidden operations.
-- Security verification via migration‑level policy enforcement and negative testing of forbidden operations.
-- Offline and PWA testing, including queued action replay after network restoration.
-- Responsive testing on multiple viewport sizes to enforce the no‑horizontal‑scroll constraint.
+## 3.17 Technologies Used
 
-## 3.17 Chapter Summary
+**Frontend.** React 18, TypeScript 5, Vite 5, Tailwind CSS 3, shadcn/ui, TanStack Query, React Router, `idb-keyval`, `vite-plugin-pwa`.
 
-This chapter documented the methodology, requirements and design that underpin OrangeFlow SL. The next chapter transitions from design to concrete implementation.
+**Backend.** PostgreSQL 15+ with Row‑Level Security, PostgREST for automatic REST exposure, Deno‑based Edge Functions for privileged operations, private object‑storage buckets with signed URL delivery.
+
+**Tooling.** Git for version control; forward‑only SQL migrations; ESLint and TypeScript's type checker for static analysis; Vitest for unit tests; Playwright, driven from the shell, for end‑to‑end and responsive verification.
+
+The complete list of runtime dependencies is reproduced in `package.json` at the root of the repository, and the migrations that construct the schema are reproduced in Appendix A.
+
+## 3.18 Testing Strategy
+
+Testing was organised into four complementary strands, each addressing a distinct class of correctness concern:
+
+1. **Functional verification.** For each functional requirement, a role‑based end‑to‑end scenario was executed against a live backend, and the resulting database state, activity‑log entry and user‑interface change were observed.
+2. **Security verification.** RLS policies were exercised through explicit negative testing: for each protected table, a user in an unauthorised role attempted each of `SELECT`, `INSERT`, `UPDATE` and `DELETE`. The `user_roles` self‑escalation trigger was exercised by attempting, as a non‑administrator, to insert a row granting oneself the administrator role.
+3. **Offline verification.** The network was disabled at the browser level; writable operations were exercised; the queued actions were observed to persist in IndexedDB; and the network was subsequently re‑enabled, upon which the queue was observed to drain in insertion order and the corresponding rows to appear in the database.
+4. **Responsive verification.** The user interface was verified at three viewport widths — 390, 820 and 1440 CSS pixels — with no horizontal overflow permitted at any width. The PWA install flow was exercised on a modern evergreen browser.
+
+The results of this testing strategy are reported in full in Chapter Five.
+
+## 3.19 Chapter Summary
+
+This chapter set out the design‑science research paradigm within which OrangeFlow SL was developed, the data‑collection methods used to characterise the incumbent workflow, the resulting requirements, the system and database designs, the iterative‑incremental methodology adopted for implementation and the fourfold testing strategy used for evaluation. The implementation itself is documented in the following chapter.
