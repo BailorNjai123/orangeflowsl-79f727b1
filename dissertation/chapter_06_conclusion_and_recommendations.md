@@ -1,39 +1,59 @@
 # Chapter Six — Conclusion and Recommendations
 
-## 6.1 Summary of the Study
+## 6.1 Introduction
 
-This dissertation set out to design, implement and evaluate a role‑based, offline‑capable Progressive Web Application that consolidates the Base Transceiver Station (BTS) site rollout workflow into a single auditable digital pipeline. Chapter One framed the problem, articulated the aim and objectives and stated the research questions. Chapter Two reviewed the relevant literature on telecommunications site rollout, Progressive Web Applications, offline‑first design, Row‑Level Security and secure document delivery, and identified the research gap at their intersection. Chapter Three set out the applied, design‑science methodology, the functional and non‑functional requirements, the three‑tier architecture and the accompanying data, use‑case, activity and flow diagrams. Chapter Four documented the concrete implementation module by module. Chapter Five reported the results of functional, security, offline and responsive verification, and compared the delivered system against the prior manual workflow.
+This concluding chapter summarises the work reported in the preceding five chapters, restates the specific contributions of the study against the objectives set out in Chapter One, discusses the practical implications of the delivered artefact for the operator's rollout coordination, acknowledges the limitations of the study candidly, and sets out specific recommendations for further work.
 
-## 6.2 Conclusion
+## 6.2 Summary of the Study
 
-OrangeFlow SL demonstrates that a small, well‑scoped engineering effort — an installable Progressive Web Application on top of a managed PostgreSQL backend — can replace a fragmented, paper‑driven telecommunications rollout workflow with a single auditable digital pipeline that enforces least‑privilege access at the database layer, preserves data integrity under intermittent connectivity, and provides supervisory visibility that the incumbent workflow could not. Each research question posed in Chapter One is answered by the delivered artefact:
+Chapter One introduced the operational problem — a manual, paper‑and‑spreadsheet workflow for BTS site rollout at Orange Sierra Leone whose five specific deficiencies delay expansion, inflate cost and expose the operator to compliance risk. It articulated the aim, six objectives and four research questions of the study. Chapter Two surveyed the literature on telecommunications rollout, offline‑first Progressive Web Applications, role‑based access control, Row‑Level Security and signed‑URL object storage, and identified the specific gap at their intersection. Chapter Three set out the design‑science research paradigm, elicited eleven functional and eight non‑functional requirements, and presented the three‑tier system architecture, the seven‑relation database design, and the use‑case, activity, flowchart and entity‑relationship models. Chapter Four documented the implementation in detail: the repository organisation, the RLS policy set, the security‑definer role oracle, the anti‑self‑escalation trigger, the offline capture and synchronisation mechanism, the privileged administrative Edge Function and the front‑end component architecture. Chapter Five reported the results of functional, security, offline and responsive verification, and compared the resulting pipeline against the incumbent workflow along eight operational dimensions.
 
-- The structural and operational deficiencies of the manual workflow (**RQ1**) were identified and each is addressed by a specific feature of the system.
-- The three‑tier architecture, normalised schema, RLS policies and signed‑URL storage together constitute the design that best supports the identified workflow (**RQ2**).
-- Least‑privilege access is enforced at the database layer, not merely in the client, through RLS policies scoped to role and ownership, a `SECURITY DEFINER` helper and a role‑escalation trigger (**RQ3**).
-- Actions initiated while offline are captured to an IndexedDB queue and replayed idempotently on reconnection, without loss, duplication or corruption (**RQ4**).
-- Functional, security, offline and responsive verification (**RQ5**) each confirmed that the implemented system satisfies its requirements.
+## 6.3 Achievement of Objectives
 
-The dissertation therefore closes the research gap identified in Chapter Two by providing a documented, evaluated implementation that addresses all four concerns — BTS rollout coordination, offline‑first delivery, database‑layer least privilege and private‑bucket document delivery — as a single coherent case.
+Each of the six objectives stated in Section 1.4 has been achieved.
 
-## 6.3 Contribution to Knowledge
+- **Objective 1** — analysis of the incumbent workflow and elicitation of requirements — is discharged in Sections 3.5 and 3.8/3.9.
+- **Objective 2** — design of the three‑tier architecture — is discharged in Sections 3.10 through 3.15.
+- **Objective 3** — implementation of site submission, checklist, approval and audit — is discharged in Chapter Four.
+- **Objective 4** — offline capture and reconciliation — is discharged in Sections 4.8 and 5.4.
+- **Objective 5** — database‑layer least privilege and signed‑URL document delivery — is discharged in Sections 4.4–4.6 and 5.3.
+- **Objective 6** — verification and comparison against the incumbent workflow — is discharged in Chapter Five.
 
-The specific contributions of this study are:
+The four research questions of Section 1.5 are correspondingly answered. **RQ1** is answered by the eleven functional and eight non‑functional requirements of Sections 3.8–3.9. **RQ2** is answered by the three‑tier architecture of Section 3.10, whose novelty lies in the joint combination of PWA delivery, IndexedDB action queue, RLS enforcement and signed‑URL document delivery. **RQ3** is answered affirmatively by the migration‑level audit strand of Section 5.3, which confirms that policy compliance is attached to the schema and therefore persists independently of any particular version of the client. **RQ4** is answered by the comparative analysis of Section 5.6, which demonstrates substantive improvement along every operational dimension examined.
 
-1. A documented case study, situated in the Sierra Leonean operating environment, of applying design‑science principles to the digitisation of a telecommunications rollout workflow.
-2. A concrete demonstration that Row‑Level Security, `SECURITY DEFINER` helpers and role‑escalation triggers, in combination, are sufficient to enforce least‑privilege access without bespoke server code.
-3. An implementation pattern for offline‑first PWA behaviour in which queued actions are treated as first‑class data with their own lifecycle, enabling idempotent replay through the same code path as online operations.
-4. A verification protocol combining role‑based end‑to‑end scenarios, migration‑level negative testing and multi‑viewport responsive checks that other student engineering projects may reuse.
+## 6.4 Contributions
 
-## 6.4 Recommendations for Future Work
+The study makes three contributions.
 
-Building on the delivered artefact, the following extensions are recommended:
+1. **A working, evaluated reference implementation** — OrangeFlow SL — that jointly addresses BTS rollout coordination, offline‑first field capture, database‑layer least privilege and signed‑URL document delivery, whose combined treatment is not represented in the reviewed literature.
+2. **A concrete demonstration** that Row‑Level Security, coupled with a `SECURITY DEFINER` role oracle and an anti‑self‑escalation trigger, is a sufficient mechanism for role enforcement in a database‑backed workflow system, obviating a class of bespoke server‑side access‑control code.
+3. **A methodological demonstration**, within a Bachelor of Engineering setting, of the end‑to‑end application of software‑engineering, database and security principles to a real operational problem, with each stage — analysis, design, implementation, verification — documented in a form suitable for external review.
 
-1. **Integration with external systems.** Integrating with the operator's Network Operations Centre, Geographic Information System and Enterprise Resource Planning platform would eliminate the remaining manual handovers at the perimeter of the workflow.
-2. **Native mobile shell.** While the installed PWA satisfies present needs, packaging the same codebase as a native iOS and Android application would enable deeper device integration, including background synchronisation and richer offline capabilities.
-3. **Advanced analytics.** The activity log already captures the raw material for descriptive and predictive analytics on rollout throughput, bottlenecks and rejection rates; a dedicated analytics module would surface these insights to management.
-4. **Multi‑tenant expansion.** The role and schema model generalises straightforwardly to other operators and to adjacent utilities workflows. A tenant‑scoped extension would enable the same system to serve multiple organisations from a single deployment.
-5. **Field measurement integration.** Ingesting RF drive‑test data, IoT sensor telemetry and photographic evidence directly from field instruments would further reduce the manual burden on planning and procurement staff.
-6. **Automated financial reconciliation.** Coupling the procurement checklist to the operator's finance ledger would close the loop between operational sign‑off and financial commitment.
+## 6.5 Practical Implications
 
-These extensions, taken together, would evolve OrangeFlow SL from a rollout coordination tool into a full lifecycle management platform for BTS infrastructure in Sierra Leone and comparable markets.
+For Orange Sierra Leone, the delivered system offers the immediate operational benefits catalogued in Section 5.6: an authoritative record per site, a chronological audit trail, computationally enforced role separation, secure document delivery, field usability under intermittent connectivity and real‑time supervisory visibility. For the wider Sierra Leonean information‑and‑communications sector, the delivered system stands as an accessible reference for the digitisation of comparable coordination workflows in the electricity, water and public‑works sectors, all of which share the structural shape of hand‑over between distinct roles and field capture under intermittent connectivity.
+
+## 6.6 Limitations
+
+The following limitations are acknowledged candidly.
+
+- The evaluation was conducted against a live backend with authored role‑based scenarios rather than against a historical corpus of production rollout records.
+- Load testing at operator‑production concurrency was not performed.
+- Behaviour on legacy browsers below the modern evergreen baseline is not characterised.
+- Integration with the operator's finance, billing and network‑operations systems remains out of scope.
+- Formal certification against national or international information‑security standards would require an audit engagement not undertaken here.
+
+## 6.7 Recommendations for Further Work
+
+Six specific extensions are recommended for further work:
+
+1. **Longitudinal field pilot.** Deploy OrangeFlow SL to a bounded pilot region for a bounded pilot period, and measure the change in rollout lead time and audit posture against the pre‑pilot baseline.
+2. **Integration with the operator's finance and network‑operations systems.** Extend the schema and add outbound webhooks so that approved sites propagate automatically into the downstream systems.
+3. **GIS enhancement.** Add a map view over the `sites` table using the existing latitude and longitude fields; layer coverage and terrain information for planning support.
+4. **Analytics module.** Add a dashboard summarising rollout throughput, procurement cycle time and rejection reasons over user‑selected time windows.
+5. **Formal security audit.** Engage an external assessor to conduct penetration testing and to certify the system against a recognised standard.
+6. **Native mobile packaging.** Package the existing PWA for distribution through internal enterprise app catalogues so that installation does not require a browser‑initiated affordance.
+
+## 6.8 Concluding Remarks
+
+The work reported in this dissertation demonstrates that a small, disciplined engineering effort — applied to a well‑characterised operational problem, under a design‑science methodology, and with correct choice of architectural primitives — can produce a system that substantively supersedes the manual workflow it replaces along every operational dimension examined. The delivered artefact, OrangeFlow SL, stands as evidence for that proposition in the specific setting of BTS rollout coordination at Orange Sierra Leone, and as a reference for the digitisation of comparable coordination workflows in the wider national context.
