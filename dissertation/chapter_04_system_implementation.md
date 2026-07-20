@@ -101,20 +101,58 @@ The creation, deletion and role assignment of user accounts require the service 
 
 The front end is organised around a small set of composable components. `DashboardLayout` renders the outer chrome — header, navigation and content region — that is common to every dashboard route. `SiteMonitorTable` renders the tabular view of sites; `ProcSubmissionDetails` renders the nine‑point checklist and its evidentiary uploads; `StatCard` and `StatusBadge` supply the atomic presentational elements from which the dashboards are composed. Data acquisition is centralised on TanStack Query, whose caching, background refetching and stale‑while‑revalidate semantics give the dashboards their thirty‑second refresh cadence without additional bespoke code.
 
-## 4.11 Notifications and the Activity Log
+## 4.11 Web‑Based User Interface Implementation
+
+Building upon the front‑end component architecture, the user interface (UI) for OrangeFlow SL operationalises the role‑based workflows into dedicated web dashboards. Designed with a responsive, high‑contrast interface optimised for both desktop and mobile field deployments, the UI directly mirrors the operational division of responsibilities across telecom rollout teams.
+
+### 4.11.1 Planning Engineer Workspace and Candidate Submission
+
+The Planning Dashboard (`src/pages/PlanningDashboard.tsx`) serves as the ingestion point for candidate base station sites. Planning engineers enter key technical metadata (Site ID, GPS coordinates, tower height and power configurations) and upload primary site survey documentation.
+
+![Figure 4.1 — Planning Engineer Site Submission UI](../public/dissertation/ui_planning_workspace.svg)
+
+*Figure 4.1 — Planning Engineer workspace displaying site parameter inputs, coordinate validation and survey document drag‑and‑drop upload zone.*
+
+### 4.11.2 Procurement Dashboard and 9‑Point Compliance Checklist
+
+The Procurement Dashboard (`src/pages/ProcurementDashboard.tsx`) renders the `ProcSubmissionDetails` component. It exposes an interactive nine‑point compliance panel where procurement officers verify site lease agreements, vendor contracts and land acquisition approvals using paired boolean toggles and file viewers.
+
+![Figure 4.2 — Procurement 9-Point Compliance Checklist UI](../public/dissertation/ui_procurement_checklist.svg)
+
+*Figure 4.2 — Interactive nine‑point compliance audit interface with evidentiary document attachment links and pass/fail verification switches.*
+
+### 4.11.3 Administrator Dashboard and Lifecycle Pipeline
+
+The Administrator Dashboard (`src/pages/AdminDashboard.tsx`) provides high‑level project managers with complete oversight of all candidate sites across the rollout lifecycle. It incorporates `SiteMonitorTable` alongside quantitative metric widgets to track approval velocities and surface bottlenecks across operational teams.
+
+![Figure 4.3 — Administrator Pipeline Monitoring UI](../public/dissertation/ui_admin_pipeline.svg)
+
+*Figure 4.3 — Administrative overview displaying global rollout status, multi‑site filter controls and user access management tables.*
+
+#### Table 4.2 — Summary of OrangeFlow SL Front‑End Interfaces and Key Functionality
+
+| View / Module | Route Location | Target User Role | Key Visual Components | Primary Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **Login & Auth** | `/login` | Unauthenticated Users | Auth form, validation alerts | Secure JWT token authentication. |
+| **Planning Workspace** | `/planning` | `planning_team` | Candidate form, Upload zone | Site entry and technical survey submission. |
+| **Procurement Workspace** | `/procurement` | `procurement_team` | 9‑Point checklist, PDF viewer | Compliance review and document auditing. |
+| **Admin Pipeline** | `/admin` | `project_team` | `SiteMonitorTable`, `StatCard` | Global pipeline tracking and user administration. |
+| **Header / Navigation** | Global | All Roles | `DashboardLayout`, Offline badge | Role switching, user profile info, offline sync status. |
+
+## 4.12 Notifications and the Activity Log
 
 Every state transition — site submission, checklist completion, approval, rejection — writes a row to `activity_log` and dispatches a notification to the recipient user. The notifications table is subscribed to by each dashboard via the client library's real‑time channels, so that the recipient's dashboard updates without a manual reload.
 
-## 4.12 Testing and Verification
+## 4.13 Testing and Verification
 
 Testing was conducted along the four axes defined in Chapter Three. For **functional** verification, each functional requirement was exercised through a role‑based scenario against a live backend; the results are reported in Chapter Five. For **security** verification, RLS policies were exercised through negative testing, and the migration‑level policy set was inspected to confirm that the enforced restrictions persist independently of any particular version of the client code. The `prevent_role_self_escalation` trigger was exercised by attempting, as an authenticated non‑administrator, to insert a row into `user_roles` granting oneself the administrator role; the operation was refused as required. For **offline** verification, the network was disabled at the browser level, writable operations were performed, the resulting IndexedDB queue was inspected under the browser developer tools, and the network was subsequently re‑enabled; the queue was observed to drain in insertion order and the corresponding rows to appear in the database. For **responsive** verification, the interface was rendered at 390, 820 and 1440 CSS pixels and inspected for horizontal overflow, clipping and legibility.
 
 Beyond the four‑axis strategy, a lightweight Vitest suite exercises pure helper functions in isolation, and Playwright was driven from the shell to capture visual evidence for the responsive strand. The generated diagrams referenced throughout Chapter Three were themselves verified to scale fluidly to all three viewport widths without clipping.
 
-## 4.13 Deployment
+## 4.14 Deployment
 
 The application is deployed as a PWA served over HTTPS from a globally distributed edge, with the backend hosted on the managed platform in the same region. The service worker is generated by `vite-plugin-pwa` at build time and caches the application shell for offline first paint. The `manifest.json` declares the installability metadata (name, short name, theme colour, icons) required for the browser to offer the "install" affordance. Deployment is automated from the trunk branch of the source repository.
 
-## 4.14 Chapter Summary
+## 4.15 Chapter Summary
 
-This chapter documented the implementation of OrangeFlow SL: the repository organisation, the database schema, the role‑resolution helpers and self‑escalation trigger, the Row‑Level Security policies, the storage and signed‑URL delivery pipeline, the authentication and route‑guarding surface, the offline capture and reconciliation mechanism, the privileged Edge Function for user management, the front‑end component architecture and the testing and deployment posture. The empirical results obtained from the testing strategy set out here are reported in Chapter Five.
+This chapter documented the implementation of OrangeFlow SL: the repository organisation, the database schema, the role‑resolution helpers and self‑escalation trigger, the Row‑Level Security policies, the storage and signed‑URL delivery pipeline, the authentication and route‑guarding surface, the offline capture and reconciliation mechanism, the privileged Edge Function for user management, the front‑end component architecture, the web‑based user interface implementation across the Planning, Procurement and Administrator dashboards, and the testing and deployment posture. The empirical results obtained from the testing strategy set out here are reported in Chapter Five.
