@@ -154,7 +154,7 @@ export default function RolloutDashboard() {
   };
 
   return (
-    <AuthGuard allowedRoles={['rollout_team']}>
+    <AuthGuard allowedRoles={['rollout_team', 'project_team']}>
       <DashboardLayout title="Rollout Dashboard" navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab}>
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
