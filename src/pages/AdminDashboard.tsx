@@ -24,10 +24,56 @@ import { formatDistanceToNow } from 'date-fns';
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
   { label: 'Site Monitor', icon: TableProperties, value: 'monitor' },
-  { label: 'Site Approvals', icon: CheckSquare, value: 'approvals' },
-  { label: 'User Management', icon: Users, value: 'users' },
+  { label: 'Planning Review', icon: ClipboardList, value: 'approvals' },
   { label: 'Procurement Review', icon: FileCheck, value: 'procurement' },
+  { label: 'Power Review', icon: Zap, value: 'power_review' },
+  { label: 'Rollout Review', icon: HardHat, value: 'rollout_review' },
+  { label: 'User Management', icon: Users, value: 'users' },
   { label: 'Activity Log', icon: Activity, value: 'activity' },
+];
+
+// Parse extended JSON stored in sites.review_notes
+const parseExt = (site: any): { power: any; rollout: any; admin: any } => {
+  try {
+    const obj = site?.review_notes ? JSON.parse(site.review_notes) : {};
+    if (obj && typeof obj === 'object' && ('power' in obj || 'rollout' in obj || 'admin' in obj)) {
+      return { power: obj.power || {}, rollout: obj.rollout || {}, admin: obj.admin || {} };
+    }
+  } catch { /* not JSON */ }
+  return { power: {}, rollout: {}, admin: {} };
+};
+
+const powerFieldLabels: [string, (s: any, ext: any) => any][] = [
+  ['Primary Power Source', (s) => s.power_source],
+  ['Power Requirement (kW)', (s) => s.power_requirement],
+  ['Grid Transformer Capacity', (s) => s.grid_transformer_capacity],
+  ['EDSA Meter Number', (_s, ext) => ext.edsa_meter_number],
+  ['Generator Capacity (kVA)', (s) => s.generator_capacity],
+  ['Generator Model & Fuel Tank', (_s, ext) => ext.generator_model_fuel],
+  ['Solar Array Capacity (kWp)', (s) => s.solar_capacity],
+  ['Solar Controller / Rectifier', (_s, ext) => ext.solar_controller_model],
+  ['Backup Power Type', (_s, ext) => ext.backup_power_type],
+  ['Battery Bank Type', (s) => s.battery_bank_type],
+  ['Battery Banks & Ah', (_s, ext) => ext.battery_config],
+  ['Earthing Resistance (Ω)', (s) => s.earthing_resistance],
+  ['Power RFI Status', (s) => s.power_rfi_status],
+  ['Power Quality Inspection Date', (_s, ext) => ext.power_quality_date],
+];
+
+const rolloutFieldLabels: [string, (s: any, ext: any) => any][] = [
+  ['Scope', (s) => s.scope],
+  ['Vendor Name', (s) => s.vendor_name],
+  ['T&I Contractor', (_s, ext) => ext.ti_contractor],
+  ['Project Manager', (_s, ext) => ext.project_manager],
+  ['Handover to Vendor', (s) => s.handover_to_vendor],
+  ['Soil Test', (s) => s.soil_test],
+  ['Site Implementation Design', (s) => s.site_implementation_design],
+  ['Cast Status', (s) => s.cast_status],
+  ['Tower Rig', (s) => s.tower_rig],
+  ['Civil RFI', (s) => s.civil_rfi],
+  ['Power RFI', (s) => s.power_rfi],
+  ['On Air', (s) => s.on_air],
+  ['Progress %', (s) => s.progress_percent],
 ];
 
 type Site = any;
