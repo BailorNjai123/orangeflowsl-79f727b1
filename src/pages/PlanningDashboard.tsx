@@ -340,6 +340,10 @@ export default function PlanningDashboard() {
             <Input id="earthing_resistance" name="earthing_resistance" type="number" placeholder="e.g. 5" defaultValue={editSite?.earthing_resistance || ''} />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="earthing_resistance">Earthing Resistance (Ohm)</Label>
+            <Input id="earthing_resistance" name="earthing_resistance" type="number" placeholder="e.g. 5" defaultValue={editSite?.earthing_resistance || ''} />
+          </div>
+          <div className="space-y-2">
             <Label>Antenna Type</Label>
             <Select name="antenna_type" defaultValue={editSite?.antenna_type || ''}>
               <SelectTrigger><SelectValue placeholder="Select antenna type" /></SelectTrigger>
@@ -358,24 +362,6 @@ export default function PlanningDashboard() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="power_requirement">Power Requirement (kW)</Label>
-            <Input id="power_requirement" name="power_requirement" placeholder="e.g. 5 or 5.5" defaultValue={editSite?.power_requirement || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label>Power Source</Label>
-            <Select name="power_source" defaultValue={editSite?.power_source || ''}>
-              <SelectTrigger><SelectValue placeholder="Select power source" /></SelectTrigger>
-              <SelectContent>{powerSources.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Backup Power</Label>
-            <Select name="backup_power" defaultValue={editSite?.backup_power || ''}>
-              <SelectTrigger><SelectValue placeholder="Select backup power" /></SelectTrigger>
-              <SelectContent>{backupPowerOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
             <Label>Equipment Shelter</Label>
             <Select name="equipment_shelter" defaultValue={editSite?.equipment_shelter || ''}>
               <SelectTrigger><SelectValue placeholder="Select shelter type" /></SelectTrigger>
@@ -384,6 +370,7 @@ export default function PlanningDashboard() {
           </div>
         </CardContent>
       </Card>
+
 
       {/* Project & Vendor Details */}
       <Card>
