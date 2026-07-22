@@ -878,6 +878,8 @@ export default function AdminDashboard() {
         {activeTab === 'approvals' && renderApprovals()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'procurement' && renderProcurement()}
+        {activeTab === 'power_review' && renderStageReviewList('power')}
+        {activeTab === 'rollout_review' && renderStageReviewList('rollout')}
         {activeTab === 'activity' && renderActivity()}
       </DashboardLayout>
     </AuthGuard>
