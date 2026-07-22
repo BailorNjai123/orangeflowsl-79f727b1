@@ -151,7 +151,7 @@ export default function PlanningDashboard() {
       cast_status: get('cast_status') || 'Not Started',
       tower_rig: get('tower_rig') || 'Not Started',
       civil_rfi: get('civil_rfi') || 'Not Started',
-      power_rfi: get('power_rfi') || 'Not Started',
+      
       on_air: get('on_air') || 'Not Started',
       notes: get('notes') || null,
       submitted_by: user!.id,
