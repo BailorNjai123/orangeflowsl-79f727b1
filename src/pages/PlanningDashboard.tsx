@@ -511,7 +511,7 @@ export default function PlanningDashboard() {
   );
 
   return (
-    <AuthGuard allowedRoles={['planning_team']}>
+    <AuthGuard allowedRoles={['planning_team', 'project_team']}>
       <DashboardLayout title="Planning Dashboard" navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab}>
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'submit' && renderSubmitForm()}
