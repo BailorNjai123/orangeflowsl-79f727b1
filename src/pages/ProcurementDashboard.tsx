@@ -398,13 +398,18 @@ export default function ProcurementDashboard() {
     </div>
   );
 
-  if (loading) {
-    return (
-      <AuthGuard allowedRoles={['procurement_team', 'project_team']}>
+  return (
+    <AuthGuard allowedRoles={['procurement_team', 'project_team']}>
       <DashboardLayout title="Procurement Dashboard" navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab}>
-        {activeTab === 'dashboard' && renderDashboard()}
-        {activeTab === 'feedback' && renderFeedback()}
-        {activeTab === 'submissions' && renderSubmissions()}
+        {loading ? (
+          <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        ) : (
+          <>
+            {activeTab === 'dashboard' && renderDashboard()}
+            {activeTab === 'feedback' && renderFeedback()}
+            {activeTab === 'submissions' && renderSubmissions()}
+          </>
+        )}
       </DashboardLayout>
 
       {/* Submission Detail Dialog */}
@@ -434,4 +439,5 @@ export default function ProcurementDashboard() {
       </Dialog>
     </AuthGuard>
   );
+}
 }
