@@ -318,28 +318,6 @@ export default function PlanningDashboard() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Power Backup Type</Label>
-            <Select name="power_backup_type" defaultValue={editSite?.power_backup_type || ''}>
-              <SelectTrigger><SelectValue placeholder="Select backup" /></SelectTrigger>
-              <SelectContent>{powerBackupTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Battery Bank Type</Label>
-            <Select name="battery_bank_type" defaultValue={editSite?.battery_bank_type || ''}>
-              <SelectTrigger><SelectValue placeholder="Select battery" /></SelectTrigger>
-              <SelectContent>{batteryBankTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="number_of_battery_banks">Number of Battery Banks</Label>
-            <Input id="number_of_battery_banks" name="number_of_battery_banks" type="number" placeholder="e.g. 2" defaultValue={editSite?.number_of_battery_banks || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="earthing_resistance">Earthing Resistance (Ohm)</Label>
-            <Input id="earthing_resistance" name="earthing_resistance" type="number" placeholder="e.g. 5" defaultValue={editSite?.earthing_resistance || ''} />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="earthing_resistance">Earthing Resistance (Ohm)</Label>
             <Input id="earthing_resistance" name="earthing_resistance" type="number" placeholder="e.g. 5" defaultValue={editSite?.earthing_resistance || ''} />
           </div>
