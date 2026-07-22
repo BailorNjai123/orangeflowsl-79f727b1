@@ -106,6 +106,8 @@ export default function AdminDashboard() {
   const [showNewPw, setShowNewPw] = useState(false);
   const [showResetPwVisible, setShowResetPwVisible] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [stageReview, setStageReview] = useState<{ site: any; stage: 'power' | 'rollout' } | null>(null);
+  const [stageNotes, setStageNotes] = useState('');
 
   const { user, profile, session } = useAuth();
   const { toast } = useToast();
