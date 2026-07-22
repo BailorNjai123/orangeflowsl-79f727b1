@@ -25,21 +25,11 @@ const navItems = [
 const towerTypes = ['3-Leg', '4-Leg', 'Monopole'];
 const towerMaterials = ['Steel', 'Concrete'];
 const transmissionTypes = ['Microwave', 'Fiber', 'Satellite'];
-const powerBackupTypes = ['Solar', 'Generator', 'Hybrid'];
-const batteryBankTypes = ['Lithium', 'Lead-acid'];
 const currentPhases = ['Planning', 'Foundation', 'Tower Erection', 'Integration'];
 const siteTypes = ['Greenfield', 'Rooftop', 'Indoor', 'COW'];
 const terrainTypes = ['Flat', 'Hilly', 'Swampy', 'Coastal'];
 const accessRoadConditions = ['Good', 'Fair', 'Poor', 'No Road'];
 const antennaTypes = ['Omni', 'Sector', 'Directional'];
-const powerSources = [
-  'Solar – Gen – EDSA/Grid and Batteries',
-  'Solar, Gen and Batteries',
-  'Gen and Batteries',
-  'Solar Only',
-  'Gen, EDSA/Grid and Batteries'
-];
-const backupPowerOptions = ['Generator', 'Battery', 'Solar', 'None'];
 const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
 const siteConfigurations = ['Standalone', 'Co-located', 'Rooftop', 'Underground', 'Hybrid'];
 const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
