@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { LayoutDashboard, Plus, FileText, Radio, MapPin, Building2, Loader2, Settings2, Paperclip } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import * as XLSX from 'xlsx';
+import {
+  LayoutDashboard, Plus, FileText, Radio, Loader2, Upload, Save, ShieldCheck, Send,
+  MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone,
+} from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
@@ -9,9 +12,11 @@ import StatusBadge from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,31 +27,194 @@ const navItems = [
   { label: 'My Submissions', icon: FileText, value: 'submissions' },
 ];
 
-const towerTypes = ['3-Leg', '4-Leg', 'Monopole'];
-const towerMaterials = ['Steel', 'Concrete'];
-const transmissionTypes = ['Microwave', 'Fiber', 'Satellite'];
-const currentPhases = ['Planning', 'Foundation', 'Tower Erection', 'Integration'];
-const siteTypes = ['Greenfield', 'Rooftop', 'Indoor', 'COW'];
-const terrainTypes = ['Flat', 'Hilly', 'Swampy', 'Coastal'];
-const accessRoadConditions = ['Good', 'Fair', 'Poor', 'No Road'];
-const antennaTypes = ['Omni', 'Sector', 'Directional'];
-const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
-const siteConfigurations = ['Standalone', 'Co-located', 'Rooftop', 'Underground', 'Hybrid'];
-const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
-const scopeOptions = ['New Site', 'Upgrade', 'Swap', 'Expansion'];
+// ----- Dropdown option sets -----
+const REGIONS = ['Western Area', 'Northern', 'Southern', 'Eastern'];
+const DISTRICTS = ['Western Area Urban','Western Area Rural','Bo','Kenema','Makeni','Port Loko','Tonkolili','Bombali','Kono','Kambia','Koinadugu','Kailahun','Moyamba','Pujehun','Bonthe','Falaba','Karene'];
+const SITE_CLASSIFICATION = ['Platinum','Gold','Silver','Bronze'];
+const NATCA_CLASS = ['Urban Area','Sub-urban','Rural'];
+const OWNER_STATUS = ['Own','Shared with ONS & DIAKEM','Colocated'];
+const SITE_TYPES = ['Greenfield','Rooftop'];
+const TECH_OPTIONS = ['2G','3G','4G','5G'] as const;
+const TOWER_TYPES = ['Monopole','Self-Supporting Lattice','Guyed Tower'];
+const TOWER_MATERIALS = ['Galvanized Steel','Tubular Steel'];
+const TERRAIN_TYPES = ['Flat','Hilly','Coastal','Rocky'];
+const ACCESS_ROAD = ['Paved','Unpaved','Seasonal/4x4 Required'];
+const SHELTER_TYPES = ['Outdoor Cabinet','Concrete Shelter','Prefab Shelter'];
+const HIGH_SPEED = ['LOW_SPEED','HIGH_SPEED'];
+const CELL_2G_TYPE = ['Normal_cell','Micro_cell','Macro_cell'];
+const FREQ_BAND_2G = ['G900','G1800','G900/G1800'];
+const TXRX_3G = ['1T1R','1T2R','2T2R','2T4R','4T4R'];
+const TXRX_4G = ['2T2R','4T4R','8T8R','32T32R','64T64R'];
+const FREQ_BAND_4G = ['L800','L900','L1800','L2100','L2600'];
+const BW_4G = ['CELL_BW_N15','CELL_BW_N25','CELL_BW_N50','CELL_BW_N75','CELL_BW_N100'];
+const FDD_TDD = ['CELL_FDD','CELL_TDD'];
+const YES_NO = ['YES','NO'];
 
-type SiteRow = {
-  id: string;
-  site_id_code: string;
-  site_name: string;
-  region: string;
-  district: string;
-  town: string;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-  review_notes: string | null;
-  [key: string]: any;
+// ----- Field definitions per module -----
+type FieldType = 'text'|'number'|'date'|'select';
+interface FieldDef { key: string; label: string; type: FieldType; options?: readonly string[]; required?: boolean; placeholder?: string; }
+
+const MOD1: FieldDef[] = [
+  { key: 'site_id_code', label: 'Site ID Code', type: 'text', required: true, placeholder: 'SL0001' },
+  { key: 'site_name', label: 'Site Name', type: 'text', required: true, placeholder: 'SL0001_WILBERFORCE' },
+  { key: 'region', label: 'Region', type: 'select', options: REGIONS, required: true },
+  { key: 'district', label: 'District', type: 'select', options: DISTRICTS, required: true },
+  { key: 'chiefdom', label: 'Chiefdom', type: 'text' },
+  { key: 'town', label: 'Town / City / Location', type: 'text', required: true },
+  { key: 'location_updated', label: 'Location Updated', type: 'date' },
+  { key: 'latitude', label: 'Latitude', type: 'number', required: true, placeholder: '8.4657' },
+  { key: 'longitude', label: 'Longitude', type: 'number', required: true, placeholder: '-13.2317' },
+  { key: 'elevation', label: 'Elevation (m)', type: 'number' },
+  { key: 'dimensions', label: 'Dimensions (m)', type: 'text', placeholder: '15x15' },
+  { key: 'distance_nearest_bts', label: 'Distance from Nearest BTS (km)', type: 'number' },
+];
+
+const MOD2_SELECTS: FieldDef[] = [
+  { key: 'site_classification', label: 'Site Classification', type: 'select', options: SITE_CLASSIFICATION },
+  { key: 'natca_classification', label: 'NAtCa Sites Classification', type: 'select', options: NATCA_CLASS },
+  { key: 'owner_sharing_status', label: 'Owner / Site Sharing Status', type: 'select', options: OWNER_STATUS },
+  { key: 'site_type', label: 'Site Type', type: 'select', options: SITE_TYPES },
+];
+
+const MOD3: FieldDef[] = [
+  { key: 'tower_height', label: 'Tower Height (m)', type: 'number', required: true },
+  { key: 'tower_type', label: 'Tower Type', type: 'select', options: TOWER_TYPES },
+  { key: 'tower_material', label: 'Tower Material', type: 'select', options: TOWER_MATERIALS },
+  { key: 'foundation_depth', label: 'Foundation Depth (cm)', type: 'number' },
+  { key: 'terrain_type', label: 'Terrain Type', type: 'select', options: TERRAIN_TYPES },
+  { key: 'access_road_condition', label: 'Access Road Condition', type: 'select', options: ACCESS_ROAD },
+  { key: 'equipment_shelter', label: 'Equipment Shelter Type', type: 'select', options: SHELTER_TYPES },
+];
+
+const MOD4: FieldDef[] = [
+  { key: 'antenna_type', label: 'Antenna Type', type: 'text' },
+  { key: 'number_of_antennas', label: 'Number of Antennas', type: 'number' },
+  { key: 'rru_model', label: 'RRU Type / Model', type: 'text' },
+  { key: 'rf_antenna_height', label: 'RF Antenna Height (m)', type: 'number' },
+  { key: 'rf_azimuth', label: 'RF Antenna Azimuth (deg)', type: 'number', placeholder: '0–360' },
+  { key: 'rf_mechanical_tilt', label: 'RF Mechanical Tilt (deg)', type: 'number' },
+  { key: 'rf_electrical_tilt', label: 'RF Electrical Tilt (deg)', type: 'number' },
+  { key: 'cluster_id', label: 'Cluster ID', type: 'text' },
+  { key: 'high_speed_flag', label: 'High Speed Flag', type: 'select', options: HIGH_SPEED },
+];
+
+const MOD5_2G: FieldDef[] = [
+  { key: '2g_bsc_name', label: '2G NE Name / BSC Name', type: 'text' },
+  { key: '2g_bts_id', label: '2G BTS ID', type: 'number' },
+  { key: '2g_cell_name', label: '2G Cell Name', type: 'text' },
+  { key: '2g_cell_id', label: '2G Cell ID', type: 'number' },
+  { key: '2g_cell_type', label: '2G Cell Type', type: 'select', options: CELL_2G_TYPE },
+  { key: '2g_freq_band', label: 'Frequency Band', type: 'select', options: FREQ_BAND_2G },
+  { key: 'g900_trx', label: 'G900 TRX Number', type: 'number' },
+  { key: 'g1800_trx', label: 'G1800 TRX Number', type: 'number' },
+  { key: '2g_bcch_ncc_bcc', label: '2G BCCH, NCC, BCC', type: 'text' },
+  { key: 'hsn_ma_maio_900', label: 'HSN_900M, MA_900, MAIO_900M', type: 'text' },
+  { key: 'hsn_ma_maio_1800', label: 'HSN_1800M, MA_1800, MAIO_1800M', type: 'text' },
+  { key: 'bch_sdcch_pdtch', label: 'BCH, SDCCH, PDTCH Channels', type: 'text' },
+  { key: 'tx_power_powt', label: 'Transmitter Power (POWT, dBm)', type: 'number' },
+  { key: '2g_identifiers', label: '2G Identifiers (MCC, MNC, LAC, RAC, CGI)', type: 'text' },
+];
+
+const MOD6_3G: FieldDef[] = [
+  { key: '3g_rnc', label: '3G RNC Name & RNC ID', type: 'text' },
+  { key: '3g_nodeb', label: '3G NodeB Name & NodeB ID', type: 'text' },
+  { key: '3g_cell', label: '3G Cell Name & Cell ID', type: 'text' },
+  { key: '3g_max_pilot_power', label: 'Max Power & Pilot Power (0.1dBm)', type: 'text' },
+  { key: '3g_psc', label: 'Primary Scrambling Code (PSC)', type: 'number' },
+  { key: '3g_txrx', label: '3G TxRxMode', type: 'select', options: TXRX_3G },
+  { key: '3g_dl_bw_earfcn', label: '3G DL Bandwidth & DL EARFCN', type: 'text' },
+  { key: '3g_identifiers', label: '3G Identifiers (MCC, MNC, LAC, RAC, SAC, CGI)', type: 'text' },
+];
+
+const MOD7_4G: FieldDef[] = [
+  { key: '4g_enodeb', label: '4G eNodeB Name & eNodeB ID', type: 'text' },
+  { key: '4g_cell', label: '4G Cell Name, Cell ID & Local Cell ID', type: 'text' },
+  { key: '4g_rs_pa_pb', label: 'RS Power (0.1dBm), PA, PB', type: 'text' },
+  { key: '4g_massive_mimo', label: 'Massive MIMO Cell & 4T6S Flag', type: 'select', options: YES_NO },
+  { key: '4g_fdd_tdd', label: 'Cell FDD / TDD Indication', type: 'select', options: FDD_TDD },
+  { key: '4g_txrx', label: '4G TxRxMode', type: 'select', options: TXRX_4G },
+  { key: '4g_freq_band', label: '4G Frequency Band', type: 'select', options: FREQ_BAND_4G },
+  { key: '4g_dl_ul_bw', label: '4G DL & UL Bandwidth', type: 'select', options: BW_4G },
+  { key: '4g_dl_earfcn', label: '4G DL EARFCN', type: 'number' },
+  { key: '4g_tac_pci_root', label: 'TAC, PCI, Root Sequence Index', type: 'text' },
+  { key: '4g_cell_radius', label: 'Cell Radius (m)', type: 'number' },
+  { key: '4g_identifiers', label: '4G Identifiers (ECI, ECGI, MCC, MNC)', type: 'text' },
+];
+
+// Columns actually present on the `sites` table — safe to write directly.
+const NATIVE_COLS = new Set([
+  'site_id_code','site_name','region','district','town','dimensions','tower_height',
+  'foundation_depth','elevation','distance_nearest_bts','latitude','longitude',
+  'tower_type','tower_material','antenna_type','number_of_antennas',
+  'equipment_shelter','site_type','terrain_type','access_road_condition',
+]);
+
+type FormState = Record<string, any> & { technology_classification?: string[] };
+
+type SiteRow = { id: string; site_id_code: string; site_name: string; region: string; district: string; town: string; status: 'pending'|'approved'|'rejected'; created_at: string; review_notes: string | null; notes?: string | null; [k: string]: any; };
+
+const emptyState: FormState = { technology_classification: [] };
+
+// Normalize an Excel header cell to a lookup key.
+const normKey = (s: any) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+// Map normalized header aliases -> internal field key.
+const HEADER_ALIASES: Record<string, string> = {
+  site_id: 'site_id_code', site_id_code: 'site_id_code', siteid: 'site_id_code',
+  site_name: 'site_name', name: 'site_name',
+  region: 'region', district: 'district', chiefdom: 'chiefdom', town: 'town', city: 'town', location: 'town',
+  latitude: 'latitude', lat: 'latitude', longitude: 'longitude', lon: 'longitude', long: 'longitude',
+  elevation: 'elevation', elevation_m: 'elevation',
+  dimensions: 'dimensions', dimensions_m: 'dimensions',
+  distance_from_nearest_bts: 'distance_nearest_bts', distance_nearest_bts: 'distance_nearest_bts',
+  tower_height: 'tower_height', tower_height_m: 'tower_height',
+  tower_type: 'tower_type', tower_material: 'tower_material',
+  foundation_depth: 'foundation_depth', foundation_depth_cm: 'foundation_depth',
+  terrain_type: 'terrain_type', access_road_condition: 'access_road_condition',
+  equipment_shelter: 'equipment_shelter', equipment_shelter_type: 'equipment_shelter',
+  antenna_type: 'antenna_type', number_of_antennas: 'number_of_antennas',
+  site_type: 'site_type', site_classification: 'site_classification',
+  natca_sites_classification: 'natca_classification', natca_classification: 'natca_classification',
+  owner_site_sharing_status: 'owner_sharing_status', owner_sharing_status: 'owner_sharing_status',
 };
+
+function parseWorkbookIntoState(wb: XLSX.WorkBook): Partial<FormState> {
+  const collected: Record<string, any> = {};
+  wb.SheetNames.forEach((name) => {
+    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets[name], { defval: '' });
+    if (!rows.length) return;
+    // Support both column-oriented (headers in row 1) and key-value (first col = key, second = value).
+    const first = rows[0];
+    const cols = Object.keys(first);
+    const looksKV = cols.length === 2 && rows.every(r => typeof Object.values(r)[0] === 'string');
+    if (looksKV) {
+      rows.forEach(r => {
+        const [k, v] = Object.values(r) as [any, any];
+        const key = HEADER_ALIASES[normKey(k)] ?? normKey(k);
+        if (key && (v !== '' && v != null) && collected[key] == null) collected[key] = v;
+      });
+    } else {
+      // Take the first non-empty row.
+      const row = rows.find(r => Object.values(r).some(v => v !== '' && v != null)) || first;
+      Object.entries(row).forEach(([h, v]) => {
+        const key = HEADER_ALIASES[normKey(h)] ?? normKey(h);
+        if (key && (v !== '' && v != null) && collected[key] == null) collected[key] = v;
+      });
+    }
+    // Sheet-name hints for RAN sheets: mark tech as present if data found there.
+    const upper = name.toUpperCase();
+    if (rows.length && /2G/.test(upper)) collected.__tech_2g = true;
+    if (rows.length && /3G/.test(upper)) collected.__tech_3g = true;
+    if (rows.length && /4G|LTE/.test(upper)) collected.__tech_4g = true;
+  });
+  const tech: string[] = [];
+  if (collected.__tech_2g) tech.push('2G');
+  if (collected.__tech_3g) tech.push('3G');
+  if (collected.__tech_4g) tech.push('4G');
+  delete collected.__tech_2g; delete collected.__tech_3g; delete collected.__tech_4g;
+  if (tech.length) collected.technology_classification = tech;
+  return collected;
+}
 
 export default function PlanningDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -54,146 +222,157 @@ export default function PlanningDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
-  
   const [viewSite, setViewSite] = useState<SiteRow | null>(null);
+  const [form, setForm] = useState<FormState>(emptyState);
+  const importRef = useRef<HTMLInputElement>(null);
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
+  const setField = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }));
+
   const fetchSites = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from('sites')
-      .select('*')
-      .eq('submitted_by', user.id)
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('sites').select('*').eq('submitted_by', user.id).order('created_at', { ascending: false });
     if (!error && data) setSites(data as SiteRow[]);
     setLoading(false);
   };
-
   useEffect(() => { fetchSites(); }, [user]);
+
+  // Hydrate form when editing.
+  useEffect(() => {
+    if (!editSite) { setForm(emptyState); return; }
+    let extended: Record<string, any> = {};
+    try {
+      const raw = editSite.notes || '';
+      const m = raw.match(/<<PLANNING_JSON>>([\s\S]*?)<<END>>/);
+      if (m) extended = JSON.parse(m[1]);
+    } catch { /* ignore malformed */ }
+    const hydrated: FormState = { technology_classification: [], ...extended };
+    Object.keys(editSite).forEach(k => { if (editSite[k] != null && NATIVE_COLS.has(k)) hydrated[k] = editSite[k]; });
+    setForm(hydrated);
+  }, [editSite]);
 
   const pending = sites.filter(s => s.status === 'pending').length;
   const approved = sites.filter(s => s.status === 'approved').length;
   const rejected = sites.filter(s => s.status === 'rejected').length;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const tech = form.technology_classification || [];
+  const has = (t: string) => tech.includes(t);
+  const toggleTech = (t: string) => setField('technology_classification', has(t) ? tech.filter(x => x !== t) : [...tech, t]);
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const parsed = parseWorkbookIntoState(wb);
+      setForm(prev => ({ ...prev, ...parsed }));
+      toast({ title: 'Import complete', description: `Populated ${Object.keys(parsed).length} field(s) from ${file.name}.` });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Import failed', description: err?.message || 'Could not read the workbook.' });
+    } finally {
+      if (importRef.current) importRef.current.value = '';
+    }
+  };
+
+  const validateSchema = (): { ok: boolean; missing: string[] } => {
+    const missing: string[] = [];
+    [...MOD1, ...MOD3].forEach(f => { if (f.required && (form[f.key] == null || form[f.key] === '')) missing.push(f.label); });
+    if (!tech.length) missing.push('Technology Classification');
+    return { ok: missing.length === 0, missing };
+  };
+
+  const runValidate = () => {
+    const { ok, missing } = validateSchema();
+    if (ok) toast({ title: 'Schema valid', description: 'All required fields are populated.' });
+    else toast({ variant: 'destructive', title: `${missing.length} required field(s) missing`, description: missing.slice(0, 6).join(', ') });
+  };
+
+  const buildPayload = (status: 'pending') => {
+    const native: Record<string, any> = { submitted_by: user!.id, status };
+    NATIVE_COLS.forEach(col => {
+      const v = form[col];
+      if (v === '' || v == null) return;
+      const numCols = ['tower_height','foundation_depth','elevation','distance_nearest_bts','latitude','longitude','number_of_antennas'];
+      native[col] = numCols.includes(col) ? Number(v) : v;
+    });
+    const extended: Record<string, any> = {};
+    Object.entries(form).forEach(([k, v]) => { if (!NATIVE_COLS.has(k) && v !== '' && v != null) extended[k] = v; });
+    native.notes = `<<PLANNING_JSON>>${JSON.stringify(extended)}<<END>>`;
+    return native;
+  };
+
+  const persist = async (asDraft: boolean) => {
+    if (!user) return;
+    if (!asDraft) {
+      const { ok, missing } = validateSchema();
+      if (!ok) { toast({ variant: 'destructive', title: 'Cannot submit', description: `Missing: ${missing.slice(0, 4).join(', ')}` }); return; }
+    }
     setSubmitting(true);
-    const fd = new FormData(e.currentTarget);
-    const get = (k: string) => fd.get(k)?.toString() || '';
-    const getNum = (k: string) => { const v = fd.get(k)?.toString(); return v ? parseFloat(v) : null; };
-
-    // Handle file uploads
-    const uploadFile = async (fieldName: string): Promise<string | null> => {
-      const file = fd.get(fieldName) as File;
-      if (!file || file.size === 0) return editSite?.[`${fieldName}_url`] || null;
-      
-      const ext = file.name.split('.').pop();
-      const path = `${user!.id}/${Date.now()}_${fieldName}.${ext}`;
-      const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
-      if (error) {
-        if (import.meta.env.DEV) console.error('Upload error:', error);
-        return null;
-      }
-      return path;
-    };
-
-    const [sitePhotoUrl, layoutPlanUrl, approvalLetterUrl] = await Promise.all([
-      uploadFile('site_photo'),
-      uploadFile('layout_plan'),
-      uploadFile('approval_letter'),
-    ]);
-
-    const siteData = {
-      site_id_code: get('site_id_code'),
-      site_name: get('site_name'),
-      region: get('region'),
-      district: get('district'),
-      town: get('town'),
-      dimensions: get('dimensions') || null,
-      tower_height: getNum('tower_height'),
-      foundation_depth: getNum('foundation_depth'),
-      elevation: getNum('elevation'),
-      distance_nearest_bts: getNum('distance_nearest_bts'),
-      latitude: getNum('latitude'),
-      longitude: getNum('longitude'),
-      tower_type: get('tower_type') || null,
-      tower_material: get('tower_material') || null,
-      transmission_type: get('transmission_type') || null,
-      earthing_resistance: getNum('earthing_resistance'),
-      antenna_type: get('antenna_type') || null,
-      number_of_antennas: getNum('number_of_antennas'),
-      site_configuration: get('site_configuration') || null,
-      equipment_shelter: get('equipment_shelter') || null,
-      site_type: get('site_type') || null,
-      terrain_type: get('terrain_type') || null,
-      access_road_condition: get('access_road_condition') || null,
-      vendor_name: get('vendor_name') || null,
-      current_phase: get('current_phase') || null,
-      planned_start_date: get('planned_start_date') || null,
-      target_completion_date: get('target_completion_date') || null,
-      last_inspection_date: get('last_inspection_date') || null,
-      approval_date: get('approval_date') || null,
-      scope: get('scope') || null,
-      handover_to_vendor: get('handover_to_vendor') || null,
-      soil_test: get('soil_test') || 'Not Started',
-      site_implementation_design: get('site_implementation_design') || 'Not Started',
-      cast_status: get('cast_status') || 'Not Started',
-      tower_rig: get('tower_rig') || 'Not Started',
-      civil_rfi: get('civil_rfi') || 'Not Started',
-      
-      on_air: get('on_air') || 'Not Started',
-      notes: get('notes') || null,
-      submitted_by: user!.id,
-      status: 'pending' as const,
-      site_photo_url: sitePhotoUrl,
-      layout_plan_url: layoutPlanUrl,
-      approval_letter_url: approvalLetterUrl,
-    };
-
-    let error;
-    if (editSite) {
-      ({ error } = await supabase.from('sites').update(siteData).eq('id', editSite.id));
-    } else {
-      ({ error } = await supabase.from('sites').insert(siteData));
-    }
-
+    const payload = buildPayload('pending');
+    if (!payload.site_id_code) payload.site_id_code = `DRAFT-${Date.now()}`;
+    if (!payload.site_name) payload.site_name = payload.site_id_code;
+    if (!payload.region) payload.region = 'Western Area';
+    if (!payload.district) payload.district = 'Western Area Urban';
+    if (!payload.town) payload.town = '—';
+    const { error } = editSite
+      ? await supabase.from('sites').update(payload as any).eq('id', editSite.id)
+      : await supabase.from('sites').insert(payload as any);
     setSubmitting(false);
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
-    } else {
-      toast({ title: editSite ? 'Site Updated' : 'Site Submitted', description: 'Your BTS site has been submitted for review.' });
-      setEditSite(null);
-      fetchSites();
-      setActiveTab('submissions');
+    if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
+    toast({ title: asDraft ? 'Draft saved' : (editSite ? 'Submission updated' : 'Submitted for review') });
+    setEditSite(null); setForm(emptyState); fetchSites();
+    if (!asDraft) setActiveTab('submissions');
+  };
+
+  const renderField = (f: FieldDef) => {
+    const val = form[f.key] ?? '';
+    if (f.type === 'select' && f.options) {
+      return (
+        <div key={f.key} className="space-y-2">
+          <Label>{f.label}{f.required && ' *'}</Label>
+          <Select value={val ? String(val) : ''} onValueChange={(v) => setField(f.key, v)}>
+            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+            <SelectContent>{f.options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+      );
     }
+    return (
+      <div key={f.key} className="space-y-2">
+        <Label htmlFor={f.key}>{f.label}{f.required && ' *'}</Label>
+        <Input id={f.key} type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'} step="any" placeholder={f.placeholder} value={val} onChange={e => setField(f.key, e.target.value)} />
+      </div>
+    );
   };
 
-  const startEdit = (site: SiteRow) => {
-    setEditSite(site);
-    setActiveTab('submit');
-  };
-
+  const modules = useMemo(() => ([
+    { id: 'm1', icon: MapPin,       title: 'Module 1 · Basic Site & Location', fields: MOD1, show: true },
+    { id: 'm2', icon: ShieldCheck,  title: 'Module 2 · Governance & Classification', fields: MOD2_SELECTS, show: true, custom: 'tech' as const },
+    { id: 'm3', icon: HardHat,      title: 'Module 3 · Civil & Infrastructure', fields: MOD3, show: true },
+    { id: 'm4', icon: Antenna,      title: 'Module 4 · RF Hardware & Physical Antenna', fields: MOD4, show: true },
+    { id: 'm5', icon: Radio,        title: 'Module 5 · 2G Radio Network', fields: MOD5_2G, show: has('2G') },
+    { id: 'm6', icon: Signal,       title: 'Module 6 · 3G Radio Network', fields: MOD6_3G, show: has('3G') },
+    { id: 'm7', icon: Smartphone,   title: 'Module 7 · 4G LTE Radio Network', fields: MOD7_4G, show: has('4G') },
+  ]), [tech]);
 
   const renderDashboard = () => (
     <div className="space-y-6">
       <div className="rounded-xl gradient-orange p-4 sm:p-5 md:p-6 text-primary-foreground">
         <h2 className="text-lg sm:text-xl font-bold">Welcome, {profile?.full_name || 'Planner'}! 👋</h2>
-        <p className="text-xs sm:text-sm opacity-90 mt-1">Manage your BTS site submissions from here.</p>
+        <p className="text-xs sm:text-sm opacity-90 mt-1">Manage your BTS site planning submissions here.</p>
       </div>
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard title="Total" value={sites.length} icon={Radio} />
         <StatCard title="Pending" value={pending} icon={FileText} color="text-warning" />
         <StatCard title="Approved" value={approved} icon={FileText} color="text-success" />
         <StatCard title="Rejected" value={rejected} icon={FileText} color="text-destructive" />
       </div>
-
       <Card>
         <CardHeader><CardTitle className="text-base">Recent Submissions</CardTitle></CardHeader>
         <CardContent>
           {sites.length === 0 ? (
-            <p className="text-muted-foreground text-sm text-center py-8">No submissions yet. Submit your first BTS site!</p>
+            <p className="text-muted-foreground text-sm text-center py-8">No submissions yet.</p>
           ) : (
             <div className="space-y-3">
               {sites.slice(0, 5).map(site => (
@@ -213,252 +392,68 @@ export default function PlanningDashboard() {
   );
 
   const renderSubmitForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 max-w-3xl">
+    <div className="space-y-4 max-w-5xl">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-lg sm:text-xl font-bold">{editSite ? 'Update Site' : 'Submit New BTS Site'}</h2>
-        {editSite && (
-          <Button type="button" variant="ghost" size="sm" onClick={() => setEditSite(null)}>Cancel Edit</Button>
-        )}
+        <h2 className="text-lg sm:text-xl font-bold">{editSite ? 'Update Planning Submission' : 'New Planning Submission'}</h2>
+        {editSite && <Button variant="ghost" size="sm" onClick={() => setEditSite(null)}>Cancel Edit</Button>}
       </div>
 
-      {/* Basic Info */}
+      {/* Action bar */}
       <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> 📍 Basic Information</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="site_id_code">Site ID Code *</Label>
-            <Input id="site_id_code" name="site_id_code" required placeholder="e.g. SITE003" defaultValue={editSite?.site_id_code || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="site_name">Site Name *</Label>
-            <Input id="site_name" name="site_name" required placeholder="e.g. Lumley Tower" defaultValue={editSite?.site_name || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="region">Region *</Label>
-            <Input id="region" name="region" required placeholder="e.g. Western Area" defaultValue={editSite?.region || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="district">District *</Label>
-            <Input id="district" name="district" required placeholder="e.g. Freetown" defaultValue={editSite?.district || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="town">Town *</Label>
-            <Input id="town" name="town" required placeholder="e.g. Lumley" defaultValue={editSite?.town || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dimensions">Dimensions (m)</Label>
-            <Input id="dimensions" name="dimensions" placeholder="e.g. 15x15" defaultValue={editSite?.dimensions || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tower_height">Tower Height (m) *</Label>
-            <Input id="tower_height" name="tower_height" type="number" required placeholder="e.g. 60" defaultValue={editSite?.tower_height || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="foundation_depth">Foundation Depth (cm)</Label>
-            <Input id="foundation_depth" name="foundation_depth" type="number" placeholder="e.g. 195" defaultValue={editSite?.foundation_depth || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="elevation">Elevation (m)</Label>
-            <Input id="elevation" name="elevation" type="number" placeholder="e.g. 35" defaultValue={editSite?.elevation || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="distance_nearest_bts">Distance from Nearest BTS (km)</Label>
-            <Input id="distance_nearest_bts" name="distance_nearest_bts" type="number" step="0.1" placeholder="e.g. 2.5" defaultValue={editSite?.distance_nearest_bts || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="latitude">Latitude</Label>
-            <Input id="latitude" name="latitude" type="number" step="0.000001" placeholder="e.g. 8.4657" defaultValue={editSite?.latitude || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="longitude">Longitude</Label>
-            <Input id="longitude" name="longitude" type="number" step="0.000001" placeholder="e.g. -13.2317" defaultValue={editSite?.longitude || ''} />
-          </div>
+        <CardContent className="pt-4 flex flex-wrap gap-2">
+          <input ref={importRef} type="file" accept=".xlsx,.xls" hidden onChange={handleImport} />
+          <Button type="button" variant="outline" onClick={() => importRef.current?.click()}>
+            <Upload className="h-4 w-4 mr-2" /> Import from Excel (.xlsx)
+          </Button>
+          <Button type="button" variant="outline" onClick={() => persist(true)} disabled={submitting}>
+            <Save className="h-4 w-4 mr-2" /> Save Draft
+          </Button>
+          <Button type="button" variant="outline" onClick={runValidate}>
+            <ShieldCheck className="h-4 w-4 mr-2" /> Validate Schema
+          </Button>
+          <Button type="button" className="gradient-orange border-0 text-primary-foreground ml-auto" onClick={() => persist(false)} disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+            Submit Planning Data
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Technical Details */}
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Settings2 className="h-4 w-4 text-primary" /> ⚙️ Technical Details</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Tower Type *</Label>
-            <Select name="tower_type" defaultValue={editSite?.tower_type || ''} required>
-              <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-              <SelectContent>{towerTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Tower Material *</Label>
-            <Select name="tower_material" defaultValue={editSite?.tower_material || ''} required>
-              <SelectTrigger><SelectValue placeholder="Select material" /></SelectTrigger>
-              <SelectContent>{towerMaterials.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Transmission Type</Label>
-            <Select name="transmission_type" defaultValue={editSite?.transmission_type || ''}>
-              <SelectTrigger><SelectValue placeholder="Select transmission" /></SelectTrigger>
-              <SelectContent>{transmissionTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="earthing_resistance">Earthing Resistance (Ohm)</Label>
-            <Input id="earthing_resistance" name="earthing_resistance" type="number" placeholder="e.g. 5" defaultValue={editSite?.earthing_resistance || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label>Antenna Type</Label>
-            <Select name="antenna_type" defaultValue={editSite?.antenna_type || ''}>
-              <SelectTrigger><SelectValue placeholder="Select antenna type" /></SelectTrigger>
-              <SelectContent>{antennaTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="number_of_antennas">Number of Antennas</Label>
-            <Input id="number_of_antennas" name="number_of_antennas" type="number" placeholder="e.g. 3" defaultValue={editSite?.number_of_antennas || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label>Site Configuration</Label>
-            <Select name="site_configuration" defaultValue={editSite?.site_configuration || ''}>
-              <SelectTrigger><SelectValue placeholder="Select configuration" /></SelectTrigger>
-              <SelectContent>{siteConfigurations.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Equipment Shelter</Label>
-            <Select name="equipment_shelter" defaultValue={editSite?.equipment_shelter || ''}>
-              <SelectTrigger><SelectValue placeholder="Select shelter type" /></SelectTrigger>
-              <SelectContent>{equipmentShelterTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-
-      {/* Project & Vendor Details */}
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" /> 🏗️ Project & Vendor Details</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Scope</Label>
-            <Select name="scope" defaultValue={editSite?.scope || ''}>
-              <SelectTrigger><SelectValue placeholder="Select scope" /></SelectTrigger>
-              <SelectContent>{scopeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="vendor_name">Vendor Assigned *</Label>
-            <Input id="vendor_name" name="vendor_name" required placeholder="e.g. Huawei, ZTE" defaultValue={editSite?.vendor_name || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="handover_to_vendor">Handover to Vendor</Label>
-            <Input id="handover_to_vendor" name="handover_to_vendor" type="date" defaultValue={editSite?.handover_to_vendor || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label>Site Type</Label>
-            <Select name="site_type" defaultValue={editSite?.site_type || ''}>
-              <SelectTrigger><SelectValue placeholder="Select site type" /></SelectTrigger>
-              <SelectContent>{siteTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Terrain Type</Label>
-            <Select name="terrain_type" defaultValue={editSite?.terrain_type || ''}>
-              <SelectTrigger><SelectValue placeholder="Select terrain type" /></SelectTrigger>
-              <SelectContent>{terrainTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Access Road Condition</Label>
-            <Select name="access_road_condition" defaultValue={editSite?.access_road_condition || ''}>
-              <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
-              <SelectContent>{accessRoadConditions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Current Phase *</Label>
-            <Select name="current_phase" defaultValue={editSite?.current_phase || ''} required>
-              <SelectTrigger><SelectValue placeholder="Select phase" /></SelectTrigger>
-              <SelectContent>{currentPhases.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="planned_start_date">Planned Start Date</Label>
-            <Input id="planned_start_date" name="planned_start_date" type="date" defaultValue={editSite?.planned_start_date || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="target_completion_date">Expected Completion Date</Label>
-            <Input id="target_completion_date" name="target_completion_date" type="date" defaultValue={editSite?.target_completion_date || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="last_inspection_date">Last Inspection Date</Label>
-            <Input id="last_inspection_date" name="last_inspection_date" type="date" defaultValue={editSite?.last_inspection_date || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="approval_date">Approval Date</Label>
-            <Input id="approval_date" name="approval_date" type="date" defaultValue={editSite?.approval_date || ''} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Attachments */}
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Paperclip className="h-4 w-4 text-primary" /> 📂 Attachments</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="site_photo">Upload Site Photo</Label>
-            <Input id="site_photo" name="site_photo" type="file" accept="image/*" />
-            {editSite?.site_photo_url && <p className="text-xs text-muted-foreground">Current file uploaded ✓</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="layout_plan">Upload Site Layout Plan</Label>
-            <Input id="layout_plan" name="layout_plan" type="file" accept=".pdf,.jpg,.png" />
-            {editSite?.layout_plan_url && <p className="text-xs text-muted-foreground">Current file uploaded ✓</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="approval_letter">Upload Approval Letter (PDF)</Label>
-            <Input id="approval_letter" name="approval_letter" type="file" accept=".pdf" />
-            {editSite?.approval_letter_url && <p className="text-xs text-muted-foreground">Current file uploaded ✓</p>}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Deployment Progress */}
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2">🚀 Deployment Progress</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-          {[
-            { name: 'soil_test', label: 'Soil Test' },
-            { name: 'site_implementation_design', label: 'Site Implementation Design' },
-            { name: 'cast_status', label: 'Cast' },
-            { name: 'tower_rig', label: 'Tower Rig' },
-            { name: 'civil_rfi', label: 'Civil RFI' },
-            
-            { name: 'on_air', label: 'On Air' },
-          ].map(field => (
-            <div key={field.name} className="space-y-2">
-              <Label>{field.label}</Label>
-              <Select name={field.name} defaultValue={editSite?.[field.name] || 'Not Started'}>
-                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                <SelectContent>{deploymentStatuses.map(s => <SelectItem key={s} value={s}>{s === 'Not Started' ? '🔴' : s === 'In Progress' ? '🟡' : '🟢'} {s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Notes */}
-      <Card>
-        <CardContent className="pt-6">
-          <Label htmlFor="notes">📝 Comments</Label>
-          <Textarea id="notes" name="notes" className="mt-2" rows={4} defaultValue={editSite?.notes || ''} placeholder="Enter any comments..." />
-        </CardContent>
-      </Card>
-
-      <Button type="submit" className="w-full sm:w-auto gradient-orange border-0 text-primary-foreground" disabled={submitting}>
-        {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-        {editSite ? 'Update Site' : 'Submit Site'}
-      </Button>
-    </form>
+      {/* Modules accordion */}
+      <Accordion type="multiple" defaultValue={['m1','m2','m3','m4']} className="space-y-3">
+        {modules.filter(m => m.show).map(m => (
+          <AccordionItem key={m.id} value={m.id} className="border rounded-lg bg-card">
+            <AccordionTrigger className="px-4 hover:no-underline">
+              <span className="flex items-center gap-2 text-sm font-semibold">
+                <m.icon className="h-4 w-4 text-primary" /> {m.title}
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+                {m.fields.map(renderField)}
+              </div>
+              {m.custom === 'tech' && (
+                <div className="mt-4 space-y-2">
+                  <Label>Technology Classification *</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {TECH_OPTIONS.map(t => (
+                      <label key={t} className={`flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer text-xs font-medium transition-colors ${has(t) ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/40'}`}>
+                        <Checkbox checked={has(t)} onCheckedChange={() => toggleTech(t)} className="h-3.5 w-3.5" />
+                        {t}
+                      </label>
+                    ))}
+                  </div>
+                  {tech.length > 0 && (
+                    <div className="flex gap-1 flex-wrap pt-1">
+                      {tech.map(t => <Badge key={t} variant="secondary">{t} module enabled</Badge>)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
   );
 
   const renderSubmissions = () => (
@@ -491,7 +486,7 @@ export default function PlanningDashboard() {
                   <div className="flex gap-1.5 flex-wrap">
                     <Button size="sm" variant="outline" onClick={() => setViewSite(site)}>View</Button>
                     {(site.status === 'pending' || site.status === 'rejected') && (
-                      <Button size="sm" variant="outline" onClick={() => startEdit(site)}>Edit</Button>
+                      <Button size="sm" variant="outline" onClick={() => { setEditSite(site); setActiveTab('submit'); }}>Edit</Button>
                     )}
                   </div>
                 </div>
@@ -501,7 +496,6 @@ export default function PlanningDashboard() {
         </div>
       )}
 
-      {/* View Site Dialog */}
       {viewSite && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setViewSite(null)}>
           <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
