@@ -36,6 +36,8 @@ export default function Login() {
       const redirectMap: Record<string, string> = {
         planning_team: '/planning',
         procurement_team: '/procurement',
+        power_team: '/power',
+        rollout_team: '/rollout',
         project_team: '/admin',
       };
       navigate(redirectMap[role as string] || '/');

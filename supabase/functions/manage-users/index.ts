@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const validRoles = ['planning_team', 'procurement_team', 'project_team'] as const;
+const validRoles = ['planning_team', 'procurement_team', 'power_team', 'rollout_team', 'project_team'] as const;
 
 const createUserSchema = z.object({
   action: z.literal('create_user'),

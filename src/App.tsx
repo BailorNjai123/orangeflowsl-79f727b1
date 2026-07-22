@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import PlanningDashboard from "./pages/PlanningDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProcurementDashboard from "./pages/ProcurementDashboard";
+import PowerDashboard from "./pages/PowerDashboard";
+import RolloutDashboard from "./pages/RolloutDashboard";
 import NotFound from "./pages/NotFound";
 import Dissertation from "./pages/Dissertation";
 
@@ -46,6 +48,8 @@ const App = () => (
             <Route path="/planning" element={<PlanningDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/procurement" element={<ProcurementDashboard />} />
+            <Route path="/power" element={<PowerDashboard />} />
+            <Route path="/rollout" element={<RolloutDashboard />} />
             <Route path="/dissertation" element={<Dissertation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
