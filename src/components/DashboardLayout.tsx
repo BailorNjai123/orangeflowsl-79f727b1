@@ -36,6 +36,8 @@ export default function DashboardLayout({ children, title, navItems, activeTab, 
     project_team: 'Project Team',
     planning_team: 'Planning Team',
     procurement_team: 'Procurement Team',
+    power_team: 'Power Team',
+    rollout_team: 'Rollout Team',
   };
 
   return (
