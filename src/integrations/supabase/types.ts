@@ -323,6 +323,8 @@ export type Database = {
           estimated_cost: number | null
           final_approval_by: string | null
           foundation_depth: number | null
+          generator_capacity: number | null
+          grid_transformer_capacity: string | null
           handover_to_vendor: string | null
           id: string
           last_inspection_date: string | null
@@ -336,9 +338,12 @@ export type Database = {
           planned_start_date: string | null
           planning_approval_status: string | null
           power_backup_type: string | null
+          power_certificate_url: string | null
           power_requirement: string | null
           power_rfi: string | null
+          power_rfi_status: string | null
           power_source: string | null
+          progress_percent: number | null
           project_name: string | null
           project_review_status: string | null
           region: string
@@ -352,6 +357,7 @@ export type Database = {
           site_photo_url: string | null
           site_type: string | null
           soil_test: string | null
+          solar_capacity: number | null
           status: Database["public"]["Enums"]["site_status"]
           submitted_by: string | null
           target_completion_date: string | null
@@ -387,6 +393,8 @@ export type Database = {
           estimated_cost?: number | null
           final_approval_by?: string | null
           foundation_depth?: number | null
+          generator_capacity?: number | null
+          grid_transformer_capacity?: string | null
           handover_to_vendor?: string | null
           id?: string
           last_inspection_date?: string | null
@@ -400,9 +408,12 @@ export type Database = {
           planned_start_date?: string | null
           planning_approval_status?: string | null
           power_backup_type?: string | null
+          power_certificate_url?: string | null
           power_requirement?: string | null
           power_rfi?: string | null
+          power_rfi_status?: string | null
           power_source?: string | null
+          progress_percent?: number | null
           project_name?: string | null
           project_review_status?: string | null
           region?: string
@@ -416,6 +427,7 @@ export type Database = {
           site_photo_url?: string | null
           site_type?: string | null
           soil_test?: string | null
+          solar_capacity?: number | null
           status?: Database["public"]["Enums"]["site_status"]
           submitted_by?: string | null
           target_completion_date?: string | null
@@ -451,6 +463,8 @@ export type Database = {
           estimated_cost?: number | null
           final_approval_by?: string | null
           foundation_depth?: number | null
+          generator_capacity?: number | null
+          grid_transformer_capacity?: string | null
           handover_to_vendor?: string | null
           id?: string
           last_inspection_date?: string | null
@@ -464,9 +478,12 @@ export type Database = {
           planned_start_date?: string | null
           planning_approval_status?: string | null
           power_backup_type?: string | null
+          power_certificate_url?: string | null
           power_requirement?: string | null
           power_rfi?: string | null
+          power_rfi_status?: string | null
           power_source?: string | null
+          progress_percent?: number | null
           project_name?: string | null
           project_review_status?: string | null
           region?: string
@@ -480,6 +497,7 @@ export type Database = {
           site_photo_url?: string | null
           site_type?: string | null
           soil_test?: string | null
+          solar_capacity?: number | null
           status?: Database["public"]["Enums"]["site_status"]
           submitted_by?: string | null
           target_completion_date?: string | null
@@ -534,7 +552,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "planning_team" | "procurement_team" | "project_team"
+      app_role:
+        | "planning_team"
+        | "procurement_team"
+        | "project_team"
+        | "power_team"
+        | "rollout_team"
       feedback_status: "pending" | "accepted" | "rejected"
       site_status: "pending" | "approved" | "rejected"
     }
@@ -664,7 +687,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["planning_team", "procurement_team", "project_team"],
+      app_role: [
+        "planning_team",
+        "procurement_team",
+        "project_team",
+        "power_team",
+        "rollout_team",
+      ],
       feedback_status: ["pending", "accepted", "rejected"],
       site_status: ["pending", "approved", "rejected"],
     },

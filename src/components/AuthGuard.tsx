@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  allowedRoles?: Array<'planning_team' | 'procurement_team' | 'project_team'>;
+  allowedRoles?: Array<'planning_team' | 'procurement_team' | 'power_team' | 'rollout_team' | 'project_team'>;
 }
 
 export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
@@ -21,9 +21,11 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
   if (!user) return <Navigate to="/login" replace />;
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
-    const redirectMap = {
+    const redirectMap: Record<string, string> = {
       planning_team: '/planning',
       procurement_team: '/procurement',
+      power_team: '/power',
+      rollout_team: '/rollout',
       project_team: '/admin',
     };
     return <Navigate to={redirectMap[role] || '/'} replace />;

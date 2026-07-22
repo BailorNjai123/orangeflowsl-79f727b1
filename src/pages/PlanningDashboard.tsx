@@ -25,21 +25,11 @@ const navItems = [
 const towerTypes = ['3-Leg', '4-Leg', 'Monopole'];
 const towerMaterials = ['Steel', 'Concrete'];
 const transmissionTypes = ['Microwave', 'Fiber', 'Satellite'];
-const powerBackupTypes = ['Solar', 'Generator', 'Hybrid'];
-const batteryBankTypes = ['Lithium', 'Lead-acid'];
 const currentPhases = ['Planning', 'Foundation', 'Tower Erection', 'Integration'];
 const siteTypes = ['Greenfield', 'Rooftop', 'Indoor', 'COW'];
 const terrainTypes = ['Flat', 'Hilly', 'Swampy', 'Coastal'];
 const accessRoadConditions = ['Good', 'Fair', 'Poor', 'No Road'];
 const antennaTypes = ['Omni', 'Sector', 'Directional'];
-const powerSources = [
-  'Solar – Gen – EDSA/Grid and Batteries',
-  'Solar, Gen and Batteries',
-  'Gen and Batteries',
-  'Solar Only',
-  'Gen, EDSA/Grid and Batteries'
-];
-const backupPowerOptions = ['Generator', 'Battery', 'Solar', 'None'];
 const equipmentShelterTypes = ['Container', 'Cabinet', 'Building', 'None'];
 const siteConfigurations = ['Standalone', 'Co-located', 'Rooftop', 'Underground', 'Hybrid'];
 const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
@@ -130,16 +120,10 @@ export default function PlanningDashboard() {
       tower_type: get('tower_type') || null,
       tower_material: get('tower_material') || null,
       transmission_type: get('transmission_type') || null,
-      power_backup_type: get('power_backup_type') || null,
-      battery_bank_type: get('battery_bank_type') || null,
-      number_of_battery_banks: getNum('number_of_battery_banks'),
       earthing_resistance: getNum('earthing_resistance'),
       antenna_type: get('antenna_type') || null,
       number_of_antennas: getNum('number_of_antennas'),
       site_configuration: get('site_configuration') || null,
-      power_requirement: get('power_requirement') || null,
-      power_source: get('power_source') || null,
-      backup_power: get('backup_power') || null,
       equipment_shelter: get('equipment_shelter') || null,
       site_type: get('site_type') || null,
       terrain_type: get('terrain_type') || null,
@@ -157,7 +141,7 @@ export default function PlanningDashboard() {
       cast_status: get('cast_status') || 'Not Started',
       tower_rig: get('tower_rig') || 'Not Started',
       civil_rfi: get('civil_rfi') || 'Not Started',
-      power_rfi: get('power_rfi') || 'Not Started',
+      
       on_air: get('on_air') || 'Not Started',
       notes: get('notes') || null,
       submitted_by: user!.id,
@@ -318,24 +302,6 @@ export default function PlanningDashboard() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Power Backup Type</Label>
-            <Select name="power_backup_type" defaultValue={editSite?.power_backup_type || ''}>
-              <SelectTrigger><SelectValue placeholder="Select backup" /></SelectTrigger>
-              <SelectContent>{powerBackupTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Battery Bank Type</Label>
-            <Select name="battery_bank_type" defaultValue={editSite?.battery_bank_type || ''}>
-              <SelectTrigger><SelectValue placeholder="Select battery" /></SelectTrigger>
-              <SelectContent>{batteryBankTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="number_of_battery_banks">Number of Battery Banks</Label>
-            <Input id="number_of_battery_banks" name="number_of_battery_banks" type="number" placeholder="e.g. 2" defaultValue={editSite?.number_of_battery_banks || ''} />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="earthing_resistance">Earthing Resistance (Ohm)</Label>
             <Input id="earthing_resistance" name="earthing_resistance" type="number" placeholder="e.g. 5" defaultValue={editSite?.earthing_resistance || ''} />
           </div>
@@ -358,24 +324,6 @@ export default function PlanningDashboard() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="power_requirement">Power Requirement (kW)</Label>
-            <Input id="power_requirement" name="power_requirement" placeholder="e.g. 5 or 5.5" defaultValue={editSite?.power_requirement || ''} />
-          </div>
-          <div className="space-y-2">
-            <Label>Power Source</Label>
-            <Select name="power_source" defaultValue={editSite?.power_source || ''}>
-              <SelectTrigger><SelectValue placeholder="Select power source" /></SelectTrigger>
-              <SelectContent>{powerSources.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Backup Power</Label>
-            <Select name="backup_power" defaultValue={editSite?.backup_power || ''}>
-              <SelectTrigger><SelectValue placeholder="Select backup power" /></SelectTrigger>
-              <SelectContent>{backupPowerOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
             <Label>Equipment Shelter</Label>
             <Select name="equipment_shelter" defaultValue={editSite?.equipment_shelter || ''}>
               <SelectTrigger><SelectValue placeholder="Select shelter type" /></SelectTrigger>
@@ -384,6 +332,7 @@ export default function PlanningDashboard() {
           </div>
         </CardContent>
       </Card>
+
 
       {/* Project & Vendor Details */}
       <Card>
@@ -483,7 +432,7 @@ export default function PlanningDashboard() {
             { name: 'cast_status', label: 'Cast' },
             { name: 'tower_rig', label: 'Tower Rig' },
             { name: 'civil_rfi', label: 'Civil RFI' },
-            { name: 'power_rfi', label: 'Power RFI' },
+            
             { name: 'on_air', label: 'On Air' },
           ].map(field => (
             <div key={field.name} className="space-y-2">

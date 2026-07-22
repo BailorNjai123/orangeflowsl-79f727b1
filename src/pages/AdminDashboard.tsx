@@ -250,11 +250,15 @@ export default function AdminDashboard() {
     project_team: 'bg-blue-500/10 text-blue-600',
     planning_team: 'bg-emerald-500/10 text-emerald-600',
     procurement_team: 'bg-primary/10 text-primary',
+    power_team: 'bg-yellow-500/10 text-yellow-700',
+    rollout_team: 'bg-purple-500/10 text-purple-600',
   };
   const roleLabels: Record<string, string> = {
     project_team: 'Project Team',
     planning_team: 'Planning Team',
     procurement_team: 'Procurement Team',
+    power_team: 'Power Team',
+    rollout_team: 'Rollout Team',
   };
 
   const renderOverview = () => (
@@ -465,6 +469,8 @@ export default function AdminDashboard() {
                   <SelectItem value="project_team">Project Team (Admin)</SelectItem>
                   <SelectItem value="planning_team">Planning Team</SelectItem>
                   <SelectItem value="procurement_team">Procurement Team</SelectItem>
+                  <SelectItem value="power_team">Power Team</SelectItem>
+                  <SelectItem value="rollout_team">Rollout Team</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -493,6 +499,8 @@ export default function AdminDashboard() {
                   <SelectItem value="project_team">Project Team (Admin)</SelectItem>
                   <SelectItem value="planning_team">Planning Team</SelectItem>
                   <SelectItem value="procurement_team">Procurement Team</SelectItem>
+                  <SelectItem value="power_team">Power Team</SelectItem>
+                  <SelectItem value="rollout_team">Rollout Team</SelectItem>
                 </SelectContent>
               </Select>
             </div>
