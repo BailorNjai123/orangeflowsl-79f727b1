@@ -737,6 +737,109 @@ export default function AdminDashboard() {
     </div>
   );
 
+  const renderStageReviewList = (stage: 'power' | 'rollout') => {
+    const fields = stage === 'power' ? powerFieldLabels : rolloutFieldLabels;
+    const icon = stage === 'power' ? Zap : HardHat;
+    const title = stage === 'power' ? 'Power Form Review' : 'Rollout Form Review';
+    // Only sites that have some data for this stage
+    const items = sites.filter(s => {
+      const ext = parseExt(s);
+      const hasExt = Object.keys(ext[stage] || {}).length > 0;
+      if (stage === 'power') return hasExt || s.power_source || s.power_rfi_status;
+      return hasExt || s.vendor_name || s.scope || s.progress_percent;
+    });
+    return (
+      <div className="space-y-4">
+        <h2 className="text-lg sm:text-xl font-bold">{title}</h2>
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard title="Total" value={items.length} icon={icon} />
+          <StatCard title="Approved" value={items.filter(s => parseExt(s).admin?.[stage]?.status === 'approved').length} icon={Check} color="text-success" />
+          <StatCard title="Revisions" value={items.filter(s => parseExt(s).admin?.[stage]?.status === 'revisions').length} icon={X} color="text-warning" />
+        </div>
+        <div className="space-y-3">
+          {items.map(site => {
+            const ext = parseExt(site);
+            const adminStatus = ext.admin?.[stage]?.status;
+            return (
+              <Card key={site.id}>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-sm">{site.site_id_code} — {site.site_name}</h3>
+                        {adminStatus === 'approved' && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">Approved</span>}
+                        {adminStatus === 'revisions' && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-warning/15 text-warning">Revisions Requested</span>}
+                        {!adminStatus && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Awaiting Review</span>}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {stage === 'power'
+                          ? `RFI: ${site.power_rfi_status || 'Not Started'} • ${site.power_source || 'No source set'}`
+                          : `Progress: ${site.progress_percent || 0}% • Vendor: ${site.vendor_name || '—'}`}
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5 flex-wrap">
+                      <Button size="sm" variant="outline" onClick={() => { setStageReview({ site, stage }); setStageNotes(ext.admin?.[stage]?.notes || ''); }}>
+                        <Eye className="h-3 w-3 mr-1" /> Review
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+          {items.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">No {stage} submissions yet.</CardContent></Card>}
+        </div>
+
+        <Dialog open={stageReview?.stage === stage} onOpenChange={(open) => { if (!open) { setStageReview(null); setStageNotes(''); } }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>{stage === 'power' ? '⚡ Power' : '🏗️ Rollout'} Review — {stageReview?.site?.site_name}</DialogTitle></DialogHeader>
+            {stageReview && (() => {
+              const ext = parseExt(stageReview.site);
+              const extStage = ext[stage] || {};
+              const previous = ext.admin?.[stage];
+              return (
+                <div className="space-y-4">
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Submitted Parameters (read-only)</h4>
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      {fields.map(([label, getter]) => {
+                        const v = getter(stageReview.site, extStage);
+                        return (
+                          <div key={label} className="flex justify-between gap-2 border-b border-border/50 py-1">
+                            <dt className="text-muted-foreground">{label}</dt>
+                            <dd className="font-medium text-right truncate">{v == null || v === '' ? '—' : String(v)}</dd>
+                          </div>
+                        );
+                      })}
+                    </dl>
+                  </div>
+                  {previous && (
+                    <div className={`rounded-lg border p-3 text-xs ${previous.status === 'approved' ? 'bg-success/10 border-success/30' : 'bg-warning/10 border-warning/30'}`}>
+                      <p className="font-semibold mb-1">Previous decision: {previous.status === 'approved' ? '✅ Approved' : '❌ Revisions requested'}</p>
+                      <p className="text-muted-foreground">By {previous.reviewed_by || 'admin'} — {previous.notes}</p>
+                    </div>
+                  )}
+                  <div className="space-y-2 border-t pt-4">
+                    <Label>Feedback Comment <span className="text-destructive">*</span></Label>
+                    <Textarea value={stageNotes} onChange={(e) => setStageNotes(e.target.value)} placeholder="Required feedback for the team..." rows={3} />
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button className="flex-1 bg-success hover:bg-success/90 text-success-foreground" disabled={actionLoading} onClick={() => handleStageAction('approved')}>
+                        <Check className="h-4 w-4 mr-1" /> Approve Stage
+                      </Button>
+                      <Button variant="destructive" className="flex-1" disabled={actionLoading} onClick={() => handleStageAction('revisions')}>
+                        <X className="h-4 w-4 mr-1" /> Request Revisions
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  };
+
   const renderActivity = () => (
     <div className="space-y-4">
       <h2 className="text-lg sm:text-xl font-bold">Activity Log</h2>
