@@ -316,8 +316,8 @@ export default function PlanningDashboard() {
     if (!payload.district) payload.district = 'Western Area Urban';
     if (!payload.town) payload.town = '—';
     const { error } = editSite
-      ? await supabase.from('sites').update(payload).eq('id', editSite.id)
-      : await supabase.from('sites').insert(payload);
+      ? await supabase.from('sites').update(payload as any).eq('id', editSite.id)
+      : await supabase.from('sites').insert(payload as any);
     setSubmitting(false);
     if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
     toast({ title: asDraft ? 'Draft saved' : (editSite ? 'Submission updated' : 'Submitted for review') });
