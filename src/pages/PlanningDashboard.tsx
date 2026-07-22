@@ -432,7 +432,7 @@ export default function PlanningDashboard() {
             { name: 'cast_status', label: 'Cast' },
             { name: 'tower_rig', label: 'Tower Rig' },
             { name: 'civil_rfi', label: 'Civil RFI' },
-            { name: 'power_rfi', label: 'Power RFI' },
+            
             { name: 'on_air', label: 'On Air' },
           ].map(field => (
             <div key={field.name} className="space-y-2">
