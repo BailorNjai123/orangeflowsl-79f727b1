@@ -186,6 +186,44 @@ export default function AdminDashboard() {
     setActionLoading(false);
   };
 
+  const handleStageAction = async (action: 'approved' | 'revisions') => {
+    if (!stageReview) return;
+    if (!stageNotes.trim()) {
+      toast({ variant: 'destructive', title: 'Feedback required', description: 'Please add a feedback comment.' });
+      return;
+    }
+    setActionLoading(true);
+    const ext = parseExt(stageReview.site);
+    const admin = { ...ext.admin };
+    admin[stageReview.stage] = {
+      status: action,
+      notes: stageNotes,
+      reviewed_by: profile?.full_name || null,
+      reviewed_at: new Date().toISOString(),
+    };
+    const updates: Record<string, any> = {
+      review_notes: JSON.stringify({ ...ext, admin }),
+    };
+    // Downstream unlock signal
+    if (stageReview.stage === 'power' && action === 'approved') {
+      updates.power_rfi = 'Completed';
+    }
+    const { error } = await supabase.from('sites').update(updates).eq('id', stageReview.site.id);
+    if (!error) {
+      await supabase.from('activity_log').insert({
+        action: `${stageReview.stage}_${action}`,
+        description: `${stageReview.stage.charAt(0).toUpperCase() + stageReview.stage.slice(1)} stage for "${stageReview.site.site_name}" ${action === 'approved' ? 'approved' : 'sent back for revisions'}`,
+        user_id: user!.id, user_name: profile?.full_name,
+        entity_type: 'site', entity_id: stageReview.site.id,
+      });
+      toast({ title: action === 'approved' ? 'Stage approved' : 'Revisions requested' });
+      setStageReview(null); setStageNotes(''); fetchData();
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+    setActionLoading(false);
+  };
+
   const validatePassword = (pw: string): string | null => {
     if (pw.length < 8) return 'Password must be at least 8 characters';
     if (!/[a-z]/.test(pw)) return 'Password must contain a lowercase letter';
