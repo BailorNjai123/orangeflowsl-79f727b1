@@ -3,8 +3,14 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
+import { generateVersionPlugin } from "./scripts/generate-version";
+
+const APP_VERSION = `${new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14)}`;
 
 export default defineConfig(({ mode }) => ({
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
   server: {
     host: "::",
     port: 8080,
@@ -34,12 +40,19 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        navigateFallbackDenylist: [/^\/~oauth/],
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/version\.json$/],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         navigationPreload: true,
+        // Never let the SW serve a stale version.json — it's our deploy signal.
+        navigateFallback: "/index.html",
         runtimeCaching: [
+          {
+            // Deploy signal — never cache.
+            urlPattern: ({ url }) => url.pathname === "/version.json",
+            handler: "NetworkOnly",
+          },
           {
             // Always try the network for page navigations so returning users
             // never see a stale HTML shell after a new deploy.
@@ -80,6 +93,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
     }),
+    generateVersionPlugin(APP_VERSION),
   ].filter(Boolean),
   resolve: {
     alias: {
