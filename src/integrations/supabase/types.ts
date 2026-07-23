@@ -300,6 +300,42 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          arguments: Json | null
+          caller_role: string | null
+          caller_user_id: string | null
+          error_code: string | null
+          error_message: string | null
+          function_name: string
+          id: string
+          occurred_at: string
+          severity: string
+        }
+        Insert: {
+          arguments?: Json | null
+          caller_role?: string | null
+          caller_user_id?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          function_name: string
+          id?: string
+          occurred_at?: string
+          severity?: string
+        }
+        Update: {
+          arguments?: Json | null
+          caller_role?: string | null
+          caller_user_id?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          function_name?: string
+          id?: string
+          occurred_at?: string
+          severity?: string
+        }
+        Relationships: []
+      }
       sites: {
         Row: {
           access_road_condition: string | null
@@ -549,6 +585,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          _arguments: Json
+          _error_code: string
+          _error_message: string
+          _function_name: string
+          _severity?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
