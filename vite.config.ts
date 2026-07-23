@@ -49,6 +49,11 @@ export default defineConfig(({ mode }) => ({
         navigateFallback: "/index.html",
         runtimeCaching: [
           {
+            // Deploy signal — never cache.
+            urlPattern: ({ url }) => url.pathname === "/version.json",
+            handler: "NetworkOnly",
+          },
+          {
             // Always try the network for page navigations so returning users
             // never see a stale HTML shell after a new deploy.
             urlPattern: ({ request }) => request.mode === "navigate",
@@ -88,6 +93,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
     }),
+    generateVersionPlugin(APP_VERSION),
   ].filter(Boolean),
   resolve: {
     alias: {
