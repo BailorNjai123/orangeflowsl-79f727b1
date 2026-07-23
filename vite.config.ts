@@ -23,19 +23,21 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["app-icon.png", "favicon.ico", "favicon.svg"],
+      includeAssets: ["favicon.ico", "favicon.svg", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "icon-maskable-512.png"],
       manifest: {
         name: "OrangeFlow SL",
         short_name: "OrangeFlow",
         description: "Digital BTS Site Approval Platform for Orange Sierra Leone",
         start_url: "/",
+        scope: "/",
         display: "standalone",
         background_color: "#fef7f0",
         theme_color: "#f97316",
         orientation: "portrait-primary",
         icons: [
-          { src: "/app-icon.png", sizes: "192x192", type: "image/png" },
-          { src: "/app-icon.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {
