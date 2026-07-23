@@ -2,28 +2,33 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import App from "./App.tsx";
 import "./index.css";
+import { initVersionChecker, initChunkErrorRecovery, hasUnsavedWork } from "@/lib/appVersion";
 
-// Auto-update: apply new SW immediately and reload the page ONCE so users
-// always see the latest published version instead of stale cached assets.
+// One-shot reload guard so multiple SW controllerchange events can't loop.
 let reloading = false;
+const safeReload = () => {
+  if (reloading) return;
+  // Never reload while the user has unsaved work — wait and retry.
+  if (hasUnsavedWork()) {
+    setTimeout(safeReload, 15_000);
+    return;
+  }
+  reloading = true;
+  window.location.reload();
+};
+
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloading) return;
-    reloading = true;
-    window.location.reload();
-  });
+  navigator.serviceWorker.addEventListener("controllerchange", safeReload);
 }
 
 const updateSW = registerSW({
   immediate: true,
   onNeedRefresh() {
-    // A new version is waiting — activate it now. The controllerchange
-    // listener above will reload the page once the new SW takes control.
+    // A new SW is waiting — activate it. controllerchange will safe-reload.
     updateSW(true);
   },
   onRegisteredSW(_swUrl, registration) {
     if (!registration) return;
-    // Check for updates on tab focus and every 30s while open.
     const check = () => registration.update().catch(() => {});
     setInterval(check, 30_000);
     window.addEventListener("focus", check);
@@ -33,4 +38,9 @@ const updateSW = registerSW({
   },
 });
 
+// Version-based deploy detection + chunk-error recovery (production only).
+initVersionChecker();
+initChunkErrorRecovery();
+
 createRoot(document.getElementById("root")!).render(<App />);
+
