@@ -838,7 +838,30 @@ export default function AdminDashboard() {
                         return (
                           <div key={label} className="flex justify-between gap-2 border-b border-border/50 py-1">
                             <dt className="text-muted-foreground">{label}</dt>
-                            <dd className="font-medium text-right truncate">{v == null || v === '' ? '—' : String(v)}</dd>
+                            <dd className="font-medium text-right truncate">
+                              {isFileValue(v) ? (
+                                <div className="flex flex-col items-end gap-1">
+                                  {v.__files.map((path, i) => {
+                                    const name = path.split('/').pop() || `file-${i + 1}`;
+                                    return (
+                                      <button
+                                        key={path + i}
+                                        type="button"
+                                        onClick={async () => {
+                                          const url = await getSignedUrl(v.bucket, path);
+                                          if (url) window.open(url, '_blank');
+                                          else toast({ variant: 'destructive', title: 'Cannot open file' });
+                                        }}
+                                        className="text-primary hover:underline text-xs truncate max-w-[240px]"
+                                        title={name}
+                                      >
+                                        ⬇ {name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : (v == null || v === '' ? '—' : String(v))}
+                            </dd>
                           </div>
                         );
                       })}
