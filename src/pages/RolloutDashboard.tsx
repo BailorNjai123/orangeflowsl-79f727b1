@@ -227,9 +227,8 @@ export default function RolloutDashboard() {
   };
 
   const handleDownload = async (path: string) => {
-    const url = await getSignedUrl('site-documents', path);
-    if (url) window.open(url, '_blank');
-    else toast({ variant: 'destructive', title: 'Cannot open file' });
+    const ok = await openFileInNewTab('site-documents', path);
+    if (!ok) toast({ variant: 'destructive', title: 'Cannot open file' });
   };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
