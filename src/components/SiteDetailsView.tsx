@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock } from 'lucide-react';
