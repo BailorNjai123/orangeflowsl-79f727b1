@@ -159,7 +159,7 @@ export default function PowerDashboard() {
       power_source: get('power_source') || null,
       power_requirement: get('power_requirement') || null,
       grid_transformer_capacity: get('grid_transformer_capacity') || null,
-      generator_capacity: get('generator_capacity') === 'None' ? null : getNum('generator_capacity_num'),
+      generator_capacity: (() => { const g = get('generator_capacity'); const n = parseFloat(g); return isNaN(n) ? null : n; })(),
       solar_capacity: getNum('solar_capacity'),
       battery_bank_type: get('battery_bank_type') || null,
       earthing_resistance: getNum('earthing_resistance'),
@@ -351,11 +351,6 @@ export default function PowerDashboard() {
                         <SelectTrigger><SelectValue placeholder="Select capacity" /></SelectTrigger>
                         <SelectContent>{genCaps.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                       </Select>
-                      <input
-                        type="hidden" name="generator_capacity_num"
-                        value={editSite.generator_capacity || ''}
-                        readOnly
-                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label>Generator Model &amp; Fuel Tank Capacity (Liters)</Label>
