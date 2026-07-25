@@ -20,7 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
-import { getSignedUrl } from '@/lib/storageUtils';
+import { getSignedUrl, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 
 type FileValue = { __files: string[]; bucket: string };
 const asFiles = (v: any, bucket = 'site-documents'): FileValue | null => {
