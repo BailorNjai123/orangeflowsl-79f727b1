@@ -100,11 +100,11 @@ const rolloutFieldLabels: [string, (s: any, ext: any) => any][] = [
   ['Actual Civil RFI Date', (_s, ext) => ext.actual_civil_rfi_date],
   ['Target On-Air Date', (_s, ext) => ext.target_on_air_date],
   ['Actual On-Air Date', (_s, ext) => ext.actual_on_air_date],
-  // Verification uploads
-  ['Soil Test Report', (_s, ext) => fileName(ext.soil_report_url)],
-  ['Approved SID Plan', (_s, ext) => fileName(ext.sid_plan_url)],
-  ['Civil RFI Quality Certificate', (_s, ext) => fileName(ext.civil_quality_cert_url)],
-  ['Post-Erection Site Photos', (_s, ext) => fileName(ext.post_erection_photos)],
+  // Verification uploads (downloadable)
+  ['Soil Test Report', (_s, ext) => asFiles(ext.soil_report_url)],
+  ['Approved SID Plan', (_s, ext) => asFiles(ext.sid_plan_url)],
+  ['Civil RFI Quality Certificate', (_s, ext) => asFiles(ext.civil_quality_cert_url)],
+  ['Post-Erection Site Photos', (_s, ext) => asFiles(ext.post_erection_photos)],
 ];
 
 type Site = any;
