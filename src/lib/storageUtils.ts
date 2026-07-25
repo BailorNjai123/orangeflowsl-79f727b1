@@ -81,21 +81,19 @@ export async function openFileInNewTab(bucket: string, path: string | null | und
   const result = await fetchAsObjectUrl(bucket, path);
   if (result) {
     const win = window.open(result.url, '_blank', 'noopener,noreferrer');
-    // Revoke after a delay so the new tab has time to load the blob.
     setTimeout(() => URL.revokeObjectURL(result.url), 60_000);
     if (!win) {
-      // Popup blocked — trigger a download instead so the user still gets the file.
+      // Popup blocked — download instead so the user still gets the file.
       triggerBlobDownload(result.blob, result.filename);
     }
     return true;
   }
-  const signed = await getSignedUrl(bucket, path);
-  if (signed) {
-    window.open(signed, '_blank', 'noopener,noreferrer');
-    return true;
-  }
-  return false;
+  // Blob download blocked (e.g. Edge/uBlock blocking *.supabase.co).
+  // Do NOT open the raw signed URL — it will hit the same block screen.
+  // Fall back to a forced download attempt via a second SDK call.
+  return await downloadFile(bucket, path);
 }
+
 
 /**
  * Fetch via the SDK and trigger a local download (no external navigation).
