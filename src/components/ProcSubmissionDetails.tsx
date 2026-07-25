@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, X, Trash2, Upload, ExternalLink, AlertTriangle, Loader2, RefreshCw, Download } from 'lucide-react';
+import { openFileInNewTab, downloadFile } from '@/lib/storageUtils';
+import { Check, X, Trash2, Upload, ExternalLink, AlertTriangle, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
