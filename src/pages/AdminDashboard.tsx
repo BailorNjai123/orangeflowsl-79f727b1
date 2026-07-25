@@ -20,6 +20,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { getSignedUrl } from '@/lib/storageUtils';
+
+type FileValue = { __files: string[]; bucket: string };
+const asFiles = (v: any, bucket = 'site-documents'): FileValue | null => {
+  if (!v) return null;
+  const arr = Array.isArray(v) ? v.filter(Boolean) : (typeof v === 'string' && v ? [v] : []);
+  return arr.length ? { __files: arr, bucket } : null;
+};
+const isFileValue = (v: any): v is FileValue => v && typeof v === 'object' && Array.isArray(v.__files);
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
@@ -91,11 +100,11 @@ const rolloutFieldLabels: [string, (s: any, ext: any) => any][] = [
   ['Actual Civil RFI Date', (_s, ext) => ext.actual_civil_rfi_date],
   ['Target On-Air Date', (_s, ext) => ext.target_on_air_date],
   ['Actual On-Air Date', (_s, ext) => ext.actual_on_air_date],
-  // Verification uploads
-  ['Soil Test Report', (_s, ext) => fileName(ext.soil_report_url)],
-  ['Approved SID Plan', (_s, ext) => fileName(ext.sid_plan_url)],
-  ['Civil RFI Quality Certificate', (_s, ext) => fileName(ext.civil_quality_cert_url)],
-  ['Post-Erection Site Photos', (_s, ext) => fileName(ext.post_erection_photos)],
+  // Verification uploads (downloadable)
+  ['Soil Test Report', (_s, ext) => asFiles(ext.soil_report_url)],
+  ['Approved SID Plan', (_s, ext) => asFiles(ext.sid_plan_url)],
+  ['Civil RFI Quality Certificate', (_s, ext) => asFiles(ext.civil_quality_cert_url)],
+  ['Post-Erection Site Photos', (_s, ext) => asFiles(ext.post_erection_photos)],
 ];
 
 type Site = any;
@@ -829,7 +838,30 @@ export default function AdminDashboard() {
                         return (
                           <div key={label} className="flex justify-between gap-2 border-b border-border/50 py-1">
                             <dt className="text-muted-foreground">{label}</dt>
-                            <dd className="font-medium text-right truncate">{v == null || v === '' ? '—' : String(v)}</dd>
+                            <dd className="font-medium text-right truncate">
+                              {isFileValue(v) ? (
+                                <div className="flex flex-col items-end gap-1">
+                                  {v.__files.map((path, i) => {
+                                    const name = path.split('/').pop() || `file-${i + 1}`;
+                                    return (
+                                      <button
+                                        key={path + i}
+                                        type="button"
+                                        onClick={async () => {
+                                          const url = await getSignedUrl(v.bucket, path);
+                                          if (url) window.open(url, '_blank');
+                                          else toast({ variant: 'destructive', title: 'Cannot open file' });
+                                        }}
+                                        className="text-primary hover:underline text-xs truncate max-w-[240px]"
+                                        title={name}
+                                      >
+                                        ⬇ {name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : (v == null || v === '' ? '—' : String(v))}
+                            </dd>
                           </div>
                         );
                       })}
