@@ -487,8 +487,7 @@ export default function RolloutDashboard() {
                                 <button
                                   type="button"
                                   onClick={async () => {
-                                    const url = await getSignedUrl(PROC_BUCKET, sub[`${k}_file_url`]);
-                                    if (url) window.open(url, '_blank');
+                                    await openFileInNewTab(PROC_BUCKET, sub[`${k}_file_url`]);
                                   }}
                                   className="text-primary underline"
                                 >
