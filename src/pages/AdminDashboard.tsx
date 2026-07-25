@@ -60,20 +60,42 @@ const powerFieldLabels: [string, (s: any, ext: any) => any][] = [
   ['Power Quality Inspection Date', (_s, ext) => ext.power_quality_date],
 ];
 
+const fileName = (p: any) => {
+  if (!p) return null;
+  if (Array.isArray(p)) return p.length ? `${p.length} file(s): ${p.map((x: string) => x.split('/').pop()).join(', ')}` : null;
+  return typeof p === 'string' ? p.split('/').pop() : null;
+};
+
 const rolloutFieldLabels: [string, (s: any, ext: any) => any][] = [
-  ['Scope', (s) => s.scope],
-  ['Vendor Name', (s) => s.vendor_name],
+  // Project Info
+  ['Project Scope', (s, ext) => s.scope || ext.project_scope],
+  ['Civil Contractor', (s, ext) => ext.civil_contractor || s.vendor_name],
   ['T&I Contractor', (_s, ext) => ext.ti_contractor],
   ['Project Manager', (_s, ext) => ext.project_manager],
   ['Handover to Vendor', (s) => s.handover_to_vendor],
+  ['Rollout Status', (_s, ext) => ext.status],
+  // Milestones
   ['Soil Test', (s) => s.soil_test],
-  ['Site Implementation Design', (s) => s.site_implementation_design],
-  ['Cast Status', (s) => s.cast_status],
-  ['Tower Rig', (s) => s.tower_rig],
+  ['Site Implementation Design (SID)', (s) => s.site_implementation_design],
+  ['Civil Foundation Cast', (s) => s.cast_status],
+  ['Tower Rigging', (s) => s.tower_rig],
   ['Civil RFI', (s) => s.civil_rfi],
-  ['Power RFI', (s) => s.power_rfi],
-  ['On Air', (s) => s.on_air],
-  ['Progress %', (s) => s.progress_percent],
+  ['Power RFI (auto-synced)', (s) => s.power_rfi],
+  ['On Air / Commissioning', (s) => s.on_air],
+  ['Progress %', (s) => (s.progress_percent != null ? `${s.progress_percent}%` : null)],
+  // Execution Schedule
+  ['Civil Works Start Date', (_s, ext) => ext.civil_start_date],
+  ['Foundation Casting Date', (_s, ext) => ext.foundation_cast_date],
+  ['Tower Erection Date', (_s, ext) => ext.tower_erection_date],
+  ['Expected Civil Completion', (_s, ext) => ext.expected_civil_completion_date],
+  ['Actual Civil RFI Date', (_s, ext) => ext.actual_civil_rfi_date],
+  ['Target On-Air Date', (_s, ext) => ext.target_on_air_date],
+  ['Actual On-Air Date', (_s, ext) => ext.actual_on_air_date],
+  // Verification uploads
+  ['Soil Test Report', (_s, ext) => fileName(ext.soil_report_url)],
+  ['Approved SID Plan', (_s, ext) => fileName(ext.sid_plan_url)],
+  ['Civil RFI Quality Certificate', (_s, ext) => fileName(ext.civil_quality_cert_url)],
+  ['Post-Erection Site Photos', (_s, ext) => fileName(ext.post_erection_photos)],
 ];
 
 type Site = any;
