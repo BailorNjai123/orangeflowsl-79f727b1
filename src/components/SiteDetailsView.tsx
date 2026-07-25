@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getSignedUrl, extractStoragePath } from '@/lib/storageUtils';
+import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
