@@ -58,60 +58,26 @@ function FileLink({ url, label, submissionId, fieldName, allowManage, onUpdated 
   url: string | null | undefined; label: string;
   submissionId?: string; fieldName?: string; allowManage?: boolean; onUpdated?: () => void;
 }) {
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [opening, setOpening] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const storagePath = getStoragePath(url);
   const hasFile = storagePath !== null;
+  const filename = storagePath?.split('/').pop() || label;
 
-  const loadSignedUrl = useCallback(async () => {
-    if (!storagePath) return;
-    setLoading(true);
-    setError(false);
-    try {
-      const { data, error: err } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, 3600);
-      if (err || !data?.signedUrl) {
-        console.error('[Storage] Signed URL error:', err?.message, 'path:', storagePath);
-        setError(true);
-      } else {
-        setSignedUrl(data.signedUrl);
-      }
-    } catch (e) {
-      console.error('[Storage] Exception:', e);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [storagePath]);
-
-  useEffect(() => {
-    setSignedUrl(null);
-    setError(false);
-    if (hasFile) loadSignedUrl();
-  }, [url, hasFile, loadSignedUrl]);
+  const handleOpen = async () => {
+    setOpening(true);
+    const ok = await openFileInNewTab(BUCKET, storagePath);
+    setOpening(false);
+    if (!ok && import.meta.env.DEV) console.error('[Storage] Preview unavailable', storagePath);
+  };
 
   const handleDownload = async () => {
-    if (!storagePath) return;
-    try {
-      const { data, error: err } = await supabase.storage.from(BUCKET).download(storagePath);
-      if (err || !data) {
-        console.error('[Storage] Download error:', err?.message);
-        return;
-      }
-      const blobUrl = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = storagePath.split('/').pop() || 'document';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-      console.error('[Storage] Download exception:', e);
-    }
+    setDownloading(true);
+    await downloadFile(BUCKET, storagePath, filename);
+    setDownloading(false);
   };
 
   const handleDelete = async () => {
@@ -139,30 +105,26 @@ function FileLink({ url, label, submissionId, fieldName, allowManage, onUpdated 
 
   return (
     <div className="flex items-center gap-2 mt-1 ml-6 flex-wrap">
-      {hasFile && signedUrl ? (
+      {hasFile ? (
         <div className="flex items-center gap-2">
-          <a href={signedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium">
-            <ExternalLink className="h-3 w-3" /> {label}
-          </a>
-          <button onClick={handleDownload} className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:underline" title="Download file">
-            <Download className="h-3 w-3" /> Download
+          <button
+            type="button"
+            onClick={handleOpen}
+            disabled={opening}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium"
+          >
+            <ExternalLink className="h-3 w-3" /> {label}{opening && '...'}
+          </button>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:underline"
+            title={`Download ${filename}`}
+          >
+            <Download className="h-3 w-3" /> Download{downloading && '...'}
           </button>
         </div>
-      ) : hasFile && loading ? (
-        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" /> Loading file...
-        </span>
-      ) : hasFile && error ? (
-        <span className="inline-flex items-center gap-1 text-xs text-destructive">
-          <AlertTriangle className="h-3 w-3" /> Failed to load file
-          <button onClick={loadSignedUrl} className="text-primary hover:underline ml-1 inline-flex items-center gap-0.5">
-            <RefreshCw className="h-3 w-3" /> Retry
-          </button>
-        </span>
-      ) : hasFile ? (
-        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" /> Loading file...
-        </span>
       ) : (
         <span className="inline-flex items-center gap-1 text-xs text-amber-600">
           <AlertTriangle className="h-3 w-3" /> No file attached
