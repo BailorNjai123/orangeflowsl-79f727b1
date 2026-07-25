@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getSignedUrl } from '@/lib/storageUtils';
+import { getSignedUrl, openFileInNewTab } from '@/lib/storageUtils';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, value: 'overview' },
@@ -227,9 +227,8 @@ export default function RolloutDashboard() {
   };
 
   const handleDownload = async (path: string) => {
-    const url = await getSignedUrl('site-documents', path);
-    if (url) window.open(url, '_blank');
-    else toast({ variant: 'destructive', title: 'Cannot open file' });
+    const ok = await openFileInNewTab('site-documents', path);
+    if (!ok) toast({ variant: 'destructive', title: 'Cannot open file' });
   };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -488,8 +487,7 @@ export default function RolloutDashboard() {
                                 <button
                                   type="button"
                                   onClick={async () => {
-                                    const url = await getSignedUrl(PROC_BUCKET, sub[`${k}_file_url`]);
-                                    if (url) window.open(url, '_blank');
+                                    await openFileInNewTab(PROC_BUCKET, sub[`${k}_file_url`]);
                                   }}
                                   className="text-primary underline"
                                 >

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getSignedUrl, extractStoragePath } from '@/lib/storageUtils';
+import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,20 +35,30 @@ function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdat
   label: string; bucket: string; path: string | null | undefined;
   siteId?: string; fieldName?: string; allowManage?: boolean; onUpdated?: () => void;
 }) {
-  const [url, setUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [opening, setOpening] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    getSignedUrl(bucket, path).then(u => { if (!cancelled) setUrl(u); });
-    return () => { cancelled = true; };
-  }, [path, bucket]);
+  const storagePath = extractStoragePath(path, bucket);
+  const hasFile = storagePath !== null;
+  const filename = storagePath?.split('/').pop() || label;
+
+  const handleOpen = async () => {
+    setOpening(true);
+    await openFileInNewTab(bucket, path);
+    setOpening(false);
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    await downloadFile(bucket, path, filename);
+    setDownloading(false);
+  };
 
   const handleDelete = async () => {
     if (!path || !siteId || !fieldName) return;
     setDeleting(true);
-    const storagePath = extractStoragePath(path, bucket);
     if (storagePath) await supabase.storage.from(bucket).remove([storagePath]);
     await supabase.from('sites').update({ [fieldName]: null }).eq('id', siteId);
     setDeleting(false);
@@ -58,7 +68,6 @@ function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdat
   const handleReplace = async (file: File) => {
     if (!siteId || !fieldName) return;
     setUploading(true);
-    const storagePath = extractStoragePath(path, bucket);
     if (storagePath) await supabase.storage.from(bucket).remove([storagePath]);
     const ext = file.name.split('.').pop();
     const newPath = `${siteId}/${Date.now()}_${fieldName.replace('_url', '')}.${ext}`;
@@ -68,17 +77,30 @@ function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdat
     onUpdated?.();
   };
 
-  const hasFile = extractStoragePath(path, bucket) !== null;
   if (!hasFile && !allowManage) return null;
 
   return (
-    <div className="flex items-center gap-2">
-      {hasFile && url ? (
-        <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium">
-          <ExternalLink className="h-3 w-3" /> {label}
-        </a>
-      ) : hasFile ? (
-        <span className="text-xs text-muted-foreground">Loading...</span>
+    <div className="flex items-center gap-2 flex-wrap">
+      {hasFile ? (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleOpen}
+            disabled={opening}
+            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+          >
+            <ExternalLink className="h-3 w-3" /> {label}{opening && '...'}
+          </button>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:underline"
+            title={`Download ${filename}`}
+          >
+            <FileDown className="h-3 w-3" /> Download{downloading && '...'}
+          </button>
+        </div>
       ) : (
         <span className="text-xs text-muted-foreground italic">No {label.toLowerCase()}</span>
       )}

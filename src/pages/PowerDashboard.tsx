@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getSignedUrl } from '@/lib/storageUtils';
+import { getSignedUrl, openFileInNewTab } from '@/lib/storageUtils';
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
@@ -84,9 +84,8 @@ export default function PowerDashboard() {
   };
 
   const handleDownload = async (path: string) => {
-    const url = await getSignedUrl('site-documents', path);
-    if (url) window.open(url, '_blank');
-    else toast({ variant: 'destructive', title: 'Cannot open file' });
+    const ok = await openFileInNewTab('site-documents', path);
+    if (!ok) toast({ variant: 'destructive', title: 'Cannot open file' });
   };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
