@@ -20,6 +20,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { getSignedUrl } from '@/lib/storageUtils';
+
+type FileValue = { __files: string[]; bucket: string };
+const asFiles = (v: any, bucket = 'site-documents'): FileValue | null => {
+  if (!v) return null;
+  const arr = Array.isArray(v) ? v.filter(Boolean) : (typeof v === 'string' && v ? [v] : []);
+  return arr.length ? { __files: arr, bucket } : null;
+};
+const isFileValue = (v: any): v is FileValue => v && typeof v === 'object' && Array.isArray(v.__files);
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
