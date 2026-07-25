@@ -844,19 +844,30 @@ export default function AdminDashboard() {
                                   {v.__files.map((path, i) => {
                                     const name = path.split('/').pop() || `file-${i + 1}`;
                                     return (
-                                      <button
-                                        key={path + i}
-                                        type="button"
-                                        onClick={async () => {
-                                          const url = await getSignedUrl(v.bucket, path);
-                                          if (url) window.open(url, '_blank');
-                                          else toast({ variant: 'destructive', title: 'Cannot open file' });
-                                        }}
-                                        className="text-primary hover:underline text-xs truncate max-w-[240px]"
-                                        title={name}
-                                      >
-                                        ⬇ {name}
-                                      </button>
+                                      <div key={path + i} className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={async () => {
+                                            const ok = await openFileInNewTab(v.bucket, path);
+                                            if (!ok) toast({ variant: 'destructive', title: 'Cannot open file' });
+                                          }}
+                                          className="text-primary hover:underline text-xs truncate max-w-[200px]"
+                                          title={`Preview ${name}`}
+                                        >
+                                          👁 {name}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={async () => {
+                                            const ok = await downloadFile(v.bucket, path, name);
+                                            if (!ok) toast({ variant: 'destructive', title: 'Download failed' });
+                                          }}
+                                          className="text-primary hover:underline text-xs"
+                                          title={`Download ${name}`}
+                                        >
+                                          ⬇
+                                        </button>
+                                      </div>
                                     );
                                   })}
                                 </div>
