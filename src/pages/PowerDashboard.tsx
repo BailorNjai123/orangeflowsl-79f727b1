@@ -35,6 +35,43 @@ const milestoneCols = [
 
 type SiteRow = any;
 
+type DocMeta = { file_name: string; file_size: number; uploaded_by: string; uploaded_at: string };
+
+const fmtSize = (b?: number) => {
+  if (!b || b <= 0) return null;
+  return b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+function DocCard({ path, meta, onView, onDownload }: {
+  path: string; meta?: DocMeta; onView: () => void; onDownload: () => void;
+}) {
+  const name = meta?.file_name || path.split('/').pop() || 'document.pdf';
+  return (
+    <div className="rounded-lg border bg-muted/20 p-2.5 space-y-1">
+      <div className="flex items-start gap-2">
+        <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium truncate" title={name}>{name}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {meta?.uploaded_at ? new Date(meta.uploaded_at).toLocaleString() : '—'}
+            {meta?.uploaded_by ? ` • by ${meta.uploaded_by}` : ''}
+            {fmtSize(meta?.file_size) ? ` • ${fmtSize(meta?.file_size)}` : ''}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" onClick={onView} className="text-xs text-primary underline inline-flex items-center gap-1">
+          <Eye className="h-3 w-3" /> View PDF
+        </button>
+        <button type="button" onClick={onDownload} className="text-xs text-primary underline inline-flex items-center gap-1">
+          <Download className="h-3 w-3" /> Download PDF
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 function parseExt(site: SiteRow): { power: any; rollout: any; feedback: any } {
   try {
     const obj = site?.review_notes ? JSON.parse(site.review_notes) : {};
