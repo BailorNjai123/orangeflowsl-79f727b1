@@ -497,32 +497,33 @@ export default function PowerDashboard() {
                       <Label>Power Certificate Upload (PDF)</Label>
                       <Input name="power_certificate" type="file" accept=".pdf" />
                       {editSite.power_certificate_url && (
-                        <div className="flex flex-wrap gap-3">
-                          <button type="button" onClick={() => handleView(editSite.power_certificate_url)} className="text-xs text-primary underline inline-flex items-center gap-1">
-                            <Eye className="h-3 w-3" /> Preview
-                          </button>
-                          <button type="button" onClick={() => handleDownload(editSite.power_certificate_url)} className="text-xs text-primary underline inline-flex items-center gap-1">
-                            <Download className="h-3 w-3" /> Download
-                          </button>
-                          <span className="text-xs text-muted-foreground">Choose a file above to replace</span>
-                        </div>
+                        <>
+                          <DocCard
+                            path={editSite.power_certificate_url}
+                            meta={ext.power_certificate_meta}
+                            onView={() => handleView(editSite.power_certificate_url)}
+                            onDownload={() => handleDownload(editSite.power_certificate_url)}
+                          />
+                          <span className="text-xs text-muted-foreground">Choose a file above to replace this PDF</span>
+                        </>
                       )}
                     </div>
                     <div className="space-y-1.5 md:col-span-2">
                       <Label>Electrical Safety &amp; Earthing Audit Report (PDF)</Label>
                       <Input name="earthing_audit" type="file" accept=".pdf" />
                       {ext.earthing_audit_url && (
-                        <div className="flex flex-wrap gap-3">
-                          <button type="button" onClick={() => handleView(ext.earthing_audit_url)} className="text-xs text-primary underline inline-flex items-center gap-1">
-                            <Eye className="h-3 w-3" /> Preview
-                          </button>
-                          <button type="button" onClick={() => handleDownload(ext.earthing_audit_url)} className="text-xs text-primary underline inline-flex items-center gap-1">
-                            <Download className="h-3 w-3" /> Download
-                          </button>
-                          <span className="text-xs text-muted-foreground">Choose a file above to replace</span>
-                        </div>
+                        <>
+                          <DocCard
+                            path={ext.earthing_audit_url}
+                            meta={ext.earthing_audit_meta}
+                            onView={() => handleView(ext.earthing_audit_url)}
+                            onDownload={() => handleDownload(ext.earthing_audit_url)}
+                          />
+                          <span className="text-xs text-muted-foreground">Choose a file above to replace this PDF</span>
+                        </>
                       )}
                     </div>
+
                   </div>
                 </section>
 
