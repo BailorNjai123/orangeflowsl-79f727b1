@@ -851,10 +851,13 @@ export default function AdminDashboard() {
                               {isFileValue(v) ? (
                                 <div className="flex flex-col items-end gap-1">
                                   {v.__files.map((path, i) => {
-                                    const name = path.split('/').pop() || `file-${i + 1}`;
+                                    const meta = v.metas?.[i];
+                                    const name = meta?.file_name || path.split('/').pop() || `file-${i + 1}`;
                                     return (
-                                      <div key={path + i} className="flex items-center gap-2 max-w-[280px]">
+                                      <div key={path + i} className="flex flex-col items-end gap-0.5 max-w-[280px] w-full">
+                                        <div className="flex items-center gap-2 w-full">
                                         <span className="text-xs truncate flex-1 text-left" title={name}>{name}</span>
+
                                         <button
                                           type="button"
                                           onClick={async () => {
