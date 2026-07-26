@@ -35,6 +35,43 @@ const milestoneCols = [
 
 type SiteRow = any;
 
+type DocMeta = { file_name: string; file_size: number; uploaded_by: string; uploaded_at: string };
+
+const fmtSize = (b?: number) => {
+  if (!b || b <= 0) return null;
+  return b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+function DocCard({ path, meta, onView, onDownload }: {
+  path: string; meta?: DocMeta; onView: () => void; onDownload: () => void;
+}) {
+  const name = meta?.file_name || path.split('/').pop() || 'document.pdf';
+  return (
+    <div className="rounded-lg border bg-muted/20 p-2.5 space-y-1">
+      <div className="flex items-start gap-2">
+        <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium truncate" title={name}>{name}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {meta?.uploaded_at ? new Date(meta.uploaded_at).toLocaleString() : '—'}
+            {meta?.uploaded_by ? ` • by ${meta.uploaded_by}` : ''}
+            {fmtSize(meta?.file_size) ? ` • ${fmtSize(meta?.file_size)}` : ''}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" onClick={onView} className="text-xs text-primary underline inline-flex items-center gap-1">
+          <Eye className="h-3 w-3" /> View PDF
+        </button>
+        <button type="button" onClick={onDownload} className="text-xs text-primary underline inline-flex items-center gap-1">
+          <Download className="h-3 w-3" /> Download PDF
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 function parseExt(site: SiteRow): { power: any; rollout: any; feedback: any } {
   try {
     const obj = site?.review_notes ? JSON.parse(site.review_notes) : {};
@@ -110,13 +147,25 @@ export default function PowerDashboard() {
     setEarth(site.earthing_resistance != null ? String(site.earthing_resistance) : '');
   };
 
-  const uploadOne = async (siteId: string, key: string, file: File | null): Promise<string | null> => {
+  const uploadOne = async (
+    siteId: string,
+    key: string,
+    file: File | null,
+  ): Promise<{ path: string; meta: DocMeta } | null> => {
     if (!file || file.size === 0) return null;
     const ext = file.name.split('.').pop();
     const path = `power/${siteId}/${Date.now()}_${key}.${ext}`;
     const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
     if (error) { toast({ variant: 'destructive', title: `Upload failed (${key})`, description: error.message }); return null; }
-    return path;
+    return {
+      path,
+      meta: {
+        file_name: file.name,
+        file_size: file.size,
+        uploaded_by: profile?.full_name || user?.email || 'Power Team',
+        uploaded_at: new Date().toISOString(),
+      },
+    };
   };
 
   const handleView = async (path: string) => {
@@ -137,11 +186,26 @@ export default function PowerDashboard() {
     const getNum = (k: string) => { const v = fd.get(k)?.toString(); return v ? parseFloat(v) : null; };
 
     const ext = parseExt(editSite);
+    const rawNotes = (() => {
+      try { const o = editSite.review_notes ? JSON.parse(editSite.review_notes) : {}; return (o && typeof o === 'object') ? o : {}; }
+      catch { return {}; }
+    })();
     const power = { ...ext.power };
 
-    const certPath = await uploadOne(editSite.id, 'certificate', fd.get('power_certificate') as File);
-    const auditPath = await uploadOne(editSite.id, 'earthing_audit', fd.get('earthing_audit') as File);
-    if (auditPath) power.earthing_audit_url = auditPath;
+    const cert = await uploadOne(editSite.id, 'certificate', fd.get('power_certificate') as File);
+    const audit = await uploadOne(editSite.id, 'earthing_audit', fd.get('earthing_audit') as File);
+    const certPath = cert?.path || null;
+    const docEvents: { type: string; meta: DocMeta; action: string }[] = [];
+    if (cert) {
+      power.power_certificate_meta = cert.meta;
+      docEvents.push({ type: 'Power Certificate', meta: cert.meta, action: editSite.power_certificate_url ? 'Replaced' : 'Uploaded' });
+    }
+    if (audit) {
+      power.earthing_audit_url = audit.path;
+      power.earthing_audit_meta = audit.meta;
+      docEvents.push({ type: 'Electrical Safety & Earthing Audit Report', meta: audit.meta, action: ext.power?.earthing_audit_url ? 'Replaced' : 'Uploaded' });
+    }
+
 
     power.edsa_meter_number = get('edsa_meter_number');
     power.generator_capacity = get('generator_capacity');
@@ -164,7 +228,7 @@ export default function PowerDashboard() {
       battery_bank_type: get('battery_bank_type') || null,
       earthing_resistance: getNum('earthing_resistance'),
       power_rfi_status: newStatus,
-      review_notes: JSON.stringify({ ...ext, power }),
+      review_notes: JSON.stringify({ ...rawNotes, ...ext, power }),
     };
     if (certPath) updates.power_certificate_url = certPath;
 
@@ -189,6 +253,17 @@ export default function PowerDashboard() {
       user_id: user!.id, user_name: profile?.full_name,
       entity_type: 'site', entity_id: editSite.id,
     });
+
+    if (docEvents.length) {
+      await supabase.from('activity_log').insert(docEvents.map(d => ({
+        action: d.action === 'Replaced' ? 'power_document_replaced' : 'power_document_uploaded',
+        description: `${d.action} ${d.type} — Site ID: ${editSite.site_id_code || editSite.id} • File: ${d.meta.file_name} • By: ${d.meta.uploaded_by} • At: ${new Date(d.meta.uploaded_at).toLocaleString()}`,
+        user_id: user!.id, user_name: profile?.full_name,
+        entity_type: 'site', entity_id: editSite.id,
+      })));
+    }
+
+
 
     if (justCompleted && prevStatus !== 'Completed') {
       const { data: recipients } = await supabase
@@ -422,32 +497,33 @@ export default function PowerDashboard() {
                       <Label>Power Certificate Upload (PDF)</Label>
                       <Input name="power_certificate" type="file" accept=".pdf" />
                       {editSite.power_certificate_url && (
-                        <div className="flex flex-wrap gap-3">
-                          <button type="button" onClick={() => handleView(editSite.power_certificate_url)} className="text-xs text-primary underline inline-flex items-center gap-1">
-                            <Eye className="h-3 w-3" /> Preview
-                          </button>
-                          <button type="button" onClick={() => handleDownload(editSite.power_certificate_url)} className="text-xs text-primary underline inline-flex items-center gap-1">
-                            <Download className="h-3 w-3" /> Download
-                          </button>
-                          <span className="text-xs text-muted-foreground">Choose a file above to replace</span>
-                        </div>
+                        <>
+                          <DocCard
+                            path={editSite.power_certificate_url}
+                            meta={ext.power_certificate_meta}
+                            onView={() => handleView(editSite.power_certificate_url)}
+                            onDownload={() => handleDownload(editSite.power_certificate_url)}
+                          />
+                          <span className="text-xs text-muted-foreground">Choose a file above to replace this PDF</span>
+                        </>
                       )}
                     </div>
                     <div className="space-y-1.5 md:col-span-2">
                       <Label>Electrical Safety &amp; Earthing Audit Report (PDF)</Label>
                       <Input name="earthing_audit" type="file" accept=".pdf" />
                       {ext.earthing_audit_url && (
-                        <div className="flex flex-wrap gap-3">
-                          <button type="button" onClick={() => handleView(ext.earthing_audit_url)} className="text-xs text-primary underline inline-flex items-center gap-1">
-                            <Eye className="h-3 w-3" /> Preview
-                          </button>
-                          <button type="button" onClick={() => handleDownload(ext.earthing_audit_url)} className="text-xs text-primary underline inline-flex items-center gap-1">
-                            <Download className="h-3 w-3" /> Download
-                          </button>
-                          <span className="text-xs text-muted-foreground">Choose a file above to replace</span>
-                        </div>
+                        <>
+                          <DocCard
+                            path={ext.earthing_audit_url}
+                            meta={ext.earthing_audit_meta}
+                            onView={() => handleView(ext.earthing_audit_url)}
+                            onDownload={() => handleDownload(ext.earthing_audit_url)}
+                          />
+                          <span className="text-xs text-muted-foreground">Choose a file above to replace this PDF</span>
+                        </>
                       )}
                     </div>
+
                   </div>
                 </section>
 

@@ -22,13 +22,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { getSignedUrl, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 
-type FileValue = { __files: string[]; bucket: string };
-const asFiles = (v: any, bucket = 'site-documents'): FileValue | null => {
+type DocMeta = { file_name?: string; file_size?: number; uploaded_by?: string; uploaded_at?: string };
+type FileValue = { __files: string[]; bucket: string; metas?: (DocMeta | undefined)[] };
+const asFiles = (v: any, bucket = 'site-documents', metas?: (DocMeta | undefined)[]): FileValue | null => {
   if (!v) return null;
   const arr = Array.isArray(v) ? v.filter(Boolean) : (typeof v === 'string' && v ? [v] : []);
-  return arr.length ? { __files: arr, bucket } : null;
+  return arr.length ? { __files: arr, bucket, metas } : null;
 };
 const isFileValue = (v: any): v is FileValue => v && typeof v === 'object' && Array.isArray(v.__files);
+const fmtFileSize = (b?: number) => {
+  if (!b || b <= 0) return null;
+  return b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
@@ -67,7 +73,10 @@ const powerFieldLabels: [string, (s: any, ext: any) => any][] = [
   ['Earthing Resistance (Ω)', (s) => s.earthing_resistance],
   ['Power RFI Status', (s) => s.power_rfi_status],
   ['Power Quality Inspection Date', (_s, ext) => ext.power_quality_date],
+  ['Power Certificate', (s, ext) => asFiles(s.power_certificate_url, 'site-documents', [ext.power_certificate_meta])],
+  ['Electrical Safety & Earthing Audit Report', (_s, ext) => asFiles(ext.earthing_audit_url, 'site-documents', [ext.earthing_audit_meta])],
 ];
+
 
 const fileName = (p: any) => {
   if (!p) return null;
@@ -161,6 +170,22 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => { fetchData(); }, [user]);
+
+  // Live sync: reflect Power/Rollout dashboard saves without a page refresh
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('admin-sites-sync')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sites' }, (payload: any) => {
+        const row = payload.new;
+        if (!row?.id) return;
+        setSites(prev => prev.map(s => (s.id === row.id ? { ...s, ...row } : s)));
+        setStageReview(prev => (prev && prev.site?.id === row.id ? { ...prev, site: { ...prev.site, ...row } } : prev));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
 
   const callManageUsers = async (body: any) => {
     const res = await supabase.functions.invoke('manage-users', { body });
@@ -842,10 +867,13 @@ export default function AdminDashboard() {
                               {isFileValue(v) ? (
                                 <div className="flex flex-col items-end gap-1">
                                   {v.__files.map((path, i) => {
-                                    const name = path.split('/').pop() || `file-${i + 1}`;
+                                    const meta = v.metas?.[i];
+                                    const name = meta?.file_name || path.split('/').pop() || `file-${i + 1}`;
                                     return (
-                                      <div key={path + i} className="flex items-center gap-2 max-w-[280px]">
+                                      <div key={path + i} className="flex flex-col items-end gap-0.5 max-w-[280px] w-full">
+                                        <div className="flex items-center gap-2 w-full">
                                         <span className="text-xs truncate flex-1 text-left" title={name}>{name}</span>
+
                                         <button
                                           type="button"
                                           onClick={async () => {
@@ -870,8 +898,17 @@ export default function AdminDashboard() {
                                         >
                                           ⬇ Download
                                         </button>
+                                        </div>
+                                        {meta && (
+                                          <span className="text-[10px] text-muted-foreground text-right">
+                                            {meta.uploaded_at ? new Date(meta.uploaded_at).toLocaleString() : '—'}
+                                            {meta.uploaded_by ? ` • by ${meta.uploaded_by}` : ''}
+                                            {fmtFileSize(meta.file_size) ? ` • ${fmtFileSize(meta.file_size)}` : ''}
+                                          </span>
+                                        )}
                                       </div>
                                     );
+
                                   })}
 
                                 </div>
