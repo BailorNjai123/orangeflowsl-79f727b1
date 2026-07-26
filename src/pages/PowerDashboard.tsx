@@ -110,13 +110,25 @@ export default function PowerDashboard() {
     setEarth(site.earthing_resistance != null ? String(site.earthing_resistance) : '');
   };
 
-  const uploadOne = async (siteId: string, key: string, file: File | null): Promise<string | null> => {
+  const uploadOne = async (
+    siteId: string,
+    key: string,
+    file: File | null,
+  ): Promise<{ path: string; meta: DocMeta } | null> => {
     if (!file || file.size === 0) return null;
     const ext = file.name.split('.').pop();
     const path = `power/${siteId}/${Date.now()}_${key}.${ext}`;
     const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
     if (error) { toast({ variant: 'destructive', title: `Upload failed (${key})`, description: error.message }); return null; }
-    return path;
+    return {
+      path,
+      meta: {
+        file_name: file.name,
+        file_size: file.size,
+        uploaded_by: profile?.full_name || user?.email || 'Power Team',
+        uploaded_at: new Date().toISOString(),
+      },
+    };
   };
 
   const handleView = async (path: string) => {
@@ -137,11 +149,26 @@ export default function PowerDashboard() {
     const getNum = (k: string) => { const v = fd.get(k)?.toString(); return v ? parseFloat(v) : null; };
 
     const ext = parseExt(editSite);
+    const rawNotes = (() => {
+      try { const o = editSite.review_notes ? JSON.parse(editSite.review_notes) : {}; return (o && typeof o === 'object') ? o : {}; }
+      catch { return {}; }
+    })();
     const power = { ...ext.power };
 
-    const certPath = await uploadOne(editSite.id, 'certificate', fd.get('power_certificate') as File);
-    const auditPath = await uploadOne(editSite.id, 'earthing_audit', fd.get('earthing_audit') as File);
-    if (auditPath) power.earthing_audit_url = auditPath;
+    const cert = await uploadOne(editSite.id, 'certificate', fd.get('power_certificate') as File);
+    const audit = await uploadOne(editSite.id, 'earthing_audit', fd.get('earthing_audit') as File);
+    const certPath = cert?.path || null;
+    const docEvents: { type: string; meta: DocMeta; action: string }[] = [];
+    if (cert) {
+      power.power_certificate_meta = cert.meta;
+      docEvents.push({ type: 'Power Certificate', meta: cert.meta, action: editSite.power_certificate_url ? 'Replaced' : 'Uploaded' });
+    }
+    if (audit) {
+      power.earthing_audit_url = audit.path;
+      power.earthing_audit_meta = audit.meta;
+      docEvents.push({ type: 'Electrical Safety & Earthing Audit Report', meta: audit.meta, action: ext.power?.earthing_audit_url ? 'Replaced' : 'Uploaded' });
+    }
+
 
     power.edsa_meter_number = get('edsa_meter_number');
     power.generator_capacity = get('generator_capacity');
