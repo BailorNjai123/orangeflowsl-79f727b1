@@ -882,8 +882,17 @@ export default function AdminDashboard() {
                                         >
                                           ⬇ Download
                                         </button>
+                                        </div>
+                                        {meta && (
+                                          <span className="text-[10px] text-muted-foreground text-right">
+                                            {meta.uploaded_at ? new Date(meta.uploaded_at).toLocaleString() : '—'}
+                                            {meta.uploaded_by ? ` • by ${meta.uploaded_by}` : ''}
+                                            {fmtFileSize(meta.file_size) ? ` • ${fmtFileSize(meta.file_size)}` : ''}
+                                          </span>
+                                        )}
                                       </div>
                                     );
+
                                   })}
 
                                 </div>
