@@ -73,7 +73,10 @@ const powerFieldLabels: [string, (s: any, ext: any) => any][] = [
   ['Earthing Resistance (Ω)', (s) => s.earthing_resistance],
   ['Power RFI Status', (s) => s.power_rfi_status],
   ['Power Quality Inspection Date', (_s, ext) => ext.power_quality_date],
+  ['Power Certificate', (s, ext) => asFiles(s.power_certificate_url, 'site-documents', [ext.power_certificate_meta])],
+  ['Electrical Safety & Earthing Audit Report', (_s, ext) => asFiles(ext.earthing_audit_url, 'site-documents', [ext.earthing_audit_meta])],
 ];
+
 
 const fileName = (p: any) => {
   if (!p) return null;
