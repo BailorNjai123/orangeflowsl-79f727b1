@@ -191,7 +191,7 @@ export default function PowerDashboard() {
       battery_bank_type: get('battery_bank_type') || null,
       earthing_resistance: getNum('earthing_resistance'),
       power_rfi_status: newStatus,
-      review_notes: JSON.stringify({ ...ext, power }),
+      review_notes: JSON.stringify({ ...rawNotes, ...ext, power }),
     };
     if (certPath) updates.power_certificate_url = certPath;
 
