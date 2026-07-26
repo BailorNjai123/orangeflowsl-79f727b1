@@ -171,6 +171,22 @@ export default function AdminDashboard() {
 
   useEffect(() => { fetchData(); }, [user]);
 
+  // Live sync: reflect Power/Rollout dashboard saves without a page refresh
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('admin-sites-sync')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sites' }, (payload: any) => {
+        const row = payload.new;
+        if (!row?.id) return;
+        setSites(prev => prev.map(s => (s.id === row.id ? { ...s, ...row } : s)));
+        setStageReview(prev => (prev && prev.site?.id === row.id ? { ...prev, site: { ...prev.site, ...row } } : prev));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+
   const callManageUsers = async (body: any) => {
     const res = await supabase.functions.invoke('manage-users', { body });
     if (res.error) {
