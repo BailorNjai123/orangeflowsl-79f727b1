@@ -22,13 +22,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { getSignedUrl, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 
-type FileValue = { __files: string[]; bucket: string };
-const asFiles = (v: any, bucket = 'site-documents'): FileValue | null => {
+type DocMeta = { file_name?: string; file_size?: number; uploaded_by?: string; uploaded_at?: string };
+type FileValue = { __files: string[]; bucket: string; metas?: (DocMeta | undefined)[] };
+const asFiles = (v: any, bucket = 'site-documents', metas?: (DocMeta | undefined)[]): FileValue | null => {
   if (!v) return null;
   const arr = Array.isArray(v) ? v.filter(Boolean) : (typeof v === 'string' && v ? [v] : []);
-  return arr.length ? { __files: arr, bucket } : null;
+  return arr.length ? { __files: arr, bucket, metas } : null;
 };
 const isFileValue = (v: any): v is FileValue => v && typeof v === 'object' && Array.isArray(v.__files);
+const fmtFileSize = (b?: number) => {
+  if (!b || b <= 0) return null;
+  return b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
