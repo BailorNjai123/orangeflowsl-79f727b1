@@ -254,6 +254,17 @@ export default function PowerDashboard() {
       entity_type: 'site', entity_id: editSite.id,
     });
 
+    if (docEvents.length) {
+      await supabase.from('activity_log').insert(docEvents.map(d => ({
+        action: d.action === 'Replaced' ? 'power_document_replaced' : 'power_document_uploaded',
+        description: `${d.action} ${d.type} — Site ID: ${editSite.site_id_code || editSite.id} • File: ${d.meta.file_name} • By: ${d.meta.uploaded_by} • At: ${new Date(d.meta.uploaded_at).toLocaleString()}`,
+        user_id: user!.id, user_name: profile?.full_name,
+        entity_type: 'site', entity_id: editSite.id,
+      })));
+    }
+
+
+
     if (justCompleted && prevStatus !== 'Completed') {
       const { data: recipients } = await supabase
         .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
