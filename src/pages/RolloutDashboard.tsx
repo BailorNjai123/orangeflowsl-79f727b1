@@ -105,6 +105,8 @@ export default function RolloutDashboard() {
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [milestones, setMilestones] = useState<Record<string, string>>({});
+  const [formKey, setFormKey] = useState(0);
+
 
   const { user, profile, role } = useAuth();
   const { toast } = useToast();
