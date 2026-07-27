@@ -105,6 +105,8 @@ export default function RolloutDashboard() {
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [milestones, setMilestones] = useState<Record<string, string>>({});
+  const [formKey, setFormKey] = useState(0);
+
 
   const { user, profile, role } = useAuth();
   const { toast } = useToast();
@@ -306,6 +308,10 @@ export default function RolloutDashboard() {
     rollout.ti_contractor = get('ti_contractor');
     rollout.project_manager = get('project_manager');
     rollout.status = rollout.status || 'In Progress';
+    rollout.submitted_at = new Date().toISOString();
+    rollout.submitted_by = profile?.full_name || '';
+    rollout.submission_count = (Number(rollout.submission_count) || 0) + 1;
+
 
     for (const [k] of dateFields) rollout[k] = get(k) || null;
 
@@ -363,10 +369,19 @@ export default function RolloutDashboard() {
         type: 'info', link: '/admin',
       })));
     }
-    toast({ title: 'Rollout data submitted', description: 'Sent to Admin Dashboard for review.' });
-    setEditSite(null);
+    toast({ title: 'Rollout data submitted', description: 'Sent to Admin. The form stays open and remains editable.' });
+    // Keep the form open with the saved values so it can be edited/resubmitted anytime
+    const { data: fresh } = await supabase.from('sites').select('*').eq('id', editSite.id).maybeSingle();
+    if (fresh) {
+      setEditSite(fresh as SiteRow);
+      const init: Record<string, string> = {};
+      milestoneFields.forEach(([k]) => { init[k] = (fresh as any)[k] || 'Not Started'; });
+      setMilestones(init);
+      setFormKey(k => k + 1);
+    }
     fetchData();
   };
+
 
   const activeRolloutSites = handoverPool.filter(s => parseExt(s).feedback.status === 'accepted');
 
@@ -527,14 +542,20 @@ export default function RolloutDashboard() {
                             <p className="text-xs text-muted-foreground truncate">
                               {site.site_id_code} • Progress: <span className="font-medium">{site.progress_percent || 0}%</span> • Power RFI: {site.power_rfi || 'Not Started'}
                             </p>
+                            {parseExt(site).rollout?.submitted_at && (
+                              <p className="text-[11px] text-primary mt-0.5">
+                                Submitted {new Date(parseExt(site).rollout.submitted_at).toLocaleDateString()} — editable
+                              </p>
+                            )}
                           </div>
                           {canEdit ? (
                             <Button size="sm" onClick={() => openEdit(site)}>
-                              {(site.progress_percent || 0) > 0 ? 'Edit & Resubmit' : 'Fill Form'}
+                              {parseExt(site).rollout?.submitted_at || (site.progress_percent || 0) > 0 ? 'Edit & Resubmit' : 'Fill Form'}
                             </Button>
                           ) : (
                             <Badge variant="outline"><Lock className="h-3 w-3 mr-1" />Read-only</Badge>
                           )}
+
                         </div>
                       ))}
                     </div>
@@ -615,7 +636,16 @@ export default function RolloutDashboard() {
             {editSite && (() => {
               const ext = parseExt(editSite).rollout;
               return (
-                <form onSubmit={handleSave} className="space-y-6">
+                <form key={formKey} onSubmit={handleSave} className="space-y-6">
+                  {ext.submitted_at && (
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs">
+                      <span className="font-medium text-primary">Submitted</span>{' '}
+                      {new Date(ext.submitted_at).toLocaleString()}
+                      {ext.submitted_by ? ` by ${ext.submitted_by}` : ''}
+                      {ext.submission_count ? ` • ${ext.submission_count} submission(s)` : ''} — you can edit and resubmit at any time.
+                    </div>
+                  )}
+
                   {/* Progress bar */}
                   <div className="rounded-lg border p-3 bg-muted/40">
                     <div className="flex items-center justify-between text-xs font-medium mb-2">
@@ -735,13 +765,14 @@ export default function RolloutDashboard() {
                   <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
                     <Button type="submit" className="flex-1 gradient-orange border-0 text-primary-foreground" disabled={saving || !canEdit}>
                       {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      {(editSite.progress_percent || 0) > 0 ? 'Update & Resubmit to Admin' : 'Submit to Admin'}
+                      {ext.submitted_at || (editSite.progress_percent || 0) > 0 ? 'Update & Resubmit to Admin' : 'Submit to Admin'}
                     </Button>
                     <Button type="button" variant="outline" className="flex-1" disabled={saving}
-                      onClick={() => toast({ title: 'Draft kept', description: 'Your entries stay in the form until you close it.' })}>
-                      Save Draft
+                      onClick={() => setEditSite(null)}>
+                      Close
                     </Button>
                   </div>
+
                 </form>
               );
             })()}
