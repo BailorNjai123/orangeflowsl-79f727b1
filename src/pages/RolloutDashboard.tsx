@@ -18,8 +18,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, openFileInNewTab } from '@/lib/storageUtils';
-import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import ProcurementManagementView, { procurementStatusBadge } from '@/components/ProcurementManagement';
+import RolloutProcurementReadiness, { RolloutReadinessTracker } from '@/components/RolloutProcurementReadiness';
+
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, value: 'overview' },
