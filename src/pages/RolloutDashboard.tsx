@@ -231,11 +231,22 @@ export default function RolloutDashboard() {
       entity_type: 'site', entity_id: feedbackSite.id,
     });
 
-    toast({ title: decision === 'accepted' ? 'Handover accepted' : 'Handover rejected' });
+    const acceptedSite = feedbackSite;
+    toast({
+      title: decision === 'accepted' ? 'Handover accepted' : 'Handover rejected',
+      description: decision === 'accepted' ? 'Site unlocked in the Rollout Form.' : undefined,
+    });
     setFeedbackSaving(false);
     setFeedbackSite(null);
     setFeedbackText('');
-    fetchData();
+    await fetchData();
+
+    // Accepted sites move straight into the Rollout Form for completion
+    if (decision === 'accepted') {
+      setActiveTab('form');
+      const { data: fresh } = await supabase.from('sites').select('*').eq('id', acceptedSite.id).maybeSingle();
+      if (fresh) openEdit(fresh as SiteRow);
+    }
   };
 
   // ---------------- Rollout form flow ----------------
