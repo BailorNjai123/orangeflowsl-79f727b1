@@ -217,13 +217,19 @@ export default function ProcurementDashboard() {
       const { data: recipients } = await supabase
         .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
       if (recipients?.length) {
-        await supabase.from('notifications').insert(recipients.map((r: any) => ({
-          user_id: r.user_id,
-          title: 'New procurement submission',
-          message: `Procurement form submitted for "${formSite.site_name}".`,
-          type: 'info',
-          link: r.role === 'rollout_team' ? '/rollout' : '/admin',
-        })));
+        const notify = async (roleName: string, link: string) => {
+          const ids = recipients.filter((r: any) => r.role === roleName).map((r: any) => r.user_id);
+          if (!ids.length) return;
+          await supabase.rpc('send_workflow_notification', {
+            _user_ids: ids,
+            _title: 'New procurement submission',
+            _message: `Procurement form submitted for "${formSite.site_name}".`,
+            _type: 'info',
+            _link: link,
+          });
+        };
+        await notify('rollout_team', '/rollout');
+        await notify('project_team', '/admin');
       }
       toast({ title: 'Procurement form submitted to Admin & Rollout!' });
       setFormSite(null); fetchData();
