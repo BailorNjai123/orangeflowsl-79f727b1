@@ -773,18 +773,25 @@ export default function RolloutDashboard() {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Land Acquisition, Lease & Handover Status
+                    Rollout Readiness Tracker
                   </h3>
-                  <ProcSubmissionDetails submission={procView.sub} />
+                  <RolloutReadinessTracker submission={procView.sub} />
                 </div>
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Vendor, Purchase Order, Delivery & Documents
+                    Land Acquisition, Lease & Handover Status
+                  </h3>
+                  <RolloutProcurementReadiness submission={procView.sub} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Vendor, Purchase Order & Delivery
                   </h3>
                   <ProcurementManagementView submission={procView.sub} />
                 </div>
               </div>
             )}
+
           </DialogContent>
         </Dialog>
       </DashboardLayout>
