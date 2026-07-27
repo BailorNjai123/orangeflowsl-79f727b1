@@ -95,6 +95,8 @@ export default function RolloutDashboard() {
 
   // Feedback modal state
   const [feedbackSite, setFeedbackSite] = useState<SiteRow | null>(null);
+  const [procView, setProcView] = useState<{ site: any; sub: any } | null>(null);
+
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackSaving, setFeedbackSaving] = useState(false);
 
