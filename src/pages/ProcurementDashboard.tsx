@@ -442,12 +442,21 @@ export default function ProcurementDashboard() {
             </Card>
           ))}
 
+          <ProcurementManagementForm
+            values={mgmtValues}
+            onChange={(k, v) => setMgmtValues(prev => ({ ...prev, [k]: v }))}
+            docFiles={docFiles}
+            onDocFile={(k, f) => setDocFiles(prev => ({ ...prev, [k]: f }))}
+            disabled={!canEditProc}
+          />
+
           <Card>
             <CardContent className="pt-6 space-y-3">
               <Label>Additional Notes</Label>
               <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={3} placeholder="Any additional notes..." />
             </CardContent>
           </Card>
+
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setFormSite(null)}>Cancel</Button>
