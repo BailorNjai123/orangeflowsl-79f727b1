@@ -4,6 +4,8 @@ import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Chec
 import SiteDetailsView from '@/components/SiteDetailsView';
 import SiteMonitorTable from '@/components/SiteMonitorTable';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
+import ProcurementManagementView from '@/components/ProcurementManagement';
+
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
