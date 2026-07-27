@@ -153,12 +153,15 @@ export default function RolloutDashboard() {
     [sites, procSubs],
   );
 
-  // Procurement records released to Rollout (view-only)
+  // Every submitted Procurement form is visible to Rollout (view-only),
+  // released records first.
   const readyProcSites = useMemo(() => {
     return Object.values(procSubs)
-      .filter((sub: any) => RELEASED.includes(sub?.procurement_status))
+      .filter((sub: any) => !!sub)
+      .sort((a: any, b: any) => Number(RELEASED.includes(b?.procurement_status)) - Number(RELEASED.includes(a?.procurement_status)))
       .map((sub: any) => ({ sub, site: sites.find(s => s.id === sub.site_id) }));
   }, [procSubs, sites]);
+
 
 
   const pendingFeedback = handoverPool.filter(s => (parseExt(s).feedback.status || 'pending') === 'pending');
