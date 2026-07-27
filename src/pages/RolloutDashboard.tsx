@@ -18,12 +18,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, openFileInNewTab } from '@/lib/storageUtils';
+import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
+import ProcurementManagementView, { procurementStatusBadge } from '@/components/ProcurementManagement';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, value: 'overview' },
   { label: 'Site Feedback', icon: ClipboardCheck, value: 'feedback' },
+  { label: 'Procurement Info', icon: FileText, value: 'procurement_info' },
   { label: 'Rollout Form', icon: FileText, value: 'form' },
 ];
+
 
 const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
 const projectScopes = ['New Site Build', 'Technology Expansion', 'Equipment Swap', 'Capacity Upgrade', 'Colocation Upgrade'];
@@ -91,6 +95,8 @@ export default function RolloutDashboard() {
 
   // Feedback modal state
   const [feedbackSite, setFeedbackSite] = useState<SiteRow | null>(null);
+  const [procView, setProcView] = useState<{ site: any; sub: any } | null>(null);
+
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackSaving, setFeedbackSaving] = useState(false);
 
@@ -126,7 +132,16 @@ export default function RolloutDashboard() {
     [sites, procSubs],
   );
 
+  // Procurement records released to Rollout (view-only)
+  const readyProcSites = useMemo(() => {
+    const released = ['Ready for Handover', 'Handed Over to Rollout', 'Completed'];
+    return Object.values(procSubs)
+      .filter((sub: any) => released.includes(sub?.procurement_status))
+      .map((sub: any) => ({ sub, site: sites.find(s => s.id === sub.site_id) }));
+  }, [procSubs, sites]);
+
   const pendingFeedback = handoverPool.filter(s => (parseExt(s).feedback.status || 'pending') === 'pending');
+
   const acceptedSites = handoverPool.filter(s => parseExt(s).feedback.status === 'accepted');
   const rejectedSites = handoverPool.filter(s => parseExt(s).feedback.status === 'rejected');
   const onAirCount = sites.filter(s => s.on_air === 'Completed').length;
@@ -411,6 +426,44 @@ export default function RolloutDashboard() {
               </Card>
             )}
 
+            {/* ================= PROCUREMENT INFO (READ-ONLY) ================= */}
+            {activeTab === 'procurement_info' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Procurement Information (View Only)</CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Sites released by Procurement. Rollout can view and download procurement records — editing is not permitted.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {readyProcSites.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      No procurement records marked "Ready for Handover" yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {readyProcSites.map(({ site, sub }) => (
+                        <div key={sub.id} className="p-3 rounded-lg border bg-card flex flex-wrap items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{site?.site_name || 'Site'}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {site?.site_id_code} • PO {sub.po_number || '—'} • Delivery: {sub.material_delivery_status || 'Pending'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {procurementStatusBadge(sub.procurement_status)}
+                            <Button size="sm" variant="outline" onClick={() => setProcView({ site, sub })}>View</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+
+
             {/* ================= ROLLOUT FORM ================= */}
             {activeTab === 'form' && (
               <Card>
@@ -686,7 +739,36 @@ export default function RolloutDashboard() {
             })()}
           </DialogContent>
         </Dialog>
+
+        {/* Procurement info — read-only for Rollout */}
+        <Dialog open={!!procView} onOpenChange={(open) => { if (!open) setProcView(null); }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 flex-wrap">
+                Procurement — {procView?.site?.site_name || 'Site'}
+                <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" /> View only</Badge>
+              </DialogTitle>
+            </DialogHeader>
+            {procView && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Land Acquisition, Lease & Handover Status
+                  </h3>
+                  <ProcSubmissionDetails submission={procView.sub} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Vendor, Purchase Order, Delivery & Documents
+                  </h3>
+                  <ProcurementManagementView submission={procView.sub} />
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </DashboardLayout>
+
     </AuthGuard>
   );
 }

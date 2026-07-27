@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, MessageSquare, ClipboardList, Loader2, Check, X, Radio, Paperclip, Eye } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, ClipboardList, Loader2, Check, X, Radio, Paperclip, Eye, Settings2 } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
+import ProcurementManagementView, {
+  ProcurementManagementForm, procMgmtGroups, procDocFields, procurementStatusBadge,
+} from '@/components/ProcurementManagement';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
@@ -16,6 +19,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
+const DATE_KEYS = ['po_date', 'expected_delivery_date', 'actual_delivery_date'];
+
+function defaultMgmt(sub?: any): Record<string, any> {
+  const out: Record<string, any> = {};
+  procMgmtGroups.forEach(g => g.fields.forEach(f => {
+    out[f.key] = sub?.[f.key] ?? (f.type === 'select' ? f.options![0] : '');
+  }));
+  return out;
+}
+
+function mgmtPayload(values: Record<string, any>) {
+  const out: Record<string, any> = {};
+  Object.entries(values).forEach(([k, v]) => {
+    out[k] = DATE_KEYS.includes(k) ? (v || null) : (v ?? '');
+  });
+  return out;
+}
+
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, value: 'dashboard' },
@@ -56,6 +78,7 @@ const procSections = [
     bgColor: 'bg-emerald-500/10',
     textColor: 'text-emerald-600',
     items: [
+      { key: 'handover_to_vendor', label: 'Handover to Vendor', fileLabel: 'Handover to Vendor Document' },
       { key: 'road_access', label: 'Road Access Available', fileLabel: 'Road Access Approval / Photo' },
       { key: 'vendor_contract', label: 'Vendor Contract Signed', fileLabel: 'Vendor Contract PDF' },
       { key: 'site_handover', label: 'Site Handover to Vendor Completed', fileLabel: 'Site Handover Certificate PDF' },
@@ -78,8 +101,14 @@ export default function ProcurementDashboard() {
   const [formFiles, setFormFiles] = useState<Record<string, File | null>>({});
   const [formNotes, setFormNotes] = useState('');
   const [viewSubmission, setViewSubmission] = useState<ProcSubmission | null>(null);
-  const { user, profile } = useAuth();
+  const [mgmtValues, setMgmtValues] = useState<Record<string, any>>(defaultMgmt());
+  const [docFiles, setDocFiles] = useState<Record<string, File | null>>({});
+  const [manageSub, setManageSub] = useState<ProcSubmission | null>(null);
+  const { user, profile, role } = useAuth();
   const { toast } = useToast();
+
+  const canEditProc = role === 'procurement_team';
+
 
   const fetchData = async () => {
     if (!user) return;
@@ -127,7 +156,24 @@ export default function ProcurementDashboard() {
     setFormValues(init);
     setFormFiles(initFiles);
     setFormNotes('');
+    setMgmtValues(defaultMgmt());
+    setDocFiles({});
     setActiveTab('submissions');
+  };
+
+  const uploadDoc = async (siteId: string, key: string, file: File): Promise<string | null> => {
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'File too large', description: `${file.name} exceeds 50MB.` });
+      return null;
+    }
+    const ext = file.name.split('.').pop();
+    const path = `${user!.id}/${siteId}/${key}_${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('procurement-documents').upload(path, file, { upsert: true });
+    if (error) {
+      toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+      return null;
+    }
+    return path;
   };
 
   const handleProcSubmit = async () => {
@@ -139,17 +185,24 @@ export default function ProcurementDashboard() {
       for (const item of section.items) {
         const file = formFiles[item.key];
         if (file && file.size > 0) {
-          const ext = file.name.split('.').pop();
-          const path = `${user!.id}/${formSite.id}/${item.key}_${Date.now()}.${ext}`;
-          const { error } = await supabase.storage.from('procurement-documents').upload(path, file, { upsert: true });
-          if (!error) fileUrls[`${item.key}_file_url`] = path;
+          const path = await uploadDoc(formSite.id, item.key, file);
+          if (path) fileUrls[`${item.key}_file_url`] = path;
         }
+      }
+    }
+
+    // Section 5 — procurement document management uploads
+    for (const doc of procDocFields) {
+      const file = docFiles[doc.key];
+      if (file && file.size > 0) {
+        const path = await uploadDoc(formSite.id, doc.key, file);
+        if (path) fileUrls[doc.key] = path;
       }
     }
 
     const { error } = await supabase.from('procurement_submissions').insert({
       site_id: formSite.id, submitted_by: user!.id,
-      ...formValues, ...fileUrls,
+      ...formValues, ...mgmtPayload(mgmtValues), ...fileUrls,
       notes: formNotes || null, status: 'pending',
     });
     setSubmitting(false);
@@ -164,6 +217,63 @@ export default function ProcurementDashboard() {
       setFormSite(null); fetchData();
     } else toast({ variant: 'destructive', title: 'Error', description: error.message });
   };
+
+  const openManage = (sub: ProcSubmission) => {
+    setManageSub(sub);
+    setMgmtValues(defaultMgmt(sub));
+    setDocFiles({});
+  };
+
+  const handleManageSave = async () => {
+    if (!manageSub) return;
+    if (!canEditProc) {
+      toast({ variant: 'destructive', title: 'Permission denied', description: 'Only the Procurement team can edit procurement records.' });
+      return;
+    }
+    setSubmitting(true);
+    const fileUrls: Record<string, string> = {};
+    for (const doc of procDocFields) {
+      const file = docFiles[doc.key];
+      if (file && file.size > 0) {
+        const path = await uploadDoc(manageSub.site_id, doc.key, file);
+        if (path) fileUrls[doc.key] = path;
+      }
+    }
+    const payload = { ...mgmtPayload(mgmtValues), ...fileUrls };
+    const { error } = await supabase.from('procurement_submissions').update(payload).eq('id', manageSub.id);
+    setSubmitting(false);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      return;
+    }
+    const siteName = manageSub.sites?.site_name || 'site';
+    await supabase.from('activity_log').insert({
+      action: 'procurement_management_updated',
+      description: `Procurement management data updated for "${siteName}" — status: ${mgmtValues.procurement_status}${Object.keys(fileUrls).length ? `, ${Object.keys(fileUrls).length} document(s) uploaded` : ''}`,
+      user_id: user!.id, user_name: profile?.full_name,
+      entity_type: 'procurement_submission', entity_id: manageSub.id,
+    });
+
+    // Notify Rollout + Admin when ready for handover
+    if (['Ready for Handover', 'Handed Over to Rollout'].includes(mgmtValues.procurement_status)) {
+      const { data: recipients } = await supabase
+        .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
+      if (recipients?.length) {
+        await supabase.from('notifications').insert(recipients.map((r: any) => ({
+          user_id: r.user_id,
+          title: 'Procurement ready for handover',
+          message: `Procurement for "${siteName}" is now "${mgmtValues.procurement_status}".`,
+          type: 'info',
+          link: r.role === 'rollout_team' ? '/rollout' : '/admin',
+        })));
+      }
+    }
+
+    toast({ title: 'Procurement management updated' });
+    setManageSub(null);
+    fetchData();
+  };
+
 
   const pendingSitesForFeedback = allSites.filter(s => s.status === 'pending' && !feedbacks.find(f => f.site_id === s.id));
   const acceptedFeedbacks = feedbacks.filter(f => f.status === 'accepted');
@@ -332,12 +442,21 @@ export default function ProcurementDashboard() {
             </Card>
           ))}
 
+          <ProcurementManagementForm
+            values={mgmtValues}
+            onChange={(k, v) => setMgmtValues(prev => ({ ...prev, [k]: v }))}
+            docFiles={docFiles}
+            onDocFile={(k, f) => setDocFiles(prev => ({ ...prev, [k]: f }))}
+            disabled={!canEditProc}
+          />
+
           <Card>
             <CardContent className="pt-6 space-y-3">
               <Label>Additional Notes</Label>
               <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={3} placeholder="Any additional notes..." />
             </CardContent>
           </Card>
+
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setFormSite(null)}>Cancel</Button>
@@ -376,14 +495,23 @@ export default function ProcurementDashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="text-sm font-semibold">{proc.sites?.site_name || 'Site'}</h4>
                         <StatusBadge status={proc.status} />
+                        {procurementStatusBadge(proc.procurement_status)}
                       </div>
-                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setViewSubmission(proc); }}>
-                        <Eye className="h-3 w-3 mr-1" /> View Details
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {canEditProc && (
+                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openManage(proc); }}>
+                            <Settings2 className="h-3 w-3 mr-1" /> Manage
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setViewSubmission(proc); }}>
+                          <Eye className="h-3 w-3 mr-1" /> View Details
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {proc.sites?.region} • Submitted {new Date(proc.created_at).toLocaleDateString()}
                     </p>
+
                   </CardContent>
                 </Card>
               ))}
@@ -433,10 +561,45 @@ export default function ProcurementDashboard() {
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Procurement Details</h3>
                 <ProcSubmissionDetails submission={viewSubmission} />
               </div>
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Procurement Management & Documents</h3>
+                <ProcurementManagementView submission={viewSubmission} />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Procurement (Section 4 & 5) Dialog */}
+      <Dialog open={!!manageSub} onOpenChange={(open) => { if (!open) setManageSub(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 flex-wrap">
+              Manage Procurement — {manageSub?.sites?.site_name || 'Site'}
+            </DialogTitle>
+          </DialogHeader>
+          {manageSub && (
+            <div className="space-y-4">
+              <ProcurementManagementForm
+                values={mgmtValues}
+                onChange={(k, v) => setMgmtValues(prev => ({ ...prev, [k]: v }))}
+                docFiles={docFiles}
+                onDocFile={(k, f) => setDocFiles(prev => ({ ...prev, [k]: f }))}
+                existing={manageSub}
+                disabled={!canEditProc}
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setManageSub(null)}>Cancel</Button>
+                <Button className="flex-1 gradient-orange border-0 text-primary-foreground" disabled={submitting || !canEditProc} onClick={handleManageSave}>
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Save Procurement Data
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
     </AuthGuard>
   );
+
 }
