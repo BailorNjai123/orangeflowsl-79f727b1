@@ -78,6 +78,7 @@ const procSections = [
     bgColor: 'bg-emerald-500/10',
     textColor: 'text-emerald-600',
     items: [
+      { key: 'handover_to_vendor', label: 'Handover to Vendor', fileLabel: 'Handover to Vendor Document' },
       { key: 'road_access', label: 'Road Access Available', fileLabel: 'Road Access Approval / Photo' },
       { key: 'vendor_contract', label: 'Vendor Contract Signed', fileLabel: 'Vendor Contract PDF' },
       { key: 'site_handover', label: 'Site Handover to Vendor Completed', fileLabel: 'Site Handover Certificate PDF' },
@@ -100,8 +101,14 @@ export default function ProcurementDashboard() {
   const [formFiles, setFormFiles] = useState<Record<string, File | null>>({});
   const [formNotes, setFormNotes] = useState('');
   const [viewSubmission, setViewSubmission] = useState<ProcSubmission | null>(null);
-  const { user, profile } = useAuth();
+  const [mgmtValues, setMgmtValues] = useState<Record<string, any>>(defaultMgmt());
+  const [docFiles, setDocFiles] = useState<Record<string, File | null>>({});
+  const [manageSub, setManageSub] = useState<ProcSubmission | null>(null);
+  const { user, profile, role } = useAuth();
   const { toast } = useToast();
+
+  const canEditProc = role === 'procurement_team';
+
 
   const fetchData = async () => {
     if (!user) return;
