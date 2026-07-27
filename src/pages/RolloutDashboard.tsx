@@ -308,6 +308,10 @@ export default function RolloutDashboard() {
     rollout.ti_contractor = get('ti_contractor');
     rollout.project_manager = get('project_manager');
     rollout.status = rollout.status || 'In Progress';
+    rollout.submitted_at = new Date().toISOString();
+    rollout.submitted_by = profile?.full_name || '';
+    rollout.submission_count = (Number(rollout.submission_count) || 0) + 1;
+
 
     for (const [k] of dateFields) rollout[k] = get(k) || null;
 
