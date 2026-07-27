@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, MessageSquare, ClipboardList, Loader2, Check, X, Radio, Paperclip, Eye } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, ClipboardList, Loader2, Check, X, Radio, Paperclip, Eye, Settings2 } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
+import ProcurementManagementView, {
+  ProcurementManagementForm, procMgmtGroups, procDocFields, procurementStatusBadge,
+} from '@/components/ProcurementManagement';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
@@ -16,6 +19,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
+const DATE_KEYS = ['po_date', 'expected_delivery_date', 'actual_delivery_date'];
+
+function defaultMgmt(sub?: any): Record<string, any> {
+  const out: Record<string, any> = {};
+  procMgmtGroups.forEach(g => g.fields.forEach(f => {
+    out[f.key] = sub?.[f.key] ?? (f.type === 'select' ? f.options![0] : '');
+  }));
+  return out;
+}
+
+function mgmtPayload(values: Record<string, any>) {
+  const out: Record<string, any> = {};
+  Object.entries(values).forEach(([k, v]) => {
+    out[k] = DATE_KEYS.includes(k) ? (v || null) : (v ?? '');
+  });
+  return out;
+}
+
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, value: 'dashboard' },
