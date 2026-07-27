@@ -31,7 +31,9 @@ const procSections = [
     color: 'border-l-emerald-500',
     bgIcon: 'bg-emerald-500/10 text-emerald-600',
     items: [
+      { key: 'handover_to_vendor', label: 'Handover to Vendor', fileLabel: 'Handover to Vendor Document' },
       { key: 'road_access', label: 'Road Access Available', fileLabel: 'Road Access Approval / Photo' },
+
       { key: 'vendor_contract', label: 'Vendor Contract Signed', fileLabel: 'Vendor Contract' },
       { key: 'site_handover', label: 'Site Handover Completed', fileLabel: 'Handover Certificate' },
     ],
