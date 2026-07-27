@@ -769,9 +769,14 @@ export default function AdminDashboard() {
                 </div>
               )}
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Procurement Submission</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Procurement Workflow Progress</h3>
                 <ProcSubmissionDetails submission={selectedProc} allowFileManage={true} onFileUpdated={fetchData} />
               </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Procurement Management (Read-only)</h3>
+                <ProcurementManagementView submission={selectedProc} />
+              </div>
+
               {selectedProc.status === 'pending' && (
                 <div className="space-y-3 border-t pt-4">
                   <Label>Review Notes</Label>
