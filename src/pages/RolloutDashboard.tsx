@@ -126,6 +126,18 @@ export default function RolloutDashboard() {
   };
   useEffect(() => { if (user) fetchData(); }, [user]);
 
+  // Live link: refresh whenever Procurement updates a submission or a site
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('rollout-procurement-link')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'procurement_submissions' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sites' }, () => fetchData())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+
   // Statuses at which Procurement releases a site to Rollout
   const RELEASED = ['Ready for Handover', 'Handed Over to Rollout', 'Completed'];
 
