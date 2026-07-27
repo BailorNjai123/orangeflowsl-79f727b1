@@ -662,6 +662,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      send_workflow_notification: {
+        Args: {
+          _link?: string
+          _message: string
+          _title: string
+          _type?: string
+          _user_ids: string[]
+        }
+        Returns: number
+      }
     }
     Enums: {
       app_role:

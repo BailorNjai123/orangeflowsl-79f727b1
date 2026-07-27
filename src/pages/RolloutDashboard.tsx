@@ -216,14 +216,13 @@ export default function RolloutDashboard() {
     const { data: procUsers } = await supabase
       .from('user_roles').select('user_id').eq('role', 'procurement_team');
     if (procUsers?.length) {
-      const rows = procUsers.map((u: any) => ({
-        user_id: u.user_id,
-        title: decision === 'accepted' ? 'Rollout accepted handover' : 'Rollout rejected handover',
-        message: `Site "${feedbackSite.site_name}" — ${decision === 'accepted' ? 'accepted' : 'rejected'} by Rollout. ${feedbackText.trim() ? 'Note: ' + feedbackText.trim() : ''}`.trim(),
-        type: decision === 'accepted' ? 'success' : 'warning',
-        link: '/procurement',
-      }));
-      await supabase.from('notifications').insert(rows);
+      await supabase.rpc('send_workflow_notification', {
+        _user_ids: procUsers.map((u: any) => u.user_id),
+        _title: decision === 'accepted' ? 'Rollout accepted handover' : 'Rollout rejected handover',
+        _message: `Site "${feedbackSite.site_name}" — ${decision === 'accepted' ? 'accepted' : 'rejected'} by Rollout. ${feedbackText.trim() ? 'Note: ' + feedbackText.trim() : ''}`.trim(),
+        _type: decision === 'accepted' ? 'success' : 'warning',
+        _link: '/procurement',
+      });
     }
 
     await supabase.from('activity_log').insert({
@@ -362,12 +361,13 @@ export default function RolloutDashboard() {
     // Notify admins
     const { data: admins } = await supabase.from('user_roles').select('user_id').eq('role', 'project_team');
     if (admins?.length) {
-      await supabase.from('notifications').insert(admins.map((a: any) => ({
-        user_id: a.user_id,
-        title: 'Rollout form submitted',
-        message: `${profile?.full_name || 'Rollout'} submitted rollout data for "${editSite.site_name}" (${pct}% complete).`,
-        type: 'info', link: '/admin',
-      })));
+      await supabase.rpc('send_workflow_notification', {
+        _user_ids: admins.map((a: any) => a.user_id),
+        _title: 'Rollout form submitted',
+        _message: `${profile?.full_name || 'Rollout'} submitted rollout data for "${editSite.site_name}" (${pct}% complete).`,
+        _type: 'info',
+        _link: '/admin',
+      });
     }
     toast({ title: 'Rollout data submitted', description: 'Sent to Admin. The form stays open and remains editable.' });
     // Keep the form open with the saved values so it can be edited/resubmitted anytime
