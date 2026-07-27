@@ -130,7 +130,16 @@ export default function RolloutDashboard() {
     [sites, procSubs],
   );
 
+  // Procurement records released to Rollout (view-only)
+  const readyProcSites = useMemo(() => {
+    const released = ['Ready for Handover', 'Handed Over to Rollout', 'Completed'];
+    return Object.values(procSubs)
+      .filter((sub: any) => released.includes(sub?.procurement_status))
+      .map((sub: any) => ({ sub, site: sites.find(s => s.id === sub.site_id) }));
+  }, [procSubs, sites]);
+
   const pendingFeedback = handoverPool.filter(s => (parseExt(s).feedback.status || 'pending') === 'pending');
+
   const acceptedSites = handoverPool.filter(s => parseExt(s).feedback.status === 'accepted');
   const rejectedSites = handoverPool.filter(s => parseExt(s).feedback.status === 'rejected');
   const onAirCount = sites.filter(s => s.on_air === 'Completed').length;
