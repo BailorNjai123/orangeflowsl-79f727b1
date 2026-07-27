@@ -142,14 +142,20 @@ export default function RolloutDashboard() {
   // Statuses at which Procurement releases a site to Rollout
   const RELEASED = ['Ready for Handover', 'Handed Over to Rollout', 'Completed'];
 
-  // Sites released by Procurement — either the handover checklist is complete
-  // or the Procurement Status has reached a release state.
+  // Any site with a submitted Procurement form reaches Rollout (Site Feedback
+  // + Rollout Form). Released records are simply prioritised in the list.
   const handoverPool = useMemo(
-    () => sites.filter(s => {
-      const sub = procSubs[s.id];
-      if (!sub || s.status !== 'approved') return false;
-      return !!sub.site_handover || !!sub.handover_to_vendor || RELEASED.includes(sub.procurement_status);
-    }),
+    () => sites
+      .filter(s => {
+        const sub = procSubs[s.id];
+        return !!sub && s.status !== 'rejected';
+      })
+      .sort((a, b) => {
+        const sa = procSubs[a.id], sb = procSubs[b.id];
+        const rank = (x: any) =>
+          Number(!!x?.site_handover || !!x?.handover_to_vendor || RELEASED.includes(x?.procurement_status));
+        return rank(sb) - rank(sa);
+      }),
     [sites, procSubs],
   );
 
