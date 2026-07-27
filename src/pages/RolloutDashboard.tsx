@@ -542,14 +542,20 @@ export default function RolloutDashboard() {
                             <p className="text-xs text-muted-foreground truncate">
                               {site.site_id_code} • Progress: <span className="font-medium">{site.progress_percent || 0}%</span> • Power RFI: {site.power_rfi || 'Not Started'}
                             </p>
+                            {parseExt(site).rollout?.submitted_at && (
+                              <p className="text-[11px] text-primary mt-0.5">
+                                Submitted {new Date(parseExt(site).rollout.submitted_at).toLocaleDateString()} — editable
+                              </p>
+                            )}
                           </div>
                           {canEdit ? (
                             <Button size="sm" onClick={() => openEdit(site)}>
-                              {(site.progress_percent || 0) > 0 ? 'Edit & Resubmit' : 'Fill Form'}
+                              {parseExt(site).rollout?.submitted_at || (site.progress_percent || 0) > 0 ? 'Edit & Resubmit' : 'Fill Form'}
                             </Button>
                           ) : (
                             <Badge variant="outline"><Lock className="h-3 w-3 mr-1" />Read-only</Badge>
                           )}
+
                         </div>
                       ))}
                     </div>
