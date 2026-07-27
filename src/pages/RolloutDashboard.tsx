@@ -759,13 +759,14 @@ export default function RolloutDashboard() {
                   <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
                     <Button type="submit" className="flex-1 gradient-orange border-0 text-primary-foreground" disabled={saving || !canEdit}>
                       {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      {(editSite.progress_percent || 0) > 0 ? 'Update & Resubmit to Admin' : 'Submit to Admin'}
+                      {ext.submitted_at || (editSite.progress_percent || 0) > 0 ? 'Update & Resubmit to Admin' : 'Submit to Admin'}
                     </Button>
                     <Button type="button" variant="outline" className="flex-1" disabled={saving}
-                      onClick={() => toast({ title: 'Draft kept', description: 'Your entries stay in the form until you close it.' })}>
-                      Save Draft
+                      onClick={() => setEditSite(null)}>
+                      Close
                     </Button>
                   </div>
+
                 </form>
               );
             })()}
