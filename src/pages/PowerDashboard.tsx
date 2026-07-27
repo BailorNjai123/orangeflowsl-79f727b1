@@ -123,8 +123,21 @@ export default function PowerDashboard() {
   };
   useEffect(() => { if (user) fetchData(); }, [user]);
 
-  const isEligible = (siteId: string) => procMap[siteId] === 'approved';
-  const eligibleSites = useMemo(() => sites.filter(s => isEligible(s.id)), [sites, procMap]);
+  // Live link: new/updated sites and procurement records appear immediately
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('power-site-link')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sites' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'procurement_submissions' }, () => fetchData())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  // A site reaches Power once Planning has approved it, or once a Procurement
+  // submission for it has been approved.
+  const isEligible = (site: SiteRow) => site.status === 'approved' || procMap[site.id] === 'approved';
+  const eligibleSites = useMemo(() => sites.filter(s => isEligible(s)), [sites, procMap]);
 
   const completedCount = eligibleSites.filter(s => s.power_rfi_status === 'Completed').length;
   const inProgressCount = eligibleSites.filter(s => s.power_rfi_status === 'In Progress').length;
