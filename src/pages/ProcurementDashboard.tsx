@@ -156,7 +156,24 @@ export default function ProcurementDashboard() {
     setFormValues(init);
     setFormFiles(initFiles);
     setFormNotes('');
+    setMgmtValues(defaultMgmt());
+    setDocFiles({});
     setActiveTab('submissions');
+  };
+
+  const uploadDoc = async (siteId: string, key: string, file: File): Promise<string | null> => {
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'File too large', description: `${file.name} exceeds 50MB.` });
+      return null;
+    }
+    const ext = file.name.split('.').pop();
+    const path = `${user!.id}/${siteId}/${key}_${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('procurement-documents').upload(path, file, { upsert: true });
+    if (error) {
+      toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
+      return null;
+    }
+    return path;
   };
 
   const handleProcSubmit = async () => {
@@ -168,17 +185,24 @@ export default function ProcurementDashboard() {
       for (const item of section.items) {
         const file = formFiles[item.key];
         if (file && file.size > 0) {
-          const ext = file.name.split('.').pop();
-          const path = `${user!.id}/${formSite.id}/${item.key}_${Date.now()}.${ext}`;
-          const { error } = await supabase.storage.from('procurement-documents').upload(path, file, { upsert: true });
-          if (!error) fileUrls[`${item.key}_file_url`] = path;
+          const path = await uploadDoc(formSite.id, item.key, file);
+          if (path) fileUrls[`${item.key}_file_url`] = path;
         }
+      }
+    }
+
+    // Section 5 — procurement document management uploads
+    for (const doc of procDocFields) {
+      const file = docFiles[doc.key];
+      if (file && file.size > 0) {
+        const path = await uploadDoc(formSite.id, doc.key, file);
+        if (path) fileUrls[doc.key] = path;
       }
     }
 
     const { error } = await supabase.from('procurement_submissions').insert({
       site_id: formSite.id, submitted_by: user!.id,
-      ...formValues, ...fileUrls,
+      ...formValues, ...mgmtPayload(mgmtValues), ...fileUrls,
       notes: formNotes || null, status: 'pending',
     });
     setSubmitting(false);
@@ -193,6 +217,63 @@ export default function ProcurementDashboard() {
       setFormSite(null); fetchData();
     } else toast({ variant: 'destructive', title: 'Error', description: error.message });
   };
+
+  const openManage = (sub: ProcSubmission) => {
+    setManageSub(sub);
+    setMgmtValues(defaultMgmt(sub));
+    setDocFiles({});
+  };
+
+  const handleManageSave = async () => {
+    if (!manageSub) return;
+    if (!canEditProc) {
+      toast({ variant: 'destructive', title: 'Permission denied', description: 'Only the Procurement team can edit procurement records.' });
+      return;
+    }
+    setSubmitting(true);
+    const fileUrls: Record<string, string> = {};
+    for (const doc of procDocFields) {
+      const file = docFiles[doc.key];
+      if (file && file.size > 0) {
+        const path = await uploadDoc(manageSub.site_id, doc.key, file);
+        if (path) fileUrls[doc.key] = path;
+      }
+    }
+    const payload = { ...mgmtPayload(mgmtValues), ...fileUrls };
+    const { error } = await supabase.from('procurement_submissions').update(payload).eq('id', manageSub.id);
+    setSubmitting(false);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      return;
+    }
+    const siteName = manageSub.sites?.site_name || 'site';
+    await supabase.from('activity_log').insert({
+      action: 'procurement_management_updated',
+      description: `Procurement management data updated for "${siteName}" — status: ${mgmtValues.procurement_status}${Object.keys(fileUrls).length ? `, ${Object.keys(fileUrls).length} document(s) uploaded` : ''}`,
+      user_id: user!.id, user_name: profile?.full_name,
+      entity_type: 'procurement_submission', entity_id: manageSub.id,
+    });
+
+    // Notify Rollout + Admin when ready for handover
+    if (['Ready for Handover', 'Handed Over to Rollout'].includes(mgmtValues.procurement_status)) {
+      const { data: recipients } = await supabase
+        .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
+      if (recipients?.length) {
+        await supabase.from('notifications').insert(recipients.map((r: any) => ({
+          user_id: r.user_id,
+          title: 'Procurement ready for handover',
+          message: `Procurement for "${siteName}" is now "${mgmtValues.procurement_status}".`,
+          type: 'info',
+          link: r.role === 'rollout_team' ? '/rollout' : '/admin',
+        })));
+      }
+    }
+
+    toast({ title: 'Procurement management updated' });
+    setManageSub(null);
+    fetchData();
+  };
+
 
   const pendingSitesForFeedback = allSites.filter(s => s.status === 'pending' && !feedbacks.find(f => f.site_id === s.id));
   const acceptedFeedbacks = feedbacks.filter(f => f.status === 'accepted');
