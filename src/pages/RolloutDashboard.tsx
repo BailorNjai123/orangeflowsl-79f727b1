@@ -630,7 +630,16 @@ export default function RolloutDashboard() {
             {editSite && (() => {
               const ext = parseExt(editSite).rollout;
               return (
-                <form onSubmit={handleSave} className="space-y-6">
+                <form key={formKey} onSubmit={handleSave} className="space-y-6">
+                  {ext.submitted_at && (
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs">
+                      <span className="font-medium text-primary">Submitted</span>{' '}
+                      {new Date(ext.submitted_at).toLocaleString()}
+                      {ext.submitted_by ? ` by ${ext.submitted_by}` : ''}
+                      {ext.submission_count ? ` • ${ext.submission_count} submission(s)` : ''} — you can edit and resubmit at any time.
+                    </div>
+                  )}
+
                   {/* Progress bar */}
                   <div className="rounded-lg border p-3 bg-muted/40">
                     <div className="flex items-center justify-between text-xs font-medium mb-2">
