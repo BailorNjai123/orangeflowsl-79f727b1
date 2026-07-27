@@ -369,10 +369,19 @@ export default function RolloutDashboard() {
         type: 'info', link: '/admin',
       })));
     }
-    toast({ title: 'Rollout data submitted', description: 'Sent to Admin Dashboard for review.' });
-    setEditSite(null);
+    toast({ title: 'Rollout data submitted', description: 'Sent to Admin. The form stays open and remains editable.' });
+    // Keep the form open with the saved values so it can be edited/resubmitted anytime
+    const { data: fresh } = await supabase.from('sites').select('*').eq('id', editSite.id).maybeSingle();
+    if (fresh) {
+      setEditSite(fresh as SiteRow);
+      const init: Record<string, string> = {};
+      milestoneFields.forEach(([k]) => { init[k] = (fresh as any)[k] || 'Not Started'; });
+      setMilestones(init);
+      setFormKey(k => k + 1);
+    }
     fetchData();
   };
+
 
   const activeRolloutSites = handoverPool.filter(s => parseExt(s).feedback.status === 'accepted');
 
