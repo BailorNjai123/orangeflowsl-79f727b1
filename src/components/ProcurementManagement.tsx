@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { ExternalLink, Download, FileText, AlertTriangle, Clock } from 'lucide-react';
+import { ExternalLink, Download, FileText, AlertTriangle, Clock, Paperclip } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { openFileInNewTab, downloadFile } from '@/lib/storageUtils';
+
 
 export const PROC_BUCKET = 'procurement-documents';
 
