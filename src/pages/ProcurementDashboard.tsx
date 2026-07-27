@@ -495,14 +495,23 @@ export default function ProcurementDashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="text-sm font-semibold">{proc.sites?.site_name || 'Site'}</h4>
                         <StatusBadge status={proc.status} />
+                        {procurementStatusBadge(proc.procurement_status)}
                       </div>
-                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setViewSubmission(proc); }}>
-                        <Eye className="h-3 w-3 mr-1" /> View Details
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {canEditProc && (
+                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openManage(proc); }}>
+                            <Settings2 className="h-3 w-3 mr-1" /> Manage
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setViewSubmission(proc); }}>
+                          <Eye className="h-3 w-3 mr-1" /> View Details
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {proc.sites?.region} • Submitted {new Date(proc.created_at).toLocaleDateString()}
                     </p>
+
                   </CardContent>
                 </Card>
               ))}
