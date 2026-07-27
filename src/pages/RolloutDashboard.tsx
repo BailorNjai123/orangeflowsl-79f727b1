@@ -411,6 +411,44 @@ export default function RolloutDashboard() {
               </Card>
             )}
 
+            {/* ================= PROCUREMENT INFO (READ-ONLY) ================= */}
+            {activeTab === 'procurement_info' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Procurement Information (View Only)</CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Sites released by Procurement. Rollout can view and download procurement records — editing is not permitted.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {readyProcSites.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      No procurement records marked "Ready for Handover" yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {readyProcSites.map(({ site, sub }) => (
+                        <div key={sub.id} className="p-3 rounded-lg border bg-card flex flex-wrap items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{site?.site_name || 'Site'}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {site?.site_id_code} • PO {sub.po_number || '—'} • Delivery: {sub.material_delivery_status || 'Pending'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {procurementStatusBadge(sub.procurement_status)}
+                            <Button size="sm" variant="outline" onClick={() => setProcView({ site, sub })}>View</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+
+
             {/* ================= ROLLOUT FORM ================= */}
             {activeTab === 'form' && (
               <Card>
