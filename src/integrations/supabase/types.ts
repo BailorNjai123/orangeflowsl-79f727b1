@@ -167,8 +167,17 @@ export type Database = {
         Row: {
           acquisition_approved: boolean
           acquisition_approved_file_url: string | null
+          actual_delivery_date: string | null
+          contact_person: string | null
           created_at: string
+          delivery_note_doc_url: string | null
+          email_address: string | null
+          expected_delivery_date: string | null
+          grn_doc_url: string | null
+          handover_to_vendor: boolean
+          handover_to_vendor_file_url: string | null
           id: string
+          invoice_number: string | null
           land_identified: boolean
           land_identified_file_url: string | null
           lease_negotiation: boolean
@@ -177,9 +186,19 @@ export type Database = {
           lease_registration_file_url: string | null
           lease_signed: boolean
           lease_signed_file_url: string | null
+          material_delivery_status: string | null
+          material_handover_form_doc_url: string | null
+          material_inspection_report_doc_url: string | null
           notes: string | null
           ownership_verified: boolean
           ownership_verified_file_url: string | null
+          payment_status: string | null
+          phone_number: string | null
+          po_date: string | null
+          po_number: string | null
+          po_status: string | null
+          procurement_status: string | null
+          purchase_order_doc_url: string | null
           review_notes: string | null
           reviewed_by: string | null
           road_access: boolean
@@ -189,15 +208,27 @@ export type Database = {
           site_id: string
           status: Database["public"]["Enums"]["site_status"]
           submitted_by: string | null
+          supplier_company: string | null
           updated_at: string
           vendor_contract: boolean
           vendor_contract_file_url: string | null
+          vendor_delivery_cert_doc_url: string | null
+          vendor_name: string | null
         }
         Insert: {
           acquisition_approved?: boolean
           acquisition_approved_file_url?: string | null
+          actual_delivery_date?: string | null
+          contact_person?: string | null
           created_at?: string
+          delivery_note_doc_url?: string | null
+          email_address?: string | null
+          expected_delivery_date?: string | null
+          grn_doc_url?: string | null
+          handover_to_vendor?: boolean
+          handover_to_vendor_file_url?: string | null
           id?: string
+          invoice_number?: string | null
           land_identified?: boolean
           land_identified_file_url?: string | null
           lease_negotiation?: boolean
@@ -206,9 +237,19 @@ export type Database = {
           lease_registration_file_url?: string | null
           lease_signed?: boolean
           lease_signed_file_url?: string | null
+          material_delivery_status?: string | null
+          material_handover_form_doc_url?: string | null
+          material_inspection_report_doc_url?: string | null
           notes?: string | null
           ownership_verified?: boolean
           ownership_verified_file_url?: string | null
+          payment_status?: string | null
+          phone_number?: string | null
+          po_date?: string | null
+          po_number?: string | null
+          po_status?: string | null
+          procurement_status?: string | null
+          purchase_order_doc_url?: string | null
           review_notes?: string | null
           reviewed_by?: string | null
           road_access?: boolean
@@ -218,15 +259,27 @@ export type Database = {
           site_id: string
           status?: Database["public"]["Enums"]["site_status"]
           submitted_by?: string | null
+          supplier_company?: string | null
           updated_at?: string
           vendor_contract?: boolean
           vendor_contract_file_url?: string | null
+          vendor_delivery_cert_doc_url?: string | null
+          vendor_name?: string | null
         }
         Update: {
           acquisition_approved?: boolean
           acquisition_approved_file_url?: string | null
+          actual_delivery_date?: string | null
+          contact_person?: string | null
           created_at?: string
+          delivery_note_doc_url?: string | null
+          email_address?: string | null
+          expected_delivery_date?: string | null
+          grn_doc_url?: string | null
+          handover_to_vendor?: boolean
+          handover_to_vendor_file_url?: string | null
           id?: string
+          invoice_number?: string | null
           land_identified?: boolean
           land_identified_file_url?: string | null
           lease_negotiation?: boolean
@@ -235,9 +288,19 @@ export type Database = {
           lease_registration_file_url?: string | null
           lease_signed?: boolean
           lease_signed_file_url?: string | null
+          material_delivery_status?: string | null
+          material_handover_form_doc_url?: string | null
+          material_inspection_report_doc_url?: string | null
           notes?: string | null
           ownership_verified?: boolean
           ownership_verified_file_url?: string | null
+          payment_status?: string | null
+          phone_number?: string | null
+          po_date?: string | null
+          po_number?: string | null
+          po_status?: string | null
+          procurement_status?: string | null
+          purchase_order_doc_url?: string | null
           review_notes?: string | null
           reviewed_by?: string | null
           road_access?: boolean
@@ -247,9 +310,12 @@ export type Database = {
           site_id?: string
           status?: Database["public"]["Enums"]["site_status"]
           submitted_by?: string | null
+          supplier_company?: string | null
           updated_at?: string
           vendor_contract?: boolean
           vendor_contract_file_url?: string | null
+          vendor_delivery_cert_doc_url?: string | null
+          vendor_name?: string | null
         }
         Relationships: [
           {
