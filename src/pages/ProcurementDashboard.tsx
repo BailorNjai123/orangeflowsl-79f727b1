@@ -561,10 +561,45 @@ export default function ProcurementDashboard() {
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Procurement Details</h3>
                 <ProcSubmissionDetails submission={viewSubmission} />
               </div>
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Procurement Management & Documents</h3>
+                <ProcurementManagementView submission={viewSubmission} />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Procurement (Section 4 & 5) Dialog */}
+      <Dialog open={!!manageSub} onOpenChange={(open) => { if (!open) setManageSub(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 flex-wrap">
+              Manage Procurement — {manageSub?.sites?.site_name || 'Site'}
+            </DialogTitle>
+          </DialogHeader>
+          {manageSub && (
+            <div className="space-y-4">
+              <ProcurementManagementForm
+                values={mgmtValues}
+                onChange={(k, v) => setMgmtValues(prev => ({ ...prev, [k]: v }))}
+                docFiles={docFiles}
+                onDocFile={(k, f) => setDocFiles(prev => ({ ...prev, [k]: f }))}
+                existing={manageSub}
+                disabled={!canEditProc}
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setManageSub(null)}>Cancel</Button>
+                <Button className="flex-1 gradient-orange border-0 text-primary-foreground" disabled={submitting || !canEditProc} onClick={handleManageSave}>
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Save Procurement Data
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
     </AuthGuard>
   );
+
 }
