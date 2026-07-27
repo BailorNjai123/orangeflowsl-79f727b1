@@ -18,12 +18,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, openFileInNewTab } from '@/lib/storageUtils';
+import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
+import ProcurementManagementView, { procurementStatusBadge } from '@/components/ProcurementManagement';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, value: 'overview' },
   { label: 'Site Feedback', icon: ClipboardCheck, value: 'feedback' },
+  { label: 'Procurement Info', icon: FileText, value: 'procurement_info' },
   { label: 'Rollout Form', icon: FileText, value: 'form' },
 ];
+
 
 const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
 const projectScopes = ['New Site Build', 'Technology Expansion', 'Equipment Swap', 'Capacity Upgrade', 'Colocation Upgrade'];
