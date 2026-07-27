@@ -278,13 +278,17 @@ export default function ProcurementDashboard() {
       const { data: recipients } = await supabase
         .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
       if (recipients?.length) {
-        await supabase.from('notifications').insert(recipients.map((r: any) => ({
-          user_id: r.user_id,
-          title: 'Procurement ready for handover',
-          message: `Procurement for "${siteName}" is now "${mgmtValues.procurement_status}".`,
-          type: 'info',
-          link: r.role === 'rollout_team' ? '/rollout' : '/admin',
-        })));
+        for (const [roleName, link] of [['rollout_team', '/rollout'], ['project_team', '/admin']] as const) {
+          const ids = recipients.filter((r: any) => r.role === roleName).map((r: any) => r.user_id);
+          if (!ids.length) continue;
+          await supabase.rpc('send_workflow_notification', {
+            _user_ids: ids,
+            _title: 'Procurement ready for handover',
+            _message: `Procurement for "${siteName}" is now "${mgmtValues.procurement_status}".`,
+            _type: 'info',
+            _link: link,
+          });
+        }
       }
     }
 

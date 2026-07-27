@@ -282,15 +282,19 @@ export default function PowerDashboard() {
       const { data: recipients } = await supabase
         .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
       if (recipients?.length) {
-        await supabase.from('notifications').insert(recipients.map((r: any) => ({
-          user_id: r.user_id,
-          title: r.role === 'rollout_team' ? 'Power RFI Completed' : 'Power RFI synchronized',
-          message: r.role === 'rollout_team'
-            ? `Power RFI completed for "${editSite.site_name}" (${editSite.site_id_code || 'N/A'}). Deployment may continue.`
-            : `Power RFI for "${editSite.site_name}" was completed and synced to Rollout (${updates.progress_percent}% progress).`,
-          type: 'success',
-          link: r.role === 'rollout_team' ? '/rollout' : '/admin',
-        })));
+        for (const roleName of ['rollout_team', 'project_team'] as const) {
+          const ids = recipients.filter((r: any) => r.role === roleName).map((r: any) => r.user_id);
+          if (!ids.length) continue;
+          await supabase.rpc('send_workflow_notification', {
+            _user_ids: ids,
+            _title: roleName === 'rollout_team' ? 'Power RFI Completed' : 'Power RFI synchronized',
+            _message: roleName === 'rollout_team'
+              ? `Power RFI completed for "${editSite.site_name}" (${editSite.site_id_code || 'N/A'}). Deployment may continue.`
+              : `Power RFI for "${editSite.site_name}" was completed and synced to Rollout (${updates.progress_percent}% progress).`,
+            _type: 'success',
+            _link: roleName === 'rollout_team' ? '/rollout' : '/admin',
+          });
+        }
       }
     }
 
