@@ -739,7 +739,36 @@ export default function RolloutDashboard() {
             })()}
           </DialogContent>
         </Dialog>
+
+        {/* Procurement info — read-only for Rollout */}
+        <Dialog open={!!procView} onOpenChange={(open) => { if (!open) setProcView(null); }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 flex-wrap">
+                Procurement — {procView?.site?.site_name || 'Site'}
+                <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" /> View only</Badge>
+              </DialogTitle>
+            </DialogHeader>
+            {procView && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Land Acquisition, Lease & Handover Status
+                  </h3>
+                  <ProcSubmissionDetails submission={procView.sub} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Vendor, Purchase Order, Delivery & Documents
+                  </h3>
+                  <ProcurementManagementView submission={procView.sub} />
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </DashboardLayout>
+
     </AuthGuard>
   );
 }
