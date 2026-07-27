@@ -226,3 +226,88 @@ export default function ProcurementManagementView({
     </div>
   );
 }
+
+/** Editable Section 4 + Section 5 (Procurement team / Admin-authorised editing) */
+export function ProcurementManagementForm({
+  values,
+  onChange,
+  docFiles,
+  onDocFile,
+  existing,
+  disabled,
+}: {
+  values: Record<string, any>;
+  onChange: (key: string, value: any) => void;
+  docFiles: Record<string, File | null>;
+  onDocFile: (key: string, file: File | null) => void;
+  existing?: Record<string, any>;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <Card className="border-l-4 border-l-orange-500">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Section 4 — Procurement Management</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {procMgmtGroups.map(group => (
+            <div key={group.title} className={`rounded-lg border border-l-4 ${group.color} p-3 space-y-3`}>
+              <h4 className="text-xs font-semibold uppercase tracking-wider">{group.title}</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {group.fields.map(f => (
+                  <div key={f.key} className="space-y-1">
+                    <Label className="text-xs">{f.label}</Label>
+                    {f.type === 'select' ? (
+                      <select
+                        disabled={disabled}
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm disabled:opacity-60"
+                        value={values[f.key] ?? f.options![0]}
+                        onChange={e => onChange(f.key, e.target.value)}
+                      >
+                        {f.options!.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : (
+                      <Input
+                        disabled={disabled}
+                        type={f.type}
+                        className="text-sm"
+                        value={values[f.key] ?? ''}
+                        onChange={e => onChange(f.key, e.target.value)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="border-l-4 border-l-slate-400">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Section 5 — Procurement Document Management</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {procDocFields.map(d => (
+            <div key={d.key} className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1">
+                <Paperclip className="h-3 w-3" /> {d.label}
+              </Label>
+              {existing?.[d.key] ? <ProcDocCard label={d.label} path={existing[d.key]} /> : null}
+              <Input
+                disabled={disabled}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="text-xs"
+                onChange={e => onDocFile(d.key, e.target.files?.[0] || null)}
+              />
+              {docFiles[d.key] && (
+                <p className="text-[10px] text-muted-foreground">Selected: {docFiles[d.key]!.name}</p>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
