@@ -213,8 +213,21 @@ export default function ProcurementDashboard() {
         user_id: user!.id, user_name: profile?.full_name,
         entity_type: 'procurement_submission', entity_id: formSite.id,
       });
-      toast({ title: 'Procurement form submitted for review!' });
+      // Route the submission to both Admin (review) and Rollout (visibility)
+      const { data: recipients } = await supabase
+        .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
+      if (recipients?.length) {
+        await supabase.from('notifications').insert(recipients.map((r: any) => ({
+          user_id: r.user_id,
+          title: 'New procurement submission',
+          message: `Procurement form submitted for "${formSite.site_name}".`,
+          type: 'info',
+          link: r.role === 'rollout_team' ? '/rollout' : '/admin',
+        })));
+      }
+      toast({ title: 'Procurement form submitted to Admin & Rollout!' });
       setFormSite(null); fetchData();
+
     } else toast({ variant: 'destructive', title: 'Error', description: error.message });
   };
 
