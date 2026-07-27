@@ -533,52 +533,19 @@ export default function RolloutDashboard() {
             </DialogHeader>
             {feedbackSite && (() => {
               const sub = procSubs[feedbackSite.id];
-              const items: Array<[string, string]> = [
-                ['land_identified', 'Land Identified'],
-                ['ownership_verified', 'Ownership Verified'],
-                ['acquisition_approved', 'Acquisition Approved'],
-                ['lease_negotiation', 'Lease Negotiation'],
-                ['lease_signed', 'Lease Signed'],
-                ['lease_registration', 'Lease Registration'],
-                ['road_access', 'Road Access'],
-                ['vendor_contract', 'Vendor Contract'],
-                ['site_handover', 'Site Handover'],
-              ];
               return (
                 <div className="space-y-4">
-                  <section className="rounded-lg border p-3 bg-muted/30">
-                    <p className="text-xs font-semibold mb-2 text-primary">Procurement Handover Details (read-only)</p>
-                    {!sub ? (
-                      <p className="text-xs text-muted-foreground">No procurement submission linked to this site.</p>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        {items.map(([k, label]) => (
-                          <div key={k} className="flex items-center justify-between p-2 rounded bg-background border">
-                            <span className="truncate mr-2">{label}</span>
-                            <div className="flex items-center gap-2 shrink-0">
-                              {sub[k] ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
-                              {sub[`${k}_file_url`] && (
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    await openFileInNewTab(PROC_BUCKET, sub[`${k}_file_url`]);
-                                  }}
-                                  className="text-primary underline"
-                                >
-                                  <Download className="h-3 w-3 inline" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                        {sub.notes && (
-                          <div className="col-span-full text-xs p-2 rounded bg-background border">
-                            <span className="font-medium">Procurement notes:</span> {sub.notes}
-                          </div>
-                        )}
+                  <section className="rounded-lg border p-3 bg-muted/30 space-y-3">
+                    <p className="text-xs font-semibold text-primary">Procurement Handover Details (read-only)</p>
+                    <RolloutReadinessTracker submission={sub} />
+                    <RolloutProcurementReadiness submission={sub} />
+                    {sub?.notes && (
+                      <div className="text-xs p-2 rounded bg-background border">
+                        <span className="font-medium">Procurement notes:</span> {sub.notes}
                       </div>
                     )}
                   </section>
+
 
                   <div className="space-y-1.5">
                     <Label>Feedback Comments {feedbackText.length > 0 ? '' : <span className="text-muted-foreground text-xs">(required for rejection)</span>}</Label>
