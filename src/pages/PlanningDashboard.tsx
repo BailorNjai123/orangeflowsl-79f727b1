@@ -334,10 +334,21 @@ export default function PlanningDashboard() {
     const file = e.target.files?.[0]; if (!file) return;
     try {
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array' });
+      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
       const parsed = parseWorkbookIntoState(wb);
-      setForm(prev => ({ ...prev, ...parsed }));
-      toast({ title: 'Import complete', description: `Populated ${Object.keys(parsed).length} field(s) from ${file.name}.` });
+      const count = Object.keys(parsed).filter(k => k !== 'technology_classification').length;
+      if (!count && !parsed.technology_classification) {
+        toast({ variant: 'destructive', title: 'Nothing imported', description: 'No recognisable parameter names were found in this workbook. Use the field labels (e.g. "Site ID Code", "Tower Height") as headers or in the first column.' });
+        return;
+      }
+      setForm(prev => {
+        const merged: FormState = { ...prev, ...parsed };
+        const incoming = parsed.technology_classification as string[] | undefined;
+        if (incoming?.length) merged.technology_classification = Array.from(new Set([...(prev.technology_classification || []), ...incoming]));
+        return merged;
+      });
+      toast({ title: 'Import complete', description: `Populated ${count} field(s) from ${file.name}.` });
+
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Import failed', description: err?.message || 'Could not read the workbook.' });
     } finally {
