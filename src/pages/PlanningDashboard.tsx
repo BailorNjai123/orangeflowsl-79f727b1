@@ -380,9 +380,10 @@ export default function PlanningDashboard() {
       native[col] = numCols.includes(col) ? Number(v) : v;
     });
     const extended: Record<string, any> = {};
-    Object.entries(form).forEach(([k, v]) => { if (!NATIVE_COLS.has(k) && v !== '' && v != null) extended[k] = v; });
-    native.notes = `<<PLANNING_JSON>>${JSON.stringify(extended)}<<END>>`;
+    Object.entries(form).forEach(([k, v]) => { if (!NATIVE_COLS.has(k) && k !== 'planner_note' && v !== '' && v != null) extended[k] = v; });
+    native.notes = buildPlanningNotes(form.planner_note as string, extended);
     return native;
+
   };
 
   const persist = async (asDraft: boolean) => {
