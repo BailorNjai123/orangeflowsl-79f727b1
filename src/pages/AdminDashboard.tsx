@@ -49,7 +49,16 @@ const navItems = [
   { label: 'Activity Log', icon: Activity, value: 'activity' },
 ];
 
+// Raw JSON object stored in sites.review_notes (null when it's a plain-text note)
+const rawNotesObj = (site: any): any | null => {
+  try {
+    const obj = site?.review_notes ? JSON.parse(site.review_notes) : null;
+    return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : null;
+  } catch { return null; }
+};
+
 // Parse extended JSON stored in sites.review_notes
+
 const parseExt = (site: any): { power: any; rollout: any; admin: any } => {
   try {
     const obj = site?.review_notes ? JSON.parse(site.review_notes) : {};
