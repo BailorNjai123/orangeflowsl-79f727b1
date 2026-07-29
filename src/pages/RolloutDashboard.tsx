@@ -204,7 +204,7 @@ export default function RolloutDashboard() {
     if (decision === 'rejected') rollout.status = 'Handover Rejected';
 
     const { error } = await supabase.from('sites').update({
-      review_notes: JSON.stringify({ ...ext, feedback, rollout }),
+      review_notes: JSON.stringify({ ...(rawNotesObj(feedbackSite) || {}), ...ext, feedback, rollout }),
     }).eq('id', feedbackSite.id);
     if (error) {
       setFeedbackSaving(false);
