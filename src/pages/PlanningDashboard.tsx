@@ -11,6 +11,8 @@ import StatCard from '@/components/StatCard';
 import StatusBadge from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -178,43 +180,113 @@ const HEADER_ALIASES: Record<string, string> = {
   owner_site_sharing_status: 'owner_sharing_status', owner_sharing_status: 'owner_sharing_status',
 };
 
+// Build a lookup of every recognisable token -> internal field key.
+function buildFieldIndex(): Record<string, FieldDef> {
+  const all: FieldDef[] = [...MOD1, ...MOD2_SELECTS, ...MOD3, ...MOD4, ...MOD5_2G, ...MOD6_3G, ...MOD7_4G];
+  const idx: Record<string, FieldDef> = {};
+  const add = (token: string, f: FieldDef) => { const n = normKey(token); if (n && !idx[n]) idx[n] = f; };
+  all.forEach(f => {
+    add(f.key, f);
+    add(f.label, f);
+    add(f.label.replace(/\([^)]*\)/g, ''), f);          // label without units
+    add(f.label.replace(/\/.*$/, ''), f);                 // label before slash
+    add(f.label.split('&')[0], f);                        // label before &
+  });
+  Object.entries(HEADER_ALIASES).forEach(([alias, key]) => {
+    const f = all.find(x => x.key === key);
+    if (f) add(alias, f);
+  });
+  return idx;
+}
+const FIELD_INDEX = buildFieldIndex();
+
+function matchField(raw: any): FieldDef | null {
+  const n = normKey(raw);
+  if (!n) return null;
+  if (FIELD_INDEX[n]) return FIELD_INDEX[n];
+  // tolerate trailing units/qualifiers: strip trailing _m, _cm, _km, _deg, _dbm, _no, _number
+  const stripped = n.replace(/_(m|cm|km|deg|degrees|dbm|db|no|number|value|s)$/,'');
+  return FIELD_INDEX[stripped] ?? null;
+}
+
+function coerce(f: FieldDef, v: any): any {
+  if (v == null || v === '') return null;
+  if (f.type === 'number') {
+    const num = typeof v === 'number' ? v : Number(String(v).replace(/[^0-9.\-]/g, ''));
+    return Number.isFinite(num) ? num : null;
+  }
+  if (f.type === 'date') {
+    if (v instanceof Date) return v.toISOString().slice(0, 10);
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? String(v) : d.toISOString().slice(0, 10);
+  }
+  const s = String(v).trim();
+  if (f.type === 'select' && f.options) {
+    const hit = f.options.find(o => normKey(o) === normKey(s));
+    return hit ?? null; // ignore values that aren't valid options
+  }
+  return s;
+}
+
 function parseWorkbookIntoState(wb: XLSX.WorkBook): Partial<FormState> {
   const collected: Record<string, any> = {};
+  const put = (f: FieldDef, v: any) => {
+    if (collected[f.key] != null && collected[f.key] !== '') return;
+    const c = coerce(f, v);
+    if (c != null && c !== '') collected[f.key] = c;
+  };
+
   wb.SheetNames.forEach((name) => {
-    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets[name], { defval: '' });
-    if (!rows.length) return;
-    // Support both column-oriented (headers in row 1) and key-value (first col = key, second = value).
-    const first = rows[0];
-    const cols = Object.keys(first);
-    const looksKV = cols.length === 2 && rows.every(r => typeof Object.values(r)[0] === 'string');
-    if (looksKV) {
-      rows.forEach(r => {
-        const [k, v] = Object.values(r) as [any, any];
-        const key = HEADER_ALIASES[normKey(k)] ?? normKey(k);
-        if (key && (v !== '' && v != null) && collected[key] == null) collected[key] = v;
-      });
-    } else {
-      // Take the first non-empty row.
-      const row = rows.find(r => Object.values(r).some(v => v !== '' && v != null)) || first;
-      Object.entries(row).forEach(([h, v]) => {
-        const key = HEADER_ALIASES[normKey(h)] ?? normKey(h);
-        if (key && (v !== '' && v != null) && collected[key] == null) collected[key] = v;
-      });
+    const grid = XLSX.utils.sheet_to_json<any[]>(wb.Sheets[name], { header: 1, defval: '', blankrows: false, raw: false });
+    if (!grid.length) return;
+    let found = 0;
+
+    // Pass 1 — key/value layout: a cell that names a field, value in a later cell of the same row.
+    grid.forEach(row => {
+      if (!Array.isArray(row)) return;
+      for (let c = 0; c < row.length; c++) {
+        const f = matchField(row[c]);
+        if (!f) continue;
+        for (let n = c + 1; n < row.length; n++) {
+          const v = row[n];
+          if (v !== '' && v != null && !matchField(v)) { put(f, v); found++; break; }
+        }
+      }
+    });
+
+    // Pass 2 — table layout: header row followed by a data row.
+    for (let r = 0; r < grid.length - 1; r++) {
+      const header = grid[r]; if (!Array.isArray(header)) continue;
+      const map = header.map(matchField);
+      const hits = map.filter(Boolean).length;
+      if (hits < 2) continue;
+      for (let d = r + 1; d < grid.length; d++) {
+        const data = grid[d];
+        if (!Array.isArray(data) || !data.some(v => v !== '' && v != null)) continue;
+        map.forEach((f, c) => { if (f) { put(f, data[c]); found++; } });
+        break;
+      }
+      break;
     }
-    // Sheet-name hints for RAN sheets: mark tech as present if data found there.
+
+    // Sheet-name hints for RAN sheets.
     const upper = name.toUpperCase();
-    if (rows.length && /2G/.test(upper)) collected.__tech_2g = true;
-    if (rows.length && /3G/.test(upper)) collected.__tech_3g = true;
-    if (rows.length && /4G|LTE/.test(upper)) collected.__tech_4g = true;
+    if (found && /2G|GSM/.test(upper)) collected.__tech_2g = true;
+    if (found && /3G|UMTS|WCDMA/.test(upper)) collected.__tech_3g = true;
+    if (found && /4G|LTE/.test(upper)) collected.__tech_4g = true;
   });
+
+  // Also infer technology from populated per-tech fields.
+  const anyKey = (prefix: string) => Object.keys(collected).some(k => k.startsWith(prefix));
   const tech: string[] = [];
-  if (collected.__tech_2g) tech.push('2G');
-  if (collected.__tech_3g) tech.push('3G');
-  if (collected.__tech_4g) tech.push('4G');
+  if (collected.__tech_2g || anyKey('2g_') || collected.g900_trx != null || collected.g1800_trx != null) tech.push('2G');
+  if (collected.__tech_3g || anyKey('3g_')) tech.push('3G');
+  if (collected.__tech_4g || anyKey('4g_')) tech.push('4G');
   delete collected.__tech_2g; delete collected.__tech_3g; delete collected.__tech_4g;
   if (tech.length) collected.technology_classification = tech;
   return collected;
 }
+
 
 export default function PlanningDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -264,10 +336,21 @@ export default function PlanningDashboard() {
     const file = e.target.files?.[0]; if (!file) return;
     try {
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array' });
+      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
       const parsed = parseWorkbookIntoState(wb);
-      setForm(prev => ({ ...prev, ...parsed }));
-      toast({ title: 'Import complete', description: `Populated ${Object.keys(parsed).length} field(s) from ${file.name}.` });
+      const count = Object.keys(parsed).filter(k => k !== 'technology_classification').length;
+      if (!count && !parsed.technology_classification) {
+        toast({ variant: 'destructive', title: 'Nothing imported', description: 'No recognisable parameter names were found in this workbook. Use the field labels (e.g. "Site ID Code", "Tower Height") as headers or in the first column.' });
+        return;
+      }
+      setForm(prev => {
+        const merged: FormState = { ...prev, ...parsed };
+        const incoming = parsed.technology_classification as string[] | undefined;
+        if (incoming?.length) merged.technology_classification = Array.from(new Set([...(prev.technology_classification || []), ...incoming]));
+        return merged;
+      });
+      toast({ title: 'Import complete', description: `Populated ${count} field(s) from ${file.name}.` });
+
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Import failed', description: err?.message || 'Could not read the workbook.' });
     } finally {
@@ -347,13 +430,14 @@ export default function PlanningDashboard() {
   };
 
   const modules = useMemo(() => ([
-    { id: 'm1', icon: MapPin,       title: 'Module 1 · Basic Site & Location', fields: MOD1, show: true },
-    { id: 'm2', icon: ShieldCheck,  title: 'Module 2 · Governance & Classification', fields: MOD2_SELECTS, show: true, custom: 'tech' as const },
-    { id: 'm3', icon: HardHat,      title: 'Module 3 · Civil & Infrastructure', fields: MOD3, show: true },
-    { id: 'm4', icon: Antenna,      title: 'Module 4 · RF Hardware & Physical Antenna', fields: MOD4, show: true },
-    { id: 'm5', icon: Radio,        title: 'Module 5 · 2G Radio Network', fields: MOD5_2G, show: has('2G') },
-    { id: 'm6', icon: Signal,       title: 'Module 6 · 3G Radio Network', fields: MOD6_3G, show: has('3G') },
-    { id: 'm7', icon: Smartphone,   title: 'Module 7 · 4G LTE Radio Network', fields: MOD7_4G, show: has('4G') },
+    { id: 'm1', icon: MapPin,       title: 'Basic Site & Location', fields: MOD1, show: true },
+    { id: 'm2', icon: ShieldCheck,  title: 'Governance & Classification', fields: MOD2_SELECTS, show: true, custom: 'tech' as const },
+    { id: 'm3', icon: HardHat,      title: 'Civil & Infrastructure', fields: MOD3, show: true },
+    { id: 'm4', icon: Antenna,      title: 'RF Hardware & Physical Antenna', fields: MOD4, show: true },
+    { id: 'm5', icon: Radio,        title: '2G Radio Network', fields: MOD5_2G, show: has('2G') },
+    { id: 'm6', icon: Signal,       title: '3G Radio Network', fields: MOD6_3G, show: has('3G') },
+    { id: 'm7', icon: Smartphone,   title: '4G LTE Radio Network', fields: MOD7_4G, show: has('4G') },
+
   ]), [tech]);
 
   const renderDashboard = () => (
@@ -453,8 +537,28 @@ export default function PlanningDashboard() {
           </AccordionItem>
         ))}
       </Accordion>
+
+      {/* Planner note — always last */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" /> Additional Notes / Remarks
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Textarea
+            id="planner_note"
+            rows={4}
+            placeholder="Add any comment, observation or clarification about this site for the reviewing teams..."
+            value={form.planner_note ?? ''}
+            onChange={e => setField('planner_note', e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">Optional. This note is shared with Procurement, Power, Rollout and Admin reviewers.</p>
+        </CardContent>
+      </Card>
     </div>
   );
+
 
   const renderSubmissions = () => (
     <div className="space-y-4">
