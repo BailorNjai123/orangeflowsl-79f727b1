@@ -804,12 +804,10 @@ export default function AdminDashboard() {
     const fields = stage === 'power' ? powerFieldLabels : rolloutFieldLabels;
     const icon = stage === 'power' ? Zap : HardHat;
     const title = stage === 'power' ? 'Power Form Review' : 'Rollout Form Review';
-    // Only sites that have some data for this stage
-    const items = sites.filter(s => {
-      const ext = parseExt(s);
-      const hasExt = Object.keys(ext[stage] || {}).length > 0;
-      if (stage === 'power') return hasExt || s.power_source || s.power_rfi_status;
-      return hasExt || s.vendor_name || s.scope || s.progress_percent;
+    // Every registered site is reviewable; sites with submitted data sort first
+    const items = [...sites.filter(s => s.status !== 'rejected')].sort((a, b) => {
+      const score = (s: any) => (Object.keys(parseExt(s)[stage] || {}).length > 0 ? 0 : 1);
+      return score(a) - score(b);
     });
     return (
       <div className="space-y-4">
