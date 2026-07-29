@@ -210,9 +210,15 @@ export default function AdminDashboard() {
 
   const handleSiteAction = async (site: Site, action: 'approved' | 'rejected') => {
     setActionLoading(true);
+    // Preserve any Power/Rollout JSON already stored in review_notes
+    const raw = rawNotesObj(site);
+    const nextNotes = raw
+      ? JSON.stringify({ ...raw, admin: { ...(raw.admin || {}), planning_notes: reviewNotes || null } })
+      : (reviewNotes || null);
     const { error } = await supabase.from('sites').update({
-      status: action, reviewed_by: user!.id, review_notes: reviewNotes || null,
+      status: action, reviewed_by: user!.id, review_notes: nextNotes,
     }).eq('id', site.id);
+
     if (!error) {
       await supabase.from('activity_log').insert({
         action: action === 'approved' ? 'site_approved' : 'site_rejected',
