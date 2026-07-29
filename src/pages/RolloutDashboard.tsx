@@ -348,7 +348,7 @@ export default function RolloutDashboard() {
       contractor_name: get('civil_contractor') || null,
       handover_to_vendor: get('handover_to_vendor') || null,
       progress_percent: pct,
-      review_notes: JSON.stringify({ ...ext, rollout }),
+      review_notes: JSON.stringify({ ...(rawNotesObj(editSite) || {}), ...ext, rollout }),
     };
     milestoneFields.forEach(([k]) => {
       if (k !== 'power_rfi') updates[k] = enforcedMilestones[k] || 'Not Started';
