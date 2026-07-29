@@ -417,13 +417,14 @@ export default function PlanningDashboard() {
   };
 
   const modules = useMemo(() => ([
-    { id: 'm1', icon: MapPin,       title: 'Module 1 · Basic Site & Location', fields: MOD1, show: true },
-    { id: 'm2', icon: ShieldCheck,  title: 'Module 2 · Governance & Classification', fields: MOD2_SELECTS, show: true, custom: 'tech' as const },
-    { id: 'm3', icon: HardHat,      title: 'Module 3 · Civil & Infrastructure', fields: MOD3, show: true },
-    { id: 'm4', icon: Antenna,      title: 'Module 4 · RF Hardware & Physical Antenna', fields: MOD4, show: true },
-    { id: 'm5', icon: Radio,        title: 'Module 5 · 2G Radio Network', fields: MOD5_2G, show: has('2G') },
-    { id: 'm6', icon: Signal,       title: 'Module 6 · 3G Radio Network', fields: MOD6_3G, show: has('3G') },
-    { id: 'm7', icon: Smartphone,   title: 'Module 7 · 4G LTE Radio Network', fields: MOD7_4G, show: has('4G') },
+    { id: 'm1', icon: MapPin,       title: 'Basic Site & Location', fields: MOD1, show: true },
+    { id: 'm2', icon: ShieldCheck,  title: 'Governance & Classification', fields: MOD2_SELECTS, show: true, custom: 'tech' as const },
+    { id: 'm3', icon: HardHat,      title: 'Civil & Infrastructure', fields: MOD3, show: true },
+    { id: 'm4', icon: Antenna,      title: 'RF Hardware & Physical Antenna', fields: MOD4, show: true },
+    { id: 'm5', icon: Radio,        title: '2G Radio Network', fields: MOD5_2G, show: has('2G') },
+    { id: 'm6', icon: Signal,       title: '3G Radio Network', fields: MOD6_3G, show: has('3G') },
+    { id: 'm7', icon: Smartphone,   title: '4G LTE Radio Network', fields: MOD7_4G, show: has('4G') },
+
   ]), [tech]);
 
   const renderDashboard = () => (
