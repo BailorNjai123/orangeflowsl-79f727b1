@@ -134,9 +134,9 @@ export default function PowerDashboard() {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  // A site reaches Power once Planning has approved it, or once a Procurement
-  // submission for it has been approved.
-  const isEligible = (site: SiteRow) => site.status === 'approved' || procMap[site.id] === 'approved';
+  // Every site registered by Planning reaches the Power dashboard as soon as it
+  // is submitted (pending or approved). Only rejected sites are excluded.
+  const isEligible = (site: SiteRow) => site.status !== 'rejected';
   const eligibleSites = useMemo(() => sites.filter(s => isEligible(s)), [sites, procMap]);
 
   const completedCount = eligibleSites.filter(s => s.power_rfi_status === 'Completed').length;
@@ -245,10 +245,10 @@ export default function PowerDashboard() {
     };
     if (certPath) updates.power_certificate_url = certPath;
 
-    // ---- Automation: sync Power RFI into the Rollout milestone + progress ----
-    if (justCompleted) {
-      updates.power_rfi = 'Completed';
-      const merged: SiteRow = { ...editSite, power_rfi: 'Completed' };
+    // ---- Automation: Power RFI always mirrors into the Rollout milestone ----
+    updates.power_rfi = newStatus;
+    {
+      const merged: SiteRow = { ...editSite, power_rfi: newStatus };
       const done = milestoneCols.filter(c => merged[c] === 'Completed').length;
       updates.progress_percent = Math.round((done / milestoneCols.length) * 100);
     }
