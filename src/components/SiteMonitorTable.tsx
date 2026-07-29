@@ -275,7 +275,7 @@ export default function SiteMonitorTable({ sites, onFileUpdated }: SiteMonitorTa
                       ) : col.type === 'rollout' ? (
                         renderRolloutCell(site)
                       ) : col.key === 'notes' ? (
-                        <span className="max-w-[200px] truncate block" title={site.notes || ''}>
+                        <span className="max-w-[200px] truncate block" title={cleanNote(site.notes)}>
                           {cellValue(site, col.key)}
                         </span>
                       ) : (
