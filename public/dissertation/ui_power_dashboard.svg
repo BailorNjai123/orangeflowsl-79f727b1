@@ -1,15 +1,136 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
-<rect width="900" height="500" fill="#f8fafc" stroke="#334155"/>
-<text x="20" y="30" font-family="sans-serif" font-size="18" font-weight="bold">Power Dashboard</text>
-<rect x="20" y="50" width="200" height="80" fill="#e0f2fe" stroke="#0284c7"/>
-<text x="30" y="75" font-size="12">Sites Pending Power RFI</text>
-<rect x="240" y="50" width="200" height="80" fill="#dcfce7" stroke="#16a34a"/>
-<text x="250" y="75" font-size="12">Sites Certified</text>
-<rect x="460" y="50" width="200" height="80" fill="#fef9c3" stroke="#ca8a04"/>
-<text x="470" y="75" font-size="12">Earthing Failures</text>
-<rect x="20" y="150" width="860" height="320" fill="#ffffff" stroke="#94a3b8"/>
-<text x="30" y="175" font-size="13" font-weight="bold">Module 1: Primary &amp; Generator Power Configuration</text>
-<text x="30" y="205" font-size="13" font-weight="bold">Module 2: Renewable &amp; Backup Energy Systems (Earthing ≤ 5.0 Ω)</text>
-<text x="30" y="235" font-size="13" font-weight="bold">Module 3: Certification, Compliance &amp; Attachments</text>
-<text x="30" y="270" font-size="11" fill="#64748b">Searchable site list with Power RFI status badges and certificate DocCards</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title{font-size:20px;font-weight:700;fill:#0f172a}
+      .box{fill:#fff;stroke:#e2e8f0;stroke-width:1.3;rx:8;ry:8}
+      .lbl{font-size:12px;fill:#0f172a;font-weight:700}
+      .sub{font-size:10px;fill:#64748b}
+      .kpi{font-size:22px;font-weight:700;fill:#0f172a}
+      .navitem{font-size:12px;fill:#334155}
+      .navactive{font-size:12px;fill:#fff;font-weight:700}
+      .th{font-size:10px;fill:#64748b;font-weight:700}
+      .td{font-size:10px;fill:#0f172a}
+    </style>
+  </defs>
+  <rect width="1200" height="900" fill="#ffffff"/>
+  <text class="title" x="600" y="30" text-anchor="middle">OrangeFlow SL — Power Dashboard (UI Mock-up)</text>
+
+  <!-- Browser frame -->
+  <rect x="40" y="55" width="1120" height="815" rx="10" ry="10" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="40" y="55" width="1120" height="34" rx="10" ry="10" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <circle cx="60" cy="72" r="5" fill="#f97316"/>
+  <circle cx="78" cy="72" r="5" fill="#facc15"/>
+  <circle cx="96" cy="72" r="5" fill="#22c55e"/>
+  <rect x="130" y="63" width="600" height="18" rx="9" ry="9" fill="#ffffff" stroke="#cbd5e1"/>
+  <text style="font-size:10px;fill:#64748b" x="145" y="76">orangeflow.sl/power</text>
+
+  <!-- Sidebar -->
+  <rect x="40" y="89" width="190" height="781" fill="#0f172a"/>
+  <text style="font-size:15px;font-weight:700;fill:#f97316" x="65" y="125">Orange<tspan fill="#fff">Flow</tspan></text>
+  <text style="font-size:9px;fill:#94a3b8" x="65" y="140">Power Dashboard</text>
+
+  <rect x="55" y="165" width="160" height="34" rx="6" ry="6" fill="#f97316"/>
+  <text class="navactive" x="70" y="186">📊  Dashboard</text>
+  <rect x="55" y="205" width="160" height="34" rx="6" ry="6" fill="#1e293b"/>
+  <text class="navitem" x="70" y="226" fill="#e2e8f0">⚡  Power Form</text>
+
+  <!-- Top KPI cards -->
+  <g>
+    <rect x="255" y="105" width="200" height="80" class="box"/>
+    <text class="sub" x="270" y="128">Total Sites</text>
+    <text class="kpi" x="270" y="160">142</text>
+
+    <rect x="470" y="105" width="200" height="80" class="box"/>
+    <text class="sub" x="485" y="128">RFI Pending</text>
+    <text class="kpi" x="485" y="160" fill="#f97316">38</text>
+
+    <rect x="685" y="105" width="200" height="80" class="box"/>
+    <text class="sub" x="700" y="128">RFI Complete</text>
+    <text class="kpi" x="700" y="160" fill="#16a34a">96</text>
+
+    <rect x="900" y="105" width="235" height="80" class="box"/>
+    <text class="sub" x="915" y="128">Earthing Fail (&gt;5.0Ω)</text>
+    <text class="kpi" x="915" y="160" fill="#dc2626">8</text>
+  </g>
+
+  <!-- Site list table -->
+  <rect x="255" y="200" width="880" height="150" class="box"/>
+  <text class="lbl" x="270" y="222">Site List</text>
+  <rect x="880" y="208" width="240" height="22" rx="11" ry="11" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text class="sub" x="895" y="223">🔍 Search sites...</text>
+  <line x1="270" y1="238" x2="1120" y2="238" stroke="#e2e8f0"/>
+  <text class="th" x="280" y="255">SITE ID</text>
+  <text class="th" x="440" y="255">REGION</text>
+  <text class="th" x="580" y="255">EARTHING (Ω)</text>
+  <text class="th" x="760" y="255">RFI STATUS</text>
+  <text class="th" x="920" y="255">ACTION</text>
+  <line x1="270" y1="264" x2="1120" y2="264" stroke="#f1f5f9"/>
+  <text class="td" x="280" y="282">BTS-FTN-014</text>
+  <text class="td" x="440" y="282">Western Area</text>
+  <text class="td" x="580" y="282" fill="#16a34a">3.2</text>
+  <text class="td" x="760" y="282" fill="#16a34a">Complete</text>
+  <text class="td" x="920" y="282" fill="#6366f1">View →</text>
+  <line x1="270" y1="292" x2="1120" y2="292" stroke="#f1f5f9"/>
+  <text class="td" x="280" y="310">BTS-BO-027</text>
+  <text class="td" x="440" y="310">Bo District</text>
+  <text class="td" x="580" y="310" fill="#dc2626">6.8</text>
+  <text class="td" x="760" y="310" fill="#f97316">Pending</text>
+  <text class="td" x="920" y="310" fill="#6366f1">View →</text>
+  <line x1="270" y1="320" x2="1120" y2="320" stroke="#f1f5f9"/>
+  <text class="td" x="280" y="338">BTS-KEN-009</text>
+  <text class="td" x="440" y="338">Kenema</text>
+  <text class="td" x="580" y="338" fill="#16a34a">4.1</text>
+  <text class="td" x="760" y="338" fill="#16a34a">Complete</text>
+  <text class="td" x="920" y="338" fill="#6366f1">View →</text>
+
+  <!-- Power Form -->
+  <rect x="255" y="365" width="880" height="490" class="box"/>
+  <text class="lbl" x="270" y="390">Power Form — BTS-BO-027</text>
+
+  <!-- Module 1 -->
+  <rect x="270" y="405" width="850" height="120" rx="8" ry="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text class="lbl" x="285" y="425">Module 1 — Primary &amp; Generator Power Configuration</text>
+  <rect x="285" y="440" width="250" height="60" fill="#fff" stroke="#e2e8f0" rx="6" ry="6"/>
+  <text class="sub" x="298" y="458">Power Source</text>
+  <text class="td" x="298" y="478">Grid + Generator</text>
+  <rect x="550" y="440" width="250" height="60" fill="#fff" stroke="#e2e8f0" rx="6" ry="6"/>
+  <text class="sub" x="563" y="458">Generator Capacity</text>
+  <text class="td" x="563" y="478">60 kVA</text>
+  <rect x="815" y="440" width="285" height="60" fill="#fff" stroke="#e2e8f0" rx="6" ry="6"/>
+  <text class="sub" x="828" y="458">Grid Transformer Capacity</text>
+  <text class="td" x="828" y="478">100 kVA</text>
+
+  <!-- Module 2 -->
+  <rect x="270" y="535" width="850" height="130" rx="8" ry="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text class="lbl" x="285" y="555">Module 2 — Renewable &amp; Backup Energy Systems</text>
+  <rect x="285" y="570" width="250" height="70" fill="#fff" stroke="#e2e8f0" rx="6" ry="6"/>
+  <text class="sub" x="298" y="588">Solar / Battery Backup</text>
+  <text class="td" x="298" y="608">Solar 5kW · 2 battery banks</text>
+  <rect x="550" y="570" width="290" height="70" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6" rx="6" ry="6"/>
+  <text class="sub" x="563" y="588" fill="#991b1b">Earthing Resistance (limit ≤ 5.0 Ω)</text>
+  <text style="font-size:20px;font-weight:700;fill:#dc2626" x="563" y="618">6.8 Ω  ⚠ Fails limit</text>
+  <rect x="855" y="570" width="245" height="70" fill="#fff" stroke="#e2e8f0" rx="6" ry="6"/>
+  <text class="sub" x="868" y="588">Backup Power Type</text>
+  <text class="td" x="868" y="608">Hybrid Solar/Diesel</text>
+
+  <!-- Module 3 -->
+  <rect x="270" y="675" width="850" height="165" rx="8" ry="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text class="lbl" x="285" y="695">Module 3 — Certification, Compliance &amp; Attachments</text>
+  <rect x="285" y="710" width="200" height="60" fill="#fff" stroke="#e2e8f0" rx="6" ry="6"/>
+  <text class="sub" x="298" y="728">Power RFI Status</text>
+  <text class="td" x="298" y="748" fill="#f97316">Pending</text>
+
+  <rect x="500" y="710" width="290" height="115" fill="#fff" stroke="#e2e8f0" rx="6" ry="6"/>
+  <text class="lbl" x="513" y="730" style="font-size:11px">📄 Power Certificate.pdf</text>
+  <text class="sub" x="513" y="748">842 KB · uploaded by P. Kamara</text>
+  <text class="sub" x="513" y="764">14 Mar 2026</text>
+  <rect x="513" y="775" width="80" height="20" rx="4" ry="4" fill="#eef2ff" stroke="#6366f1"/>
+  <text style="font-size:9px;fill:#4338ca" x="524" y="789">View</text>
+
+  <rect x="805" y="710" width="290" height="115" fill="#fff" stroke="#e2e8f0" rx="6" ry="6"/>
+  <text class="lbl" x="818" y="730" style="font-size:11px">📄 Inspection Report.pdf</text>
+  <text class="sub" x="818" y="748">1.1 MB · uploaded by P. Kamara</text>
+  <text class="sub" x="818" y="764">14 Mar 2026</text>
+  <rect x="818" y="775" width="80" height="20" rx="4" ry="4" fill="#eef2ff" stroke="#6366f1"/>
+  <text style="font-size:9px;fill:#4338ca" x="829" y="789">View</text>
 </svg>
