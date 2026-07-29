@@ -67,7 +67,15 @@ const PROC_BUCKET = 'procurement-documents';
 
 type SiteRow = any;
 
+function rawNotesObj(site: SiteRow): any | null {
+  try {
+    const obj = site?.review_notes ? JSON.parse(site.review_notes) : null;
+    return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : null;
+  } catch { return null; }
+}
+
 function parseExt(site: SiteRow): { power: any; rollout: any; feedback: any } {
+
   try {
     const obj = site?.review_notes ? JSON.parse(site.review_notes) : {};
     if (obj && typeof obj === 'object') {
@@ -204,7 +212,7 @@ export default function RolloutDashboard() {
     if (decision === 'rejected') rollout.status = 'Handover Rejected';
 
     const { error } = await supabase.from('sites').update({
-      review_notes: JSON.stringify({ ...ext, feedback, rollout }),
+      review_notes: JSON.stringify({ ...(rawNotesObj(feedbackSite) || {}), ...ext, feedback, rollout }),
     }).eq('id', feedbackSite.id);
     if (error) {
       setFeedbackSaving(false);
@@ -340,7 +348,7 @@ export default function RolloutDashboard() {
       contractor_name: get('civil_contractor') || null,
       handover_to_vendor: get('handover_to_vendor') || null,
       progress_percent: pct,
-      review_notes: JSON.stringify({ ...ext, rollout }),
+      review_notes: JSON.stringify({ ...(rawNotesObj(editSite) || {}), ...ext, rollout }),
     };
     milestoneFields.forEach(([k]) => {
       if (k !== 'power_rfi') updates[k] = enforcedMilestones[k] || 'Not Started';

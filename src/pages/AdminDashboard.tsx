@@ -49,7 +49,16 @@ const navItems = [
   { label: 'Activity Log', icon: Activity, value: 'activity' },
 ];
 
+// Raw JSON object stored in sites.review_notes (null when it's a plain-text note)
+const rawNotesObj = (site: any): any | null => {
+  try {
+    const obj = site?.review_notes ? JSON.parse(site.review_notes) : null;
+    return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : null;
+  } catch { return null; }
+};
+
 // Parse extended JSON stored in sites.review_notes
+
 const parseExt = (site: any): { power: any; rollout: any; admin: any } => {
   try {
     const obj = site?.review_notes ? JSON.parse(site.review_notes) : {};
@@ -210,9 +219,15 @@ export default function AdminDashboard() {
 
   const handleSiteAction = async (site: Site, action: 'approved' | 'rejected') => {
     setActionLoading(true);
+    // Preserve any Power/Rollout JSON already stored in review_notes
+    const raw = rawNotesObj(site);
+    const nextNotes = raw
+      ? JSON.stringify({ ...raw, admin: { ...(raw.admin || {}), planning_notes: reviewNotes || null } })
+      : (reviewNotes || null);
     const { error } = await supabase.from('sites').update({
-      status: action, reviewed_by: user!.id, review_notes: reviewNotes || null,
+      status: action, reviewed_by: user!.id, review_notes: nextNotes,
     }).eq('id', site.id);
+
     if (!error) {
       await supabase.from('activity_log').insert({
         action: action === 'approved' ? 'site_approved' : 'site_rejected',
@@ -260,7 +275,7 @@ export default function AdminDashboard() {
       reviewed_at: new Date().toISOString(),
     };
     const updates: Record<string, any> = {
-      review_notes: JSON.stringify({ ...ext, admin }),
+      review_notes: JSON.stringify({ ...(rawNotesObj(stageReview.site) || {}), ...ext, admin }),
     };
     // Downstream unlock signal
     if (stageReview.stage === 'power' && action === 'approved') {
