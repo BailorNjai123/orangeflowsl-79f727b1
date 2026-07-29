@@ -830,7 +830,8 @@ export default function AdminDashboard() {
                         <h3 className="font-semibold text-sm">{site.site_id_code} — {site.site_name}</h3>
                         {adminStatus === 'approved' && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">Approved</span>}
                         {adminStatus === 'revisions' && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-warning/15 text-warning">Revisions Requested</span>}
-                        {!adminStatus && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Awaiting Review</span>}
+                        {!adminStatus && Object.keys(ext[stage] || {}).length > 0 && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">Submitted — Awaiting Review</span>}
+                        {!adminStatus && Object.keys(ext[stage] || {}).length === 0 && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Not Submitted</span>}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {stage === 'power'
