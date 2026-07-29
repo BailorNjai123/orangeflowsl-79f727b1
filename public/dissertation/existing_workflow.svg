@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" font-family="Arial, sans-serif">
+<style>.box{fill:#fff7ed;stroke:#f97316;stroke-width:2;} .t{font-size:13px;fill:#1f2937;} .arr{stroke:#6b7280;stroke-width:2;marker-end:url(#a);}</style>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/></marker></defs>
+<rect x="10" y="110" width="130" height="70" class="box"/><text x="20" y="140" class="t">Planning fills</text><text x="20" y="158" class="t">Excel sheet</text>
+<line x1="140" y1="145" x2="180" y2="145" class="arr"/>
+<rect x="180" y="110" width="130" height="70" class="box"/><text x="190" y="140" class="t">Emailed to</text><text x="190" y="158" class="t">Procurement</text>
+<line x1="310" y1="145" x2="350" y2="145" class="arr"/>
+<rect x="350" y="110" width="130" height="70" class="box"/><text x="360" y="140" class="t">Manual checklist</text><text x="360" y="158" class="t">on paper form</text>
+<line x1="480" y1="145" x2="520" y2="145" class="arr"/>
+<rect x="520" y="110" width="130" height="70" class="box"/><text x="530" y="140" class="t">Handover form</text><text x="530" y="158" class="t">printed/signed</text>
+<line x1="650" y1="145" x2="690" y2="145" class="arr"/>
+<rect x="690" y="110" width="130" height="70" class="box"/><text x="700" y="140" class="t">Power/Rollout</text><text x="700" y="158" class="t">phone updates</text>
+<line x1="755" y1="180" x2="755" y2="230" class="arr"/>
+<rect x="640" y="230" width="230" height="50" class="box"/><text x="650" y="260" class="t">Admin re-keys status into spreadsheet</text>
+<text x="20" y="30" font-size="18" fill="#1f2937">Figure 3.1 — Existing Manual BTS Rollout Coordination Workflow</text>
+</svg>

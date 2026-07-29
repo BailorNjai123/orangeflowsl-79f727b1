@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="Arial, sans-serif">
+<style>.a{fill:#fff7ed;stroke:#f97316;} .t{font-size:11px;fill:#1f2937;} .l{stroke:#9ca3af;stroke-dasharray:4;} .m{stroke:#374151;stroke-width:1.5;marker-end:url(#c);}</style>
+<defs><marker id="c" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#374151"/></marker></defs>
+<g>
+<rect x="20" y="10" width="110" height="30" class="a"/><text x="30" y="30" class="t">Planning</text>
+<rect x="170" y="10" width="110" height="30" class="a"/><text x="180" y="30" class="t">Procurement</text>
+<rect x="320" y="10" width="110" height="30" class="a"/><text x="330" y="30" class="t">Power</text>
+<rect x="470" y="10" width="110" height="30" class="a"/><text x="480" y="30" class="t">Rollout</text>
+<rect x="620" y="10" width="110" height="30" class="a"/><text x="630" y="30" class="t">Project/Admin</text>
+<rect x="770" y="10" width="110" height="30" class="a"/><text x="780" y="30" class="t">sites (DB)</text>
+</g>
+<line x1="75" y1="40" x2="75" y2="500" class="l"/><line x1="225" y1="40" x2="225" y2="500" class="l"/><line x1="375" y1="40" x2="375" y2="500" class="l"/><line x1="525" y1="40" x2="525" y2="500" class="l"/><line x1="675" y1="40" x2="675" y2="500" class="l"/><line x1="825" y1="40" x2="825" y2="500" class="l"/>
+<line x1="75" y1="60" x2="825" y2="60" class="m"/><text x="80" y="55" class="t">1: submit site plan</text>
+<line x1="825" y1="90" x2="225" y2="90" class="m"/><text x="230" y="85" class="t">2: notify pending review</text>
+<line x1="225" y1="120" x2="825" y2="120" class="m"/><text x="230" y="115" class="t">3: nine-point checklist feedback</text>
+<line x1="825" y1="150" x2="225" y2="150" class="m"/><text x="230" y="145" class="t">4: procurement release approved</text>
+<line x1="225" y1="180" x2="375" y2="180" class="m"/><text x="230" y="175" class="t">5: notify Power team</text>
+<line x1="375" y1="220" x2="825" y2="220" class="m"/><text x="380" y="215" class="t">6: power config + Power RFI</text>
+<line x1="825" y1="250" x2="525" y2="250" class="m"/><text x="530" y="245" class="t">7: notify Rollout team</text>
+<line x1="525" y1="280" x2="825" y2="280" class="m"/><text x="530" y="275" class="t">8: accept handover, milestones</text>
+<line x1="525" y1="320" x2="825" y2="320" class="m"/><text x="530" y="315" class="t">9: upload verification documents</text>
+<line x1="825" y1="360" x2="675" y2="360" class="m"/><text x="680" y="355" class="t">10: notify Admin stage review</text>
+<line x1="675" y1="400" x2="825" y2="400" class="m"/><text x="680" y="395" class="t">11: approve stage / request revisions</text>
+<line x1="825" y1="440" x2="675" y2="440" class="m"/><text x="680" y="435" class="t">12: progress_percent recalculated</text>
+<line x1="675" y1="470" x2="825" y2="470" class="m"/><text x="680" y="465" class="t">13: mark On Air</text>
+</svg>
