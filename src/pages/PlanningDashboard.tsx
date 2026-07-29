@@ -12,6 +12,8 @@ import StatusBadge from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { parsePlanningNotes, buildPlanningNotes } from '@/lib/planningNotes';
+
 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -313,15 +315,11 @@ export default function PlanningDashboard() {
   // Hydrate form when editing.
   useEffect(() => {
     if (!editSite) { setForm(emptyState); return; }
-    let extended: Record<string, any> = {};
-    try {
-      const raw = editSite.notes || '';
-      const m = raw.match(/<<PLANNING_JSON>>([\s\S]*?)<<END>>/);
-      if (m) extended = JSON.parse(m[1]);
-    } catch { /* ignore malformed */ }
-    const hydrated: FormState = { technology_classification: [], ...extended };
+    const { text, extended } = parsePlanningNotes(editSite.notes);
+    const hydrated: FormState = { technology_classification: [], ...extended, planner_note: text };
     Object.keys(editSite).forEach(k => { if (editSite[k] != null && NATIVE_COLS.has(k)) hydrated[k] = editSite[k]; });
     setForm(hydrated);
+
   }, [editSite]);
 
   const pending = sites.filter(s => s.status === 'pending').length;
@@ -380,9 +378,10 @@ export default function PlanningDashboard() {
       native[col] = numCols.includes(col) ? Number(v) : v;
     });
     const extended: Record<string, any> = {};
-    Object.entries(form).forEach(([k, v]) => { if (!NATIVE_COLS.has(k) && v !== '' && v != null) extended[k] = v; });
-    native.notes = `<<PLANNING_JSON>>${JSON.stringify(extended)}<<END>>`;
+    Object.entries(form).forEach(([k, v]) => { if (!NATIVE_COLS.has(k) && k !== 'planner_note' && v !== '' && v != null) extended[k] = v; });
+    native.notes = buildPlanningNotes(form.planner_note as string, extended);
     return native;
+
   };
 
   const persist = async (asDraft: boolean) => {

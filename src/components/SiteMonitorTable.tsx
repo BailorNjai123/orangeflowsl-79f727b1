@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import SiteDetailsView from '@/components/SiteDetailsView';
+import { cleanNote } from '@/lib/planningNotes';
+
 
 type Site = any;
 
@@ -64,10 +66,12 @@ function cellValue(site: Site, key: string): string {
   const col = columns.find(c => c.key === key);
   if (col?.get) { const v = col.get(site); return v === null || v === undefined || v === '' ? '-' : String(v); }
   if (key === 'rollout_progress') return `${computeRollout(site)}%`;
+  if (key === 'notes') return cleanNote(site.notes) || '-';
   const v = site[key];
   if (v === null || v === undefined || v === '') return '-';
   if (key === 'handover_to_vendor') return fmtDate(v);
   return String(v);
+
 }
 
 const columns: { key: string; label: string; minW?: string; type?: 'deployment' | 'approval' | 'rollout'; get?: (s: Site) => any }[] = [
@@ -271,7 +275,7 @@ export default function SiteMonitorTable({ sites, onFileUpdated }: SiteMonitorTa
                       ) : col.type === 'rollout' ? (
                         renderRolloutCell(site)
                       ) : col.key === 'notes' ? (
-                        <span className="max-w-[200px] truncate block" title={site.notes || ''}>
+                        <span className="max-w-[200px] truncate block" title={cleanNote(site.notes)}>
                           {cellValue(site, col.key)}
                         </span>
                       ) : (

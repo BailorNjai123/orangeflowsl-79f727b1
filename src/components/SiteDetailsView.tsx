@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
+import { cleanNote } from '@/lib/planningNotes';
+
 import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -233,12 +235,13 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
-      {site.notes && (
+      {cleanNote(site.notes) && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
-          <div className="rounded-lg border bg-muted/50 p-3 text-sm">{site.notes}</div>
+          <div className="rounded-lg border bg-muted/50 p-3 text-sm whitespace-pre-wrap">{cleanNote(site.notes)}</div>
         </div>
       )}
+
     </div>
   );
 }
