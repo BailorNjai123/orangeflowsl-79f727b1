@@ -535,8 +535,28 @@ export default function PlanningDashboard() {
           </AccordionItem>
         ))}
       </Accordion>
+
+      {/* Planner note — always last */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" /> Additional Notes / Remarks
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Textarea
+            id="planner_note"
+            rows={4}
+            placeholder="Add any comment, observation or clarification about this site for the reviewing teams..."
+            value={form.planner_note ?? ''}
+            onChange={e => setField('planner_note', e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">Optional. This note is shared with Procurement, Power, Rollout and Admin reviewers.</p>
+        </CardContent>
+      </Card>
     </div>
   );
+
 
   const renderSubmissions = () => (
     <div className="space-y-4">
