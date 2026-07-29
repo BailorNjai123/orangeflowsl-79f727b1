@@ -135,8 +135,8 @@ export default function SiteMonitorTable({ sites, onFileUpdated }: SiteMonitorTa
         bv = computeRollout(b);
         return sortDir === 'asc' ? av - bv : bv - av;
       }
-      av = a[sortKey] ?? '';
-      bv = b[sortKey] ?? '';
+      av = cellValue(a, sortKey);
+      bv = cellValue(b, sortKey);
       const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true });
       return sortDir === 'asc' ? cmp : -cmp;
     });
