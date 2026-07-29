@@ -1,87 +1,82 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1150" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
   <defs>
-    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
-    </marker>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker>
     <style>
-      .t{font-size:24px;font-weight:700;fill:#0f172a}
-      .lane{font-size:14px;font-weight:700;fill:#0f172a}
-      .n{font-size:12px;fill:#0f172a}
+      .t{font-size:22px;font-weight:700;fill:#0f172a}
+      .lane{font-size:13px;font-weight:700;fill:#0f172a}
+      .n{font-size:11px;fill:#0f172a}
       .act{fill:#fff;stroke:#475569;stroke-width:1.5}
-      .planning{fill:#fff7ed}
-      .procure{fill:#eef2ff}
-      .admin{fill:#ecfdf5}
-      .line{stroke:#334155;stroke-width:1.6;fill:none}
-      .div{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4 4}
+      .planning{fill:#fff7ed} .procure{fill:#eef2ff} .power{fill:#fef9c3} .rollout{fill:#dcfce7} .admin{fill:#ede9fe}
+      .line{stroke:#334155;stroke-width:1.5;fill:none}
+      .dec{fill:#fff;stroke:#f97316;stroke-width:1.5}
+      .yn{font-size:10px;font-weight:700}
     </style>
   </defs>
-  <rect width="1100" height="720" fill="#fff"/>
-  <text class="t" x="550" y="36" text-anchor="middle">OrangeFlow — Activity Diagram (Swimlanes)</text>
+  <rect width="1200" height="1150" fill="#fff"/>
+  <text class="t" x="600" y="30" text-anchor="middle">OrangeFlow — End-to-End Activity Diagram (Swimlanes)</text>
 
-  <!-- Lanes -->
-  <rect x="40" y="70" width="1020" height="200" class="planning" stroke="#fb923c"/>
-  <rect x="40" y="270" width="1020" height="200" class="procure" stroke="#6366f1"/>
-  <rect x="40" y="470" width="1020" height="200" class="admin" stroke="#10b981"/>
-  <text class="lane" x="55" y="95">Planning Team</text>
-  <text class="lane" x="55" y="295">Procurement Team</text>
-  <text class="lane" x="55" y="495">Project Admin</text>
-  <line class="div" x1="200" y1="70" x2="200" y2="670"/>
+  <rect x="30" y="50" width="1140" height="140" class="planning" stroke="#fb923c"/>
+  <rect x="30" y="190" width="1140" height="180" class="procure" stroke="#6366f1"/>
+  <rect x="30" y="370" width="1140" height="200" class="power" stroke="#eab308"/>
+  <rect x="30" y="570" width="1140" height="230" class="rollout" stroke="#22c55e"/>
+  <rect x="30" y="800" width="1140" height="220" class="admin" stroke="#8b5cf6"/>
+  <text class="lane" x="45" y="72">Planning</text>
+  <text class="lane" x="45" y="212">Procurement</text>
+  <text class="lane" x="45" y="392">Power</text>
+  <text class="lane" x="45" y="592">Rollout</text>
+  <text class="lane" x="45" y="822">Project / Admin</text>
 
-  <!-- Planning nodes -->
-  <circle cx="240" cy="170" r="14" fill="#0f172a"/>
-  <rect class="act" x="290" y="150" width="170" height="40" rx="20"/>
-  <text class="n" x="375" y="175" text-anchor="middle">Submit Site Proposal</text>
-  <rect class="act" x="490" y="150" width="200" height="40" rx="20"/>
-  <text class="n" x="590" y="175" text-anchor="middle">Upload → site-documents</text>
+  <circle cx="70" cy="120" r="12" fill="#0f172a"/>
+  <rect class="act" x="110" y="100" width="170" height="40" rx="20"/><text class="n" x="195" y="124" text-anchor="middle">Submit Site Plan</text>
+  <rect class="act" x="310" y="100" width="180" height="40" rx="20"/><text class="n" x="400" y="124" text-anchor="middle">Import from Excel /</text>
+  <text class="n" x="400" y="136" text-anchor="middle">Validate Schema</text>
+  <path class="line" d="M82,120 L110,120" marker-end="url(#arr)"/>
+  <path class="line" d="M280,120 L310,120" marker-end="url(#arr)"/>
+  <path class="line" d="M400,140 L400,210" marker-end="url(#arr)"/>
 
-  <!-- arrows planning -->
-  <path class="line" d="M254,170 L290,170" marker-end="url(#arr)"/>
-  <path class="line" d="M460,170 L490,170" marker-end="url(#arr)"/>
-  <path class="line" d="M590,190 L590,340" marker-end="url(#arr)"/>
+  <rect class="act" x="310" y="200" width="180" height="40" rx="20"/><text class="n" x="400" y="224" text-anchor="middle">Review Feedback Req.</text>
+  <polygon class="dec" points="620,220 690,190 760,220 690,250"/><text class="n" x="690" y="216" text-anchor="middle">Accept</text><text class="n" x="690" y="230" text-anchor="middle">handover?</text>
+  <rect class="act" x="800" y="200" width="180" height="40" rx="20"/><text class="n" x="890" y="224" text-anchor="middle">9-Point Checklist +</text><text class="n" x="890" y="236" text-anchor="middle">Vendor/PO/Docs</text>
+  <path class="line" d="M490,220 L620,220" marker-end="url(#arr)"/>
+  <path class="line" d="M760,220 L800,220" marker-end="url(#arr)"/>
+  <text class="yn" x="765" y="212" fill="#059669">Yes</text>
+  <path class="line" d="M690,250 C 650,300 500,300 400,260" marker-end="url(#arr)"/>
+  <text class="yn" x="600" y="300" fill="#dc2626">No — return to Planning</text>
+  <rect class="act" x="1000" y="200" width="130" height="40" rx="20"/><text class="n" x="1065" y="224" text-anchor="middle">Notify Admin</text>
+  <text class="n" x="1065" y="236" text-anchor="middle">+ Rollout</text>
+  <path class="line" d="M980,220 L1000,220" marker-end="url(#arr)"/>
+  <path class="line" d="M1065,240 L1065,270 L400,270 L400,400" marker-end="url(#arr)"/>
 
-  <!-- Procurement -->
-  <rect class="act" x="230" y="350" width="150" height="40" rx="20"/>
-  <text class="n" x="305" y="375" text-anchor="middle">Select Site</text>
-  <rect class="act" x="410" y="350" width="170" height="40" rx="20"/>
-  <text class="n" x="495" y="375" text-anchor="middle">Perform 9-pt Checklist</text>
-  <rect class="act" x="610" y="350" width="180" height="40" rx="20"/>
-  <text class="n" x="700" y="375" text-anchor="middle">Attach Validation Sheets</text>
-  <rect class="act" x="820" y="350" width="160" height="40" rx="20"/>
-  <text class="n" x="900" y="375" text-anchor="middle">Save Feedback</text>
+  <rect class="act" x="310" y="400" width="200" height="40" rx="20"/><text class="n" x="410" y="424" text-anchor="middle">Configure Power / Test Earthing</text>
+  <polygon class="dec" points="620,420 700,390 780,420 700,450"/><text class="n" x="700" y="416" text-anchor="middle">Resistance</text><text class="n" x="700" y="430" text-anchor="middle">≤ 5.0 Ω?</text>
+  <rect class="act" x="820" y="400" width="150" height="40" rx="20"/><text class="n" x="895" y="424" text-anchor="middle">Issue Power RFI Pass</text>
+  <rect class="act" x="820" y="470" width="150" height="40" rx="20"/><text class="n" x="895" y="494" text-anchor="middle">Flag Fail, Rework</text>
+  <path class="line" d="M510,420 L620,420" marker-end="url(#arr)"/>
+  <path class="line" d="M780,410 L820,410 L820,420" marker-end="url(#arr)"/><text class="yn" x="785" y="402" fill="#059669">Pass</text>
+  <path class="line" d="M780,435 L820,470" marker-end="url(#arr)"/><text class="yn" x="785" y="460" fill="#dc2626">Fail</text>
+  <path class="line" d="M895,510 C 895,540 700,470 700,450" marker-end="url(#arr)"/>
+  <path class="line" d="M895,440 L895,540 L410,540 L410,600" marker-end="url(#arr)"/>
 
-  <path class="line" d="M380,370 L410,370" marker-end="url(#arr)"/>
-  <path class="line" d="M580,370 L610,370" marker-end="url(#arr)"/>
-  <path class="line" d="M790,370 L820,370" marker-end="url(#arr)"/>
-  <path class="line" d="M900,390 L900,540" marker-end="url(#arr)"/>
+  <rect class="act" x="310" y="600" width="180" height="40" rx="20"/><text class="n" x="400" y="624" text-anchor="middle">Accept Site Handover</text>
+  <polygon class="dec" points="620,620 690,590 760,620 690,650"/><text class="n" x="690" y="616" text-anchor="middle">Accept</text><text class="n" x="690" y="630" text-anchor="middle">handover?</text>
+  <rect class="act" x="800" y="600" width="200" height="40" rx="20"/><text class="n" x="900" y="624" text-anchor="middle">Record 7 Deployment</text><text class="n" x="900" y="636" text-anchor="middle">Milestones + Docs</text>
+  <path class="line" d="M490,620 L620,620" marker-end="url(#arr)"/>
+  <path class="line" d="M760,620 L800,620" marker-end="url(#arr)"/><text class="yn" x="765" y="612" fill="#059669">Yes</text>
+  <path class="line" d="M690,650 C 650,690 500,690 400,660" marker-end="url(#arr)"/><text class="yn" x="550" y="695" fill="#dc2626">No — back to Procurement</text>
+  <path class="line" d="M900,640 L900,700 L400,700 L400,830" marker-end="url(#arr)"/>
 
-  <!-- back to planning arrow visual -->
-  <path class="line" d="M590,340 L305,340 L305,350" marker-end="url(#arr)"/>
+  <rect class="act" x="310" y="830" width="180" height="40" rx="20"/><text class="n" x="400" y="854" text-anchor="middle">Review Stage Data</text>
+  <polygon class="dec" points="620,850 690,820 760,850 690,880"/><text class="n" x="690" y="846" text-anchor="middle">Approve</text><text class="n" x="690" y="860" text-anchor="middle">stage?</text>
+  <rect class="act" x="800" y="820" width="150" height="40" rx="20"/><text class="n" x="875" y="844" text-anchor="middle">Approve Stage</text>
+  <rect class="act" x="800" y="890" width="150" height="40" rx="20"/><text class="n" x="875" y="914" text-anchor="middle">Request Revisions</text>
+  <path class="line" d="M490,850 L620,850" marker-end="url(#arr)"/>
+  <path class="line" d="M760,840 L800,840" marker-end="url(#arr)"/><text class="yn" x="765" y="832" fill="#059669">Yes</text>
+  <path class="line" d="M760,865 L800,900" marker-end="url(#arr)"/><text class="yn" x="765" y="885" fill="#dc2626">No</text>
+  <path class="line" d="M950,910 C 1050,910 1050,850 690,880" marker-end="url(#arr)"/>
+  <rect class="act" x="1000" y="820" width="150" height="40" rx="20"/><text class="n" x="1075" y="840" text-anchor="middle">Write activity_log +</text><text class="n" x="1075" y="852" text-anchor="middle">send_workflow_notification</text>
+  <path class="line" d="M950,840 L1000,840" marker-end="url(#arr)"/>
 
-  <!-- Admin -->
-  <rect class="act" x="240" y="550" width="150" height="40" rx="20"/>
-  <text class="n" x="315" y="575" text-anchor="middle">Review State</text>
-  <!-- decision diamond -->
-  <polygon points="470,570 540,530 610,570 540,610" fill="#fff" stroke="#475569" stroke-width="1.5"/>
-  <text class="n" x="540" y="575" text-anchor="middle">Approve?</text>
-
-  <rect class="act" x="670" y="500" width="150" height="40" rx="20"/>
-  <text class="n" x="745" y="525" text-anchor="middle">Approve</text>
-  <rect class="act" x="670" y="600" width="150" height="40" rx="20"/>
-  <text class="n" x="745" y="625" text-anchor="middle">Reject</text>
-
-  <rect class="act" x="850" y="550" width="200" height="40" rx="20"/>
-  <text class="n" x="950" y="575" text-anchor="middle">Write Log + Notify Users</text>
-
-  <path class="line" d="M390,570 L470,570" marker-end="url(#arr)"/>
-  <path class="line" d="M610,555 L670,525" marker-end="url(#arr)"/>
-  <text class="n" x="625" y="530">Yes</text>
-  <path class="line" d="M610,590 L670,615" marker-end="url(#arr)"/>
-  <text class="n" x="625" y="620">No</text>
-  <path class="line" d="M820,520 C 840,520 840,570 850,570" marker-end="url(#arr)"/>
-  <path class="line" d="M820,620 C 840,620 840,575 850,575" marker-end="url(#arr)"/>
-
-  <!-- end -->
-  <circle cx="950" cy="660" r="14" fill="#fff" stroke="#0f172a" stroke-width="2"/>
-  <circle cx="950" cy="660" r="7" fill="#0f172a"/>
-  <path class="line" d="M950,590 L950,646" marker-end="url(#arr)"/>
+  <circle cx="1075" cy="1000" r="12" fill="#fff" stroke="#0f172a" stroke-width="2"/><circle cx="1075" cy="1000" r="6" fill="#0f172a"/>
+  <text class="n" x="1075" y="1030" text-anchor="middle" font-weight="700">On Air</text>
+  <path class="line" d="M1075,860 L1075,988" marker-end="url(#arr)"/>
 </svg>

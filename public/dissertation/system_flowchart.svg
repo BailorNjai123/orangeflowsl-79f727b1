@@ -1,92 +1,76 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1050" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
-    </marker>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker>
     <style>
-      .t{font-size:24px;font-weight:700;fill:#0f172a}
-      .n{font-size:13px;fill:#0f172a}
+      .t{font-size:22px;font-weight:700;fill:#0f172a}
+      .n{font-size:11.5px;fill:#0f172a}
       .proc{fill:#fff;stroke:#475569;stroke-width:1.5;rx:8;ry:8}
       .dec{fill:#fff7ed;stroke:#f97316;stroke-width:1.5}
       .db{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5;rx:6;ry:6}
-      .line{stroke:#334155;stroke-width:1.6;fill:none}
-      .yes{font-size:11px;fill:#059669;font-weight:600}
-      .no{font-size:11px;fill:#dc2626;font-weight:600}
+      .line{stroke:#334155;stroke-width:1.5;fill:none}
+      .yes{font-size:10px;fill:#059669;font-weight:700}
+      .no{font-size:10px;fill:#dc2626;font-weight:700}
     </style>
   </defs>
-  <rect width="1000" height="900" fill="#fff"/>
-  <text class="t" x="500" y="38" text-anchor="middle">OrangeFlow — System Flowchart</text>
+  <rect width="1100" height="1050" fill="#fff"/>
+  <text class="t" x="550" y="32" text-anchor="middle">OrangeFlow — Full System Flowchart</text>
 
-  <!-- Start -->
-  <ellipse cx="500" cy="90" rx="60" ry="24" fill="#0f172a"/>
-  <text class="n" x="500" y="95" text-anchor="middle" fill="#fff">Start</text>
+  <ellipse cx="550" cy="70" rx="55" ry="22" fill="#0f172a"/><text class="n" x="550" y="75" text-anchor="middle" fill="#fff">Start</text>
+  <polygon points="550,110 650,160 550,210 450,160" class="dec"/><text class="n" x="550" y="156" text-anchor="middle">Authenticated?</text>
+  <rect class="proc" x="200" y="145" width="150" height="40"/><text class="n" x="275" y="169" text-anchor="middle">Redirect /login (JWT)</text>
+  <path class="line" d="M450,160 L350,165" marker-end="url(#a)"/><text class="no" x="380" y="155">No</text>
+  <path class="line" d="M275,185 C 275,230 480,230 550,215" marker-end="url(#a)"/>
 
-  <!-- Auth check diamond -->
-  <polygon points="500,140 620,200 500,260 380,200" class="dec"/>
-  <text class="n" x="500" y="196" text-anchor="middle">Session</text>
-  <text class="n" x="500" y="214" text-anchor="middle">Authenticated?</text>
+  <rect class="proc" x="480" y="240" width="140" height="40"/><text class="n" x="550" y="264" text-anchor="middle">Resolve app_role</text>
+  <path class="line" d="M550,210 L550,240" marker-end="url(#a)"/><text class="yes" x="560" y="228">Yes</text>
 
-  <!-- Login path -->
-  <rect class="proc" x="150" y="180" width="160" height="44"/>
-  <text class="n" x="230" y="207" text-anchor="middle">Redirect → /login</text>
-  <rect class="proc" x="150" y="240" width="160" height="44"/>
-  <text class="n" x="230" y="267" text-anchor="middle">Authenticate (JWT)</text>
+  <!-- routing -->
+  <polygon points="550,300 640,340 550,380 460,340" class="dec"/><text class="n" x="550" y="336" text-anchor="middle">Route by</text><text class="n" x="550" y="350" text-anchor="middle">role</text>
+  <path class="line" d="M550,280 L550,300" marker-end="url(#a)"/>
 
-  <!-- Dashboard -->
-  <rect class="proc" x="410" y="290" width="180" height="44"/>
-  <text class="n" x="500" y="317" text-anchor="middle">Load Role Dashboard</text>
+  <rect class="proc" x="40" y="400" width="150" height="40"/><text class="n" x="115" y="424" text-anchor="middle">Planning /planning</text>
+  <rect class="proc" x="220" y="400" width="150" height="40"/><text class="n" x="295" y="424" text-anchor="middle">Procurement /procurement</text>
+  <rect class="proc" x="400" y="400" width="150" height="40"/><text class="n" x="475" y="424" text-anchor="middle">Power /power</text>
+  <rect class="proc" x="580" y="400" width="150" height="40"/><text class="n" x="655" y="424" text-anchor="middle">Rollout /rollout</text>
+  <rect class="proc" x="760" y="400" width="180" height="40"/><text class="n" x="850" y="424" text-anchor="middle">Project/Admin /admin</text>
+  <path class="line" d="M460,340 C 250,360 150,380 115,400" marker-end="url(#a)"/>
+  <path class="line" d="M480,350 C 350,370 320,390 295,400" marker-end="url(#a)"/>
+  <path class="line" d="M520,375 L 475,400" marker-end="url(#a)"/>
+  <path class="line" d="M580,375 L 655,400" marker-end="url(#a)"/>
+  <path class="line" d="M640,340 C 750,360 830,380 850,400" marker-end="url(#a)"/>
 
-  <!-- Action -->
-  <rect class="proc" x="410" y="360" width="180" height="44"/>
-  <text class="n" x="500" y="387" text-anchor="middle">User Action Triggered</text>
+  <rect class="proc" x="330" y="470" width="440" height="44"/><text class="n" x="550" y="497" text-anchor="middle">User submits / edits form data</text>
+  <path class="line" d="M115,440 C 115,460 400,460 500,470" marker-end="url(#a)"/>
+  <path class="line" d="M295,440 L 400,470" marker-end="url(#a)"/>
+  <path class="line" d="M475,440 L 500,470" marker-end="url(#a)"/>
+  <path class="line" d="M655,440 L 600,470" marker-end="url(#a)"/>
+  <path class="line" d="M850,440 C 850,460 650,460 620,470" marker-end="url(#a)"/>
 
-  <!-- Online? -->
-  <polygon points="500,430 620,490 500,550 380,490" class="dec"/>
-  <text class="n" x="500" y="486" text-anchor="middle">navigator</text>
-  <text class="n" x="500" y="504" text-anchor="middle">.onLine?</text>
+  <polygon points="550,530 650,570 550,610 450,570" class="dec"/><text class="n" x="550" y="566" text-anchor="middle">navigator</text><text class="n" x="550" y="580" text-anchor="middle">.onLine?</text>
+  <path class="line" d="M550,514 L550,530" marker-end="url(#a)"/>
 
-  <!-- Online branch -->
-  <rect class="proc" x="700" y="470" width="230" height="44"/>
-  <text class="n" x="815" y="497" text-anchor="middle">Direct Supabase API Mutation</text>
-  <rect class="db" x="700" y="530" width="230" height="40"/>
-  <text class="n" x="815" y="555" text-anchor="middle">Update Global State</text>
-  <rect class="proc" x="700" y="590" width="230" height="44"/>
-  <text class="n" x="815" y="617" text-anchor="middle">Polling Refresh (30s)</text>
+  <rect class="db" x="740" y="550" width="240" height="40"/><text class="n" x="860" y="574" text-anchor="middle">PostgREST mutation (RLS)</text>
+  <path class="line" d="M650,570 L740,570" marker-end="url(#a)"/><text class="yes" x="680" y="562">Yes</text>
+  <rect class="db" x="80" y="550" width="240" height="40"/><text class="n" x="200" y="574" text-anchor="middle">Queue in IndexedDB</text>
+  <path class="line" d="M450,570 L320,570" marker-end="url(#a)"/><text class="no" x="380" y="562">No</text>
+  <rect class="proc" x="80" y="610" width="240" height="40"/><text class="n" x="200" y="634" text-anchor="middle">useOnlineSync replay on reconnect</text>
+  <path class="line" d="M200,590 L200,610" marker-end="url(#a)"/>
+  <path class="line" d="M200,650 C 200,690 700,690 860,610" marker-end="url(#a)"/>
 
-  <!-- Offline branch -->
-  <rect class="db" x="70" y="470" width="240" height="44"/>
-  <text class="n" x="190" y="497" text-anchor="middle">Persist mutation → IndexedDB</text>
-  <rect class="proc" x="70" y="530" width="240" height="44"/>
-  <text class="n" x="190" y="557" text-anchor="middle">Wait: 'online' event listener</text>
-  <rect class="proc" x="70" y="590" width="240" height="44"/>
-  <text class="n" x="190" y="617" text-anchor="middle">Replay / drain queue</text>
+  <polygon points="860,650 950,690 860,730 770,690" class="dec"/><text class="n" x="860" y="686" text-anchor="middle">Submission</text><text class="n" x="860" y="700" text-anchor="middle">complete?</text>
+  <path class="line" d="M860,590 L860,650" marker-end="url(#a)"/>
 
-  <!-- End -->
-  <ellipse cx="500" cy="710" rx="70" ry="26" fill="#fff" stroke="#0f172a" stroke-width="2"/>
-  <ellipse cx="500" cy="710" rx="58" ry="18" fill="#0f172a"/>
-  <text class="n" x="500" y="716" text-anchor="middle" fill="#fff">Complete</text>
+  <rect class="proc" x="600" y="750" width="240" height="40"/><text class="n" x="720" y="774" text-anchor="middle">send_workflow_notification RPC</text>
+  <path class="line" d="M810,700 L730,750" marker-end="url(#a)"/><text class="yes" x="740" y="730">Yes</text>
+  <rect class="db" x="900" y="750" width="180" height="40"/><text class="n" x="990" y="774" text-anchor="middle">Write activity_log</text>
+  <path class="line" d="M840,774 L900,774" marker-end="url(#a)"/>
+  <path class="line" d="M900,700 C 950,720 990,730 990,750" marker-end="url(#a)"/><text class="no" x="900" y="720">Realtime push</text>
 
-  <!-- Arrows -->
-  <path class="line" d="M500,114 L500,140" marker-end="url(#a)"/>
-  <path class="line" d="M380,200 L310,200" marker-end="url(#a)"/>
-  <text class="no" x="325" y="192">No</text>
-  <path class="line" d="M230,224 L230,240" marker-end="url(#a)"/>
-  <path class="line" d="M230,284 C 230,320 380,320 410,312" marker-end="url(#a)"/>
-  <path class="line" d="M500,260 L500,290" marker-end="url(#a)"/>
-  <text class="yes" x="510" y="278">Yes</text>
-  <path class="line" d="M500,334 L500,360" marker-end="url(#a)"/>
-  <path class="line" d="M500,404 L500,430" marker-end="url(#a)"/>
+  <polygon points="720,820 810,860 720,900 630,860" class="dec"/><text class="n" x="720" y="856" text-anchor="middle">Admin approve</text><text class="n" x="720" y="870" text-anchor="middle">final stage?</text>
+  <path class="line" d="M720,790 L720,820" marker-end="url(#a)"/>
+  <path class="line" d="M720,700 C 650,750 650,800 630,850" marker-end="url(#a)"/><text class="no" x="600" y="760">No / More stages</text>
 
-  <path class="line" d="M620,490 L700,490" marker-end="url(#a)"/>
-  <text class="yes" x="640" y="482">Yes</text>
-  <path class="line" d="M380,490 L310,490" marker-end="url(#a)"/>
-  <text class="no" x="325" y="482">No</text>
-
-  <path class="line" d="M815,514 L815,530" marker-end="url(#a)"/>
-  <path class="line" d="M815,570 L815,590" marker-end="url(#a)"/>
-  <path class="line" d="M190,514 L190,530" marker-end="url(#a)"/>
-  <path class="line" d="M190,574 L190,590" marker-end="url(#a)"/>
-
-  <path class="line" d="M815,634 C 815,690 570,700 500,690" marker-end="url(#a)"/>
-  <path class="line" d="M190,634 C 190,690 430,700 500,690" marker-end="url(#a)"/>
+  <ellipse cx="720" cy="970" rx="70" ry="26" fill="#fff" stroke="#0f172a" stroke-width="2"/><ellipse cx="720" cy="970" rx="58" ry="18" fill="#0f172a"/>
+  <text class="n" x="720" y="976" text-anchor="middle" fill="#fff">On Air</text>
+  <path class="line" d="M720,900 L720,944" marker-end="url(#a)"/><text class="yes" x="730" y="930">Yes</text>
 </svg>
