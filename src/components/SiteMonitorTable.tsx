@@ -43,27 +43,43 @@ const approvalStatusDots: Record<string, string> = {
 
 const deploymentFields = ['soil_test', 'site_implementation_design', 'cast_status', 'tower_rig', 'civil_rfi', 'power_rfi', 'on_air'];
 
+/** Rollout/Power data submitted through the dashboards is stored as JSON in sites.review_notes */
+function parseExt(site: Site): { rollout: any; power: any } {
+  try {
+    const obj = site?.review_notes ? JSON.parse(site.review_notes) : {};
+    if (obj && typeof obj === 'object') return { rollout: obj.rollout || {}, power: obj.power || {} };
+  } catch { /* plain text note */ }
+  return { rollout: {}, power: {} };
+}
+
+const fmtDate = (v: any) => { if (!v) return '-'; try { return new Date(v).toLocaleDateString(); } catch { return String(v); } };
+
 function computeRollout(site: Site): number {
+  if (site.progress_percent != null) return Math.round(Number(site.progress_percent));
   const completed = deploymentFields.filter(f => site[f] === 'Completed').length;
   return Math.round((completed / deploymentFields.length) * 100);
 }
 
 function cellValue(site: Site, key: string): string {
+  const col = columns.find(c => c.key === key);
+  if (col?.get) { const v = col.get(site); return v === null || v === undefined || v === '' ? '-' : String(v); }
   if (key === 'rollout_progress') return `${computeRollout(site)}%`;
   const v = site[key];
   if (v === null || v === undefined || v === '') return '-';
-  if (key === 'handover_to_vendor') {
-    try { return new Date(v).toLocaleDateString(); } catch { return String(v); }
-  }
+  if (key === 'handover_to_vendor') return fmtDate(v);
   return String(v);
 }
 
-const columns: { key: string; label: string; minW?: string; type?: 'deployment' | 'approval' | 'rollout' }[] = [
+const columns: { key: string; label: string; minW?: string; type?: 'deployment' | 'approval' | 'rollout'; get?: (s: Site) => any }[] = [
   { key: 'site_id_code', label: 'Site ID', minW: '100px' },
   { key: 'site_name', label: 'Site', minW: '150px' },
-  { key: 'scope', label: 'Scope', minW: '100px' },
+  { key: 'scope', label: 'Scope', minW: '100px', get: s => s.scope || parseExt(s).rollout.project_scope },
   { key: 'district', label: 'District', minW: '120px' },
   { key: 'vendor_name', label: 'Vendor', minW: '120px' },
+  { key: 'civil_contractor', label: 'Civil Contractor', minW: '140px', get: s => parseExt(s).rollout.civil_contractor || s.contractor_name },
+  { key: 'ti_contractor', label: 'T&I Contractor', minW: '140px', get: s => parseExt(s).rollout.ti_contractor },
+  { key: 'project_manager', label: 'Project Manager', minW: '140px', get: s => parseExt(s).rollout.project_manager },
+  { key: 'rollout_status', label: 'Rollout Status', minW: '120px', get: s => parseExt(s).rollout.status },
   { key: 'handover_to_vendor', label: 'Handover to Vendor', minW: '140px' },
   { key: 'soil_test', label: 'Soil Test', minW: '110px', type: 'deployment' },
   { key: 'site_implementation_design', label: 'Site Implementation Design', minW: '180px', type: 'deployment' },
@@ -73,6 +89,15 @@ const columns: { key: string; label: string; minW?: string; type?: 'deployment' 
   { key: 'power_rfi', label: 'Power RFI', minW: '100px', type: 'deployment' },
   { key: 'on_air', label: 'On Air', minW: '100px', type: 'deployment' },
   { key: 'rollout_progress', label: 'Rollout Progress (%)', minW: '140px', type: 'rollout' },
+  { key: 'civil_start_date', label: 'Civil Start', minW: '110px', get: s => fmtDate(parseExt(s).rollout.civil_start_date) },
+  { key: 'foundation_cast_date', label: 'Foundation Cast Date', minW: '150px', get: s => fmtDate(parseExt(s).rollout.foundation_cast_date) },
+  { key: 'tower_erection_date', label: 'Tower Erection Date', minW: '150px', get: s => fmtDate(parseExt(s).rollout.tower_erection_date) },
+  { key: 'expected_civil_completion_date', label: 'Expected Civil Completion', minW: '180px', get: s => fmtDate(parseExt(s).rollout.expected_civil_completion_date) },
+  { key: 'actual_civil_rfi_date', label: 'Actual Civil RFI Date', minW: '160px', get: s => fmtDate(parseExt(s).rollout.actual_civil_rfi_date) },
+  { key: 'target_on_air_date', label: 'Target On-Air Date', minW: '150px', get: s => fmtDate(parseExt(s).rollout.target_on_air_date) },
+  { key: 'actual_on_air_date', label: 'Actual On-Air Date', minW: '150px', get: s => fmtDate(parseExt(s).rollout.actual_on_air_date) },
+  { key: 'power_rfi_status', label: 'Power RFI Status', minW: '140px' },
+  { key: 'rollout_submitted_at', label: 'Rollout Submitted', minW: '150px', get: s => (parseExt(s).rollout.submitted_at ? new Date(parseExt(s).rollout.submitted_at).toLocaleString() : '') },
   { key: 'notes', label: 'Comments', minW: '180px' },
 ];
 
