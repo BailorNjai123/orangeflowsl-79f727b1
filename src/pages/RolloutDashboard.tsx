@@ -67,7 +67,15 @@ const PROC_BUCKET = 'procurement-documents';
 
 type SiteRow = any;
 
+function rawNotesObj(site: SiteRow): any | null {
+  try {
+    const obj = site?.review_notes ? JSON.parse(site.review_notes) : null;
+    return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : null;
+  } catch { return null; }
+}
+
 function parseExt(site: SiteRow): { power: any; rollout: any; feedback: any } {
+
   try {
     const obj = site?.review_notes ? JSON.parse(site.review_notes) : {};
     if (obj && typeof obj === 'object') {
