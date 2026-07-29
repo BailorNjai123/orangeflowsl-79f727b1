@@ -275,7 +275,7 @@ export default function AdminDashboard() {
       reviewed_at: new Date().toISOString(),
     };
     const updates: Record<string, any> = {
-      review_notes: JSON.stringify({ ...ext, admin }),
+      review_notes: JSON.stringify({ ...(rawNotesObj(stageReview.site) || {}), ...ext, admin }),
     };
     // Downstream unlock signal
     if (stageReview.stage === 'power' && action === 'approved') {
