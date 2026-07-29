@@ -315,15 +315,11 @@ export default function PlanningDashboard() {
   // Hydrate form when editing.
   useEffect(() => {
     if (!editSite) { setForm(emptyState); return; }
-    let extended: Record<string, any> = {};
-    try {
-      const raw = editSite.notes || '';
-      const m = raw.match(/<<PLANNING_JSON>>([\s\S]*?)<<END>>/);
-      if (m) extended = JSON.parse(m[1]);
-    } catch { /* ignore malformed */ }
-    const hydrated: FormState = { technology_classification: [], ...extended };
+    const { text, extended } = parsePlanningNotes(editSite.notes);
+    const hydrated: FormState = { technology_classification: [], ...extended, planner_note: text };
     Object.keys(editSite).forEach(k => { if (editSite[k] != null && NATIVE_COLS.has(k)) hydrated[k] = editSite[k]; });
     setForm(hydrated);
+
   }, [editSite]);
 
   const pending = sites.filter(s => s.status === 'pending').length;
