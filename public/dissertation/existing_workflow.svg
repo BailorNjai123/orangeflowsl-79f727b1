@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 860" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/>
+    </marker>
+    <style>
+      .title{font-size:21px;font-weight:700;fill:#0f172a}
+      .lane{font-size:14px;font-weight:700;fill:#0f172a}
+      .box{fill:#fff;stroke:#334155;stroke-width:1.5;rx:8;ry:8}
+      .lbl{font-size:11.5px;fill:#0f172a;font-weight:600}
+      .sub{font-size:10px;fill:#475569}
+      .flow{stroke:#64748b;stroke-width:1.6;fill:none}
+      .pain{fill:#fef2f2;stroke:#dc2626;stroke-width:1.3;rx:8;ry:8}
+      .painTxt{font-size:10px;fill:#991b1b;font-weight:600}
+      .legend{font-size:11px;fill:#0f172a}
+    </style>
+  </defs>
+  <rect width="1180" height="860" fill="#ffffff"/>
+  <text class="title" x="590" y="32" text-anchor="middle">OrangeFlow SL — Existing Manual BTS Rollout Coordination Workflow (As-Is)</text>
+
+  <!-- Swimlanes -->
+  <g>
+    <rect x="40" y="60" width="1100" height="120" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text class="lane" x="55" y="85">Planning</text>
+    <rect x="40" y="180" width="1100" height="120" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="lane" x="55" y="205">Procurement</text>
+    <rect x="40" y="300" width="1100" height="120" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text class="lane" x="55" y="325">Power</text>
+    <rect x="40" y="420" width="1100" height="120" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="lane" x="55" y="445">Rollout</text>
+    <rect x="40" y="540" width="1100" height="120" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text class="lane" x="55" y="565">Project Supervision</text>
+  </g>
+
+  <!-- Planning items -->
+  <rect x="150" y="95" width="150" height="60" class="box"/>
+  <text class="lbl" x="225" y="118" text-anchor="middle">Printed Site Survey</text>
+  <text class="sub" x="225" y="136" text-anchor="middle">Paper form</text>
+
+  <rect x="360" y="95" width="170" height="60" class="box"/>
+  <text class="lbl" x="445" y="118" text-anchor="middle">Site Register.xlsx</text>
+  <text class="sub" x="445" y="136" text-anchor="middle">Master spreadsheet, local copy</text>
+
+  <path class="flow" d="M300,125 L360,125" marker-end="url(#arrow)"/>
+  <path class="flow" d="M530,150 C 560,160 560,200 560,215" marker-end="url(#arrow)"/>
+  <text class="sub" x="600" y="175">Email attachment</text>
+
+  <!-- Procurement items -->
+  <rect x="560" y="215" width="170" height="60" class="box"/>
+  <text class="lbl" x="645" y="238" text-anchor="middle">Procurement Copy.xlsx</text>
+  <text class="sub" x="645" y="256" text-anchor="middle">Re-typed checklist</text>
+
+  <rect x="770" y="215" width="170" height="60" class="box"/>
+  <text class="lbl" x="855" y="238" text-anchor="middle">Scanned Vendor Docs</text>
+  <text class="sub" x="855" y="256" text-anchor="middle">Emailed PDFs</text>
+  <path class="flow" d="M730,245 L770,245" marker-end="url(#arrow)"/>
+
+  <path class="flow" d="M855,275 C 855,300 780,300 780,320" marker-end="url(#arrow)"/>
+  <text class="sub" x="890" y="300">Printed handover pack</text>
+
+  <!-- Power items -->
+  <rect x="690" y="335" width="170" height="60" class="box"/>
+  <text class="lbl" x="775" y="358" text-anchor="middle">Power Config Sheet</text>
+  <text class="sub" x="775" y="376" text-anchor="middle">Paper checklist</text>
+
+  <rect x="900" y="335" width="170" height="60" class="box"/>
+  <text class="lbl" x="985" y="358" text-anchor="middle">WhatsApp / Chat</text>
+  <text class="sub" x="985" y="376" text-anchor="middle">Informal RFI status</text>
+  <path class="flow" d="M860,365 L900,365" marker-end="url(#arrow)"/>
+
+  <path class="flow" d="M775,395 C 775,420 470,420 470,440" marker-end="url(#arrow)"/>
+  <text class="sub" x="620" y="420">Verbal / phone handover</text>
+
+  <!-- Rollout items -->
+  <rect x="380" y="455" width="170" height="60" class="box"/>
+  <text class="lbl" x="465" y="478" text-anchor="middle">Milestone Tracker.xlsx</text>
+  <text class="sub" x="465" y="496" text-anchor="middle">Manually updated weekly</text>
+
+  <rect x="590" y="455" width="170" height="60" class="box"/>
+  <text class="lbl" x="675" y="478" text-anchor="middle">Field Photos (email)</text>
+  <text class="sub" x="675" y="496" text-anchor="middle">Verification evidence</text>
+  <path class="flow" d="M550,485 L590,485" marker-end="url(#arrow)"/>
+
+  <path class="flow" d="M675,515 C 675,540 300,540 300,560" marker-end="url(#arrow)"/>
+  <text class="sub" x="480" y="540">Weekly status email (delayed)</text>
+
+  <!-- Project Supervision items -->
+  <rect x="200" y="575" width="180" height="60" class="box"/>
+  <text class="lbl" x="290" y="598" text-anchor="middle">Consolidated Report</text>
+  <text class="sub" x="290" y="616" text-anchor="middle">Manually compiled monthly</text>
+
+  <rect x="420" y="575" width="180" height="60" class="box"/>
+  <text class="lbl" x="510" y="598" text-anchor="middle">Meeting Minutes</text>
+  <text class="sub" x="510" y="616" text-anchor="middle">Printed / emailed</text>
+  <path class="flow" d="M380,605 L420,605" marker-end="url(#arrow)"/>
+
+  <!-- Pain point callouts -->
+  <rect x="670" y="88" width="220" height="46" class="pain"/>
+  <text class="painTxt" x="680" y="107">⚠ Duplicated spreadsheets across</text>
+  <text class="painTxt" x="680" y="121">domains (no shared record)</text>
+
+  <rect x="960" y="88" width="200" height="46" class="pain"/>
+  <text class="painTxt" x="970" y="107">⚠ No single site record —</text>
+  <text class="painTxt" x="970" y="121">each team keeps its own file</text>
+
+  <rect x="960" y="215" width="200" height="46" class="pain"/>
+  <text class="painTxt" x="970" y="234">⚠ Lost documents at</text>
+  <text class="painTxt" x="970" y="248">handover between teams</text>
+
+  <rect x="40" y="335" width="220" height="46" class="pain"/>
+  <text class="painTxt" x="50" y="354">⚠ No audit trail of who</text>
+  <text class="painTxt" x="50" y="368">changed what, and when</text>
+
+  <rect x="800" y="455" width="220" height="46" class="pain"/>
+  <text class="painTxt" x="810" y="474">⚠ No supervisory visibility</text>
+  <text class="painTxt" x="810" y="488">into live rollout progress</text>
+
+  <rect x="650" y="575" width="230" height="46" class="pain"/>
+  <text class="painTxt" x="660" y="594">⚠ Delayed status reporting —</text>
+  <text class="painTxt" x="660" y="608">weeks behind actual site state</text>
+
+  <!-- Legend -->
+  <rect x="40" y="700" width="1100" height="120" fill="#f8fafc" stroke="#cbd5e1" rx="8" ry="8"/>
+  <text class="lane" x="60" y="725">Legend</text>
+  <rect x="60" y="740" width="18" height="14" class="box"/>
+  <text class="legend" x="86" y="752">Document / spreadsheet / form artefact</text>
+  <path class="flow" d="M60,775 L100,775" marker-end="url(#arrow)"/>
+  <text class="legend" x="110" y="780">Manual hand-off (print, email, chat, phone)</text>
+  <rect x="60" y="795" width="18" height="14" class="pain"/>
+  <text class="legend" x="86" y="807">Identified coordination pain point in the as-is process</text>
+</svg>

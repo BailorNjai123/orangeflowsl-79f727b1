@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 720" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 800" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
   <defs>
     <linearGradient id="tier1" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#fff7ed"/><stop offset="1" stop-color="#ffedd5"/>
@@ -15,97 +15,116 @@
     <style>
       .title{font-size:24px;font-weight:700;fill:#0f172a}
       .tier{font-size:18px;font-weight:700;fill:#0f172a}
-      .lbl{font-size:13px;fill:#0f172a;font-weight:600}
-      .sub{font-size:11px;fill:#475569}
+      .lbl{font-size:12.5px;fill:#0f172a;font-weight:600}
+      .sub{font-size:10.5px;fill:#475569}
       .box{stroke:#cbd5e1;stroke-width:1.5;rx:10;ry:10}
       .line{stroke:#334155;stroke-width:2;fill:none}
       .dash{stroke:#f97316;stroke-width:2;stroke-dasharray:6 4;fill:none}
     </style>
   </defs>
 
-  <rect width="1000" height="720" fill="#ffffff"/>
-  <text class="title" x="500" y="38" text-anchor="middle">OrangeFlow — Three-Tier System Architecture</text>
+  <rect width="1080" height="800" fill="#ffffff"/>
+  <text class="title" x="540" y="36" text-anchor="middle">OrangeFlow — Three-Tier System Architecture</text>
 
   <!-- Tier 1 -->
-  <rect x="40" y="70" width="920" height="170" fill="url(#tier1)" class="box" stroke="#fb923c"/>
-  <text class="tier" x="60" y="98">Tier 1 — Presentation Layer</text>
+  <rect x="30" y="64" width="1020" height="150" fill="url(#tier1)" class="box" stroke="#fb923c"/>
+  <text class="tier" x="50" y="90">Tier 1 — Presentation Layer: Five Role Dashboards</text>
   <g>
-    <rect x="70" y="115" width="200" height="105" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="170" y="140" text-anchor="middle">React 18 SPA</text>
-    <text class="sub" x="170" y="160" text-anchor="middle">Vite Build</text>
-    <text class="sub" x="170" y="178" text-anchor="middle">Tailwind CSS</text>
-    <text class="sub" x="170" y="196" text-anchor="middle">shadcn/ui</text>
+    <rect x="46" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
+    <text class="lbl" x="140" y="128" text-anchor="middle">Planning</text>
+    <text class="sub" x="140" y="146" text-anchor="middle">/planning</text>
+    <text class="sub" x="140" y="163" text-anchor="middle">61-param form</text>
+    <text class="sub" x="140" y="180" text-anchor="middle">Excel import</text>
 
-    <rect x="290" y="115" width="200" height="105" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="390" y="140" text-anchor="middle">PWA Service Worker</text>
-    <text class="sub" x="390" y="160" text-anchor="middle">Install Prompt</text>
-    <text class="sub" x="390" y="178" text-anchor="middle">Auto-update</text>
-    <text class="sub" x="390" y="196" text-anchor="middle">Cache-first assets</text>
+    <rect x="246" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
+    <text class="lbl" x="340" y="128" text-anchor="middle">Procurement</text>
+    <text class="sub" x="340" y="146" text-anchor="middle">/procurement</text>
+    <text class="sub" x="340" y="163" text-anchor="middle">9-pt checklist</text>
+    <text class="sub" x="340" y="180" text-anchor="middle">Vendor / PO / docs</text>
 
-    <rect x="510" y="115" width="200" height="105" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="610" y="140" text-anchor="middle">Local Cache</text>
-    <text class="sub" x="610" y="160" text-anchor="middle">TanStack Query</text>
-    <text class="sub" x="610" y="178" text-anchor="middle">30s auto-refresh</text>
-    <text class="sub" x="610" y="196" text-anchor="middle">Stale-while-revalidate</text>
+    <rect x="446" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
+    <text class="lbl" x="540" y="128" text-anchor="middle">Power</text>
+    <text class="sub" x="540" y="146" text-anchor="middle">/power</text>
+    <text class="sub" x="540" y="163" text-anchor="middle">Earthing / RFI</text>
+    <text class="sub" x="540" y="180" text-anchor="middle">Certification</text>
 
-    <rect x="730" y="115" width="200" height="105" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="830" y="140" text-anchor="middle">Role Dashboards</text>
-    <text class="sub" x="830" y="160" text-anchor="middle">Planning</text>
-    <text class="sub" x="830" y="178" text-anchor="middle">Procurement</text>
-    <text class="sub" x="830" y="196" text-anchor="middle">Project Admin</text>
+    <rect x="646" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
+    <text class="lbl" x="740" y="128" text-anchor="middle">Rollout</text>
+    <text class="sub" x="740" y="146" text-anchor="middle">/rollout</text>
+    <text class="sub" x="740" y="163" text-anchor="middle">Milestones</text>
+    <text class="sub" x="740" y="180" text-anchor="middle">Handover accept</text>
+
+    <rect x="846" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
+    <text class="lbl" x="940" y="128" text-anchor="middle">Project / Admin</text>
+    <text class="sub" x="940" y="146" text-anchor="middle">/admin</text>
+    <text class="sub" x="940" y="163" text-anchor="middle">Global authority</text>
+    <text class="sub" x="940" y="180" text-anchor="middle">8 tabs</text>
   </g>
 
   <!-- Tier 2 -->
-  <rect x="40" y="280" width="920" height="200" fill="url(#tier2)" class="box" stroke="#6366f1"/>
-  <text class="tier" x="60" y="308">Tier 2 — API / Middleware Layer</text>
+  <rect x="30" y="240" width="1020" height="270" fill="url(#tier2)" class="box" stroke="#6366f1"/>
+  <text class="tier" x="50" y="266">Tier 2 — API / Middleware Layer</text>
   <g>
-    <rect x="70" y="325" width="220" height="130" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
-    <text class="lbl" x="180" y="350" text-anchor="middle">Supabase Client</text>
-    <text class="sub" x="180" y="370" text-anchor="middle">JWT Session Auth</text>
-    <text class="sub" x="180" y="388" text-anchor="middle">HTTPS Gateway</text>
-    <text class="sub" x="180" y="406" text-anchor="middle">PostgREST</text>
-    <text class="sub" x="180" y="424" text-anchor="middle">RLS Enforced</text>
+    <rect x="46" y="282" width="230" height="112" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
+    <text class="lbl" x="161" y="304" text-anchor="middle">Authenticated Client</text>
+    <text class="sub" x="161" y="322" text-anchor="middle">JWT Session Auth</text>
+    <text class="sub" x="161" y="338" text-anchor="middle">PostgREST Gateway</text>
+    <text class="sub" x="161" y="354" text-anchor="middle">RLS Enforced</text>
+    <text class="sub" x="161" y="370" text-anchor="middle">HTTPS</text>
 
-    <rect x="310" y="325" width="220" height="130" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
-    <text class="lbl" x="420" y="350" text-anchor="middle">Edge Functions (Deno)</text>
-    <text class="sub" x="420" y="370" text-anchor="middle">manage-users</text>
-    <text class="sub" x="420" y="388" text-anchor="middle">seed-users</text>
-    <text class="sub" x="420" y="406" text-anchor="middle">Service-role only</text>
-    <text class="sub" x="420" y="424" text-anchor="middle">Admin lifecycle ops</text>
+    <rect x="292" y="282" width="230" height="112" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
+    <text class="lbl" x="407" y="304" text-anchor="middle">Deno Edge Functions</text>
+    <text class="sub" x="407" y="322" text-anchor="middle">manage-users</text>
+    <text class="sub" x="407" y="338" text-anchor="middle">seed-users</text>
+    <text class="sub" x="407" y="354" text-anchor="middle">service-role, project_team only</text>
+    <text class="sub" x="407" y="370" text-anchor="middle">archives to deleted_users_archive</text>
 
-    <rect x="550" y="325" width="180" height="130" rx="8" ry="8" fill="#fff7ed" stroke="#f97316"/>
-    <text class="lbl" x="640" y="350" text-anchor="middle">Offline Queue</text>
-    <text class="sub" x="640" y="370" text-anchor="middle">IndexedDB</text>
-    <text class="sub" x="640" y="388" text-anchor="middle">idb-keyval</text>
-    <text class="sub" x="640" y="406" text-anchor="middle">Replay on reconnect</text>
-    <text class="sub" x="640" y="424" text-anchor="middle">useOnlineSync</text>
+    <rect x="538" y="282" width="220" height="112" rx="8" ry="8" fill="#fff7ed" stroke="#f97316"/>
+    <text class="lbl" x="648" y="304" text-anchor="middle">Offline Queue</text>
+    <text class="sub" x="648" y="322" text-anchor="middle">IndexedDB (idb-keyval)</text>
+    <text class="sub" x="648" y="338" text-anchor="middle">offlineQueue.ts</text>
+    <text class="sub" x="648" y="354" text-anchor="middle">useOnlineSync replay</text>
+    <text class="sub" x="648" y="370" text-anchor="middle">on reconnect</text>
 
-    <rect x="750" y="325" width="180" height="130" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
-    <text class="lbl" x="840" y="350" text-anchor="middle">Realtime Layer</text>
-    <text class="sub" x="840" y="370" text-anchor="middle">Notifications</text>
-    <text class="sub" x="840" y="388" text-anchor="middle">Activity events</text>
-    <text class="sub" x="840" y="406" text-anchor="middle">Websocket</text>
+    <rect x="774" y="282" width="230" height="112" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
+    <text class="lbl" x="889" y="304" text-anchor="middle">Realtime Channel</text>
+    <text class="sub" x="889" y="322" text-anchor="middle">REPLICA IDENTITY FULL</text>
+    <text class="sub" x="889" y="338" text-anchor="middle">sites · procurement_submissions</text>
+    <text class="sub" x="889" y="354" text-anchor="middle">Websocket push</text>
+    <text class="sub" x="889" y="370" text-anchor="middle">+ 30s TanStack poll</text>
+
+    <rect x="46" y="408" width="958" height="80" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
+    <text class="lbl" x="525" y="430" text-anchor="middle">send_workflow_notification(_user_ids, _title, _message, _type, _link) — SECURITY DEFINER RPC</text>
+    <text class="sub" x="525" y="450" text-anchor="middle">Role-checked cross-user notification · sanitises content · rejects external (non-relative) links</text>
+    <text class="sub" x="525" y="468" text-anchor="middle">Used by Procurement→Project/Rollout, Power→Rollout/Admin notifications</text>
   </g>
 
   <!-- Tier 3 -->
-  <rect x="40" y="520" width="920" height="170" fill="url(#tier3)" class="box" stroke="#64748b"/>
-  <text class="tier" x="60" y="548">Tier 3 — Data Store Layer</text>
+  <rect x="30" y="546" width="1020" height="230" fill="url(#tier3)" class="box" stroke="#64748b"/>
+  <text class="tier" x="50" y="572">Tier 3 — Data Store Layer</text>
   <g>
-    <rect x="70" y="565" width="410" height="105" rx="8" ry="8" fill="#fff" stroke="#64748b"/>
-    <text class="lbl" x="275" y="590" text-anchor="middle">PostgreSQL (Managed)</text>
-    <text class="sub" x="275" y="610" text-anchor="middle">Row-Level Security enabled on all public tables</text>
-    <text class="sub" x="275" y="628" text-anchor="middle">profiles · user_roles · sites · procurement_submissions</text>
-    <text class="sub" x="275" y="646" text-anchor="middle">procurement_feedback · activity_log · notifications</text>
+    <rect x="46" y="588" width="580" height="170" rx="8" ry="8" fill="#fff" stroke="#64748b"/>
+    <text class="lbl" x="336" y="610" text-anchor="middle">PostgreSQL — 9 tables (RLS + explicit GRANTs)</text>
+    <text class="sub" x="336" y="630" text-anchor="middle">profiles · user_roles · sites · procurement_submissions</text>
+    <text class="sub" x="336" y="648" text-anchor="middle">procurement_feedback · activity_log · notifications</text>
+    <text class="sub" x="336" y="666" text-anchor="middle">deleted_users_archive · security_audit_log</text>
+    <text class="sub" x="336" y="690" text-anchor="middle">Functions: has_role · get_user_role · handle_new_user</text>
+    <text class="sub" x="336" y="708" text-anchor="middle">prevent_role_self_escalation · log_security_event</text>
+    <text class="sub" x="336" y="726" text-anchor="middle">31 SQL migrations applied</text>
 
-    <rect x="500" y="565" width="430" height="105" rx="8" ry="8" fill="#fff" stroke="#64748b"/>
-    <text class="lbl" x="715" y="590" text-anchor="middle">Cloud Storage Buckets (Private)</text>
-    <text class="sub" x="715" y="614" text-anchor="middle">site-documents  •  procurement-documents</text>
-    <text class="sub" x="715" y="634" text-anchor="middle">1-hour signed URLs · owner-scoped policies</text>
+    <rect x="646" y="588" width="358" height="170" rx="8" ry="8" fill="#fff" stroke="#64748b"/>
+    <text class="lbl" x="825" y="610" text-anchor="middle">Cloud Storage — Private Buckets</text>
+    <text class="sub" x="825" y="634" text-anchor="middle">site-documents</text>
+    <text class="sub" x="825" y="652" text-anchor="middle">procurement-documents</text>
+    <text class="sub" x="825" y="676" text-anchor="middle">DB stores object paths, not URLs</text>
+    <text class="sub" x="825" y="694" text-anchor="middle">1-hour signed URLs</text>
+    <text class="sub" x="825" y="712" text-anchor="middle">fetchAsObjectUrl → Blob delivery</text>
+    <text class="sub" x="825" y="730" text-anchor="middle">(bypasses adblock ERR_BLOCKED_BY_CLIENT)</text>
   </g>
 
   <!-- connectors -->
-  <path class="line" d="M500,240 L500,280" marker-end="url(#arrow)"/>
-  <path class="line" d="M500,480 L500,520" marker-end="url(#arrow)"/>
-  <path class="dash" d="M640,325 C 640,270 610,240 610,220" marker-end="url(#arrow)"/>
-  <text class="sub" x="655" y="270" fill="#c2410c">offline bypass</text>
+  <path class="line" d="M540,214 L540,240" marker-end="url(#arrow)"/>
+  <path class="line" d="M540,510 L540,546" marker-end="url(#arrow)"/>
+  <path class="dash" d="M648,282 C 648,235 610,214 610,214" marker-end="url(#arrow)"/>
+  <text class="sub" x="660" y="240" fill="#c2410c">offline bypass</text>
 </svg>
