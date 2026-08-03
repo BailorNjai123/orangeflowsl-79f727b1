@@ -491,15 +491,8 @@ export default function PlanningDashboard() {
       {/* Action bar */}
       <Card>
         <CardContent className="pt-4 flex flex-wrap gap-2">
-          <input ref={importRef} type="file" accept=".xlsx,.xls" hidden onChange={handleImport} />
-          <Button type="button" variant="outline" onClick={() => importRef.current?.click()}>
-            <Upload className="h-4 w-4 mr-2" /> Import from Excel (.xlsx)
-          </Button>
           <Button type="button" variant="outline" onClick={() => persist(true)} disabled={submitting}>
             <Save className="h-4 w-4 mr-2" /> Save Draft
-          </Button>
-          <Button type="button" variant="outline" onClick={runValidate}>
-            <ShieldCheck className="h-4 w-4 mr-2" /> Validate Schema
           </Button>
           <Button type="button" className="gradient-orange border-0 text-primary-foreground ml-auto" onClick={() => persist(false)} disabled={submitting}>
             {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
@@ -507,6 +500,7 @@ export default function PlanningDashboard() {
           </Button>
         </CardContent>
       </Card>
+
 
       {/* Modules accordion */}
       <Accordion type="multiple" defaultValue={['m1','m2','m3','m4']} className="space-y-3">
