@@ -128,7 +128,53 @@ function FileLink({ label, bucket, path, siteId, fieldName, allowManage, onUpdat
   );
 }
 
+function PlanningParameters({ site }: { site: any }) {
+  const { extended } = parsePlanningNotes(site?.notes);
+  const merged: Record<string, any> = { ...(site || {}), ...(extended || {}) };
+
+  const groups = PLANNING_FIELD_GROUPS
+    .map(g => ({
+      title: g.title,
+      rows: g.fields
+        .map(f => ({ label: f.label, value: formatPlanningValue(merged[f.key]) }))
+        .filter(r => r.value !== null),
+    }))
+    .filter(g => g.rows.length > 0);
+
+  const extraRows = Object.entries(extended || {})
+    .filter(([k]) => !isKnownPlanningKey(k) && k !== 'planner_note')
+    .map(([k, v]) => ({ label: prettifyKey(k), value: formatPlanningValue(v) }))
+    .filter(r => r.value !== null);
+
+  if (!groups.length && !extraRows.length) return null;
+
+  return (
+    <div className="space-y-4">
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+        <ListChecks className="h-3.5 w-3.5" /> Planning Parameters
+      </h4>
+      {groups.map(g => (
+        <div key={g.title}>
+          <p className="text-[11px] font-semibold text-foreground/80 mb-1.5">{g.title}</p>
+          <div className="rounded-lg border bg-card p-3">
+            {g.rows.map(r => <DetailRow key={r.label} label={r.label} value={r.value} />)}
+          </div>
+        </div>
+      ))}
+      {extraRows.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold text-foreground/80 mb-1.5">Other Parameters</p>
+          <div className="rounded-lg border bg-card p-3">
+            {extraRows.map(r => <DetailRow key={r.label} label={r.label} value={r.value} />)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }: SiteDetailsViewProps) {
+
   return (
     <div className="space-y-4">
       {/* Submission Info */}
