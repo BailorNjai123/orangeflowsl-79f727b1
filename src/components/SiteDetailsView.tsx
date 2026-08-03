@@ -235,12 +235,16 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
         </div>
       </div>
 
+      {/* Full planning parameter set (native columns + extended JSON payload) */}
+      <PlanningParameters site={site} />
+
       {cleanNote(site.notes) && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
           <div className="rounded-lg border bg-muted/50 p-3 text-sm whitespace-pre-wrap">{cleanNote(site.notes)}</div>
         </div>
       )}
+
 
     </div>
   );
