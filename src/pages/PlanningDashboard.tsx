@@ -544,6 +544,43 @@ export default function PlanningDashboard() {
         ))}
       </Accordion>
 
+      {/* Attachments */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Upload className="h-4 w-4 text-primary" /> Attachments
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {ATTACHMENTS.map(a => {
+            const existing = form[a.key] as string | undefined;
+            const picked = files[a.key];
+            return (
+              <div key={a.key} className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between rounded-lg border p-3 bg-muted/20">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{a.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {picked ? picked.name : existing ? existing.split('/').pop() : 'No file attached'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="max-w-[240px] text-xs"
+                    onChange={e => setFiles(prev => ({ ...prev, [a.key]: e.target.files?.[0] || null }))}
+                  />
+                  {picked && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setFiles(prev => ({ ...prev, [a.key]: null }))}>Clear</Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          <p className="text-xs text-muted-foreground">Images or PDF. Files upload when you save the draft or submit.</p>
+        </CardContent>
+      </Card>
+
       {/* Planner note — always last */}
       <Card>
         <CardHeader className="pb-2">
