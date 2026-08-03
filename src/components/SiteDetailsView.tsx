@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
-import { cleanNote } from '@/lib/planningNotes';
+import { cleanNote, parsePlanningNotes } from '@/lib/planningNotes';
+import { PLANNING_FIELD_GROUPS, formatPlanningValue, isKnownPlanningKey, prettifyKey } from '@/lib/planningFieldLabels';
 
-import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock } from 'lucide-react';
+import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock, ListChecks } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
