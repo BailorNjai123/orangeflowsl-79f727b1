@@ -151,7 +151,14 @@ const NATIVE_COLS = new Set([
   'foundation_depth','elevation','distance_nearest_bts','latitude','longitude',
   'tower_type','tower_material','antenna_type','number_of_antennas',
   'equipment_shelter','site_type','terrain_type','access_road_condition',
+  'site_photo_url','layout_plan_url','approval_letter_url',
 ]);
+
+const ATTACHMENTS: { key: string; label: string }[] = [
+  { key: 'site_photo_url', label: 'Site Photo' },
+  { key: 'layout_plan_url', label: 'Layout Plan' },
+  { key: 'approval_letter_url', label: 'Approval Letter' },
+];
 
 type FormState = Record<string, any> & { technology_classification?: string[] };
 
