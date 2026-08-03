@@ -337,32 +337,6 @@ export default function PlanningDashboard() {
   const has = (t: string) => tech.includes(t);
   const toggleTech = (t: string) => setField('technology_classification', has(t) ? tech.filter(x => x !== t) : [...tech, t]);
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    try {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
-      const parsed = parseWorkbookIntoState(wb);
-      const count = Object.keys(parsed).filter(k => k !== 'technology_classification').length;
-      if (!count && !parsed.technology_classification) {
-        toast({ variant: 'destructive', title: 'Nothing imported', description: 'No recognisable parameter names were found in this workbook. Use the field labels (e.g. "Site ID Code", "Tower Height") as headers or in the first column.' });
-        return;
-      }
-      setForm(prev => {
-        const merged: FormState = { ...prev, ...parsed };
-        const incoming = parsed.technology_classification as string[] | undefined;
-        if (incoming?.length) merged.technology_classification = Array.from(new Set([...(prev.technology_classification || []), ...incoming]));
-        return merged;
-      });
-      toast({ title: 'Import complete', description: `Populated ${count} field(s) from ${file.name}.` });
-
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Import failed', description: err?.message || 'Could not read the workbook.' });
-    } finally {
-      if (importRef.current) importRef.current.value = '';
-    }
-  };
-
   const validateSchema = (): { ok: boolean; missing: string[] } => {
     const missing: string[] = [];
     [...MOD1, ...MOD3].forEach(f => { if (f.required && (form[f.key] == null || form[f.key] === '')) missing.push(f.label); });
@@ -370,10 +344,18 @@ export default function PlanningDashboard() {
     return { ok: missing.length === 0, missing };
   };
 
-  const runValidate = () => {
-    const { ok, missing } = validateSchema();
-    if (ok) toast({ title: 'Schema valid', description: 'All required fields are populated.' });
-    else toast({ variant: 'destructive', title: `${missing.length} required field(s) missing`, description: missing.slice(0, 6).join(', ') });
+  const uploadAttachments = async (): Promise<Record<string, string>> => {
+    const out: Record<string, string> = {};
+    for (const a of ATTACHMENTS) {
+      const file = files[a.key];
+      if (!file || file.size === 0) continue;
+      const ext = file.name.split('.').pop();
+      const path = `${user!.id}/${Date.now()}_${a.key}.${ext}`;
+      const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
+      if (error) { toast({ variant: 'destructive', title: `Upload failed (${a.label})`, description: error.message }); continue; }
+      out[a.key] = path;
+    }
+    return out;
   };
 
   const buildPayload = (status: 'pending') => {
@@ -398,7 +380,8 @@ export default function PlanningDashboard() {
       if (!ok) { toast({ variant: 'destructive', title: 'Cannot submit', description: `Missing: ${missing.slice(0, 4).join(', ')}` }); return; }
     }
     setSubmitting(true);
-    const payload = buildPayload('pending');
+    const uploaded = await uploadAttachments();
+    const payload = { ...buildPayload('pending'), ...uploaded };
     if (!payload.site_id_code) payload.site_id_code = `DRAFT-${Date.now()}`;
     if (!payload.site_name) payload.site_name = payload.site_id_code;
     if (!payload.region) payload.region = 'Western Area';
@@ -410,9 +393,10 @@ export default function PlanningDashboard() {
     setSubmitting(false);
     if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
     toast({ title: asDraft ? 'Draft saved' : (editSite ? 'Submission updated' : 'Submitted for review') });
-    setEditSite(null); setForm(emptyState); fetchSites();
+    setEditSite(null); setForm(emptyState); setFiles({}); fetchSites();
     if (!asDraft) setActiveTab('submissions');
   };
+
 
   const renderField = (f: FieldDef) => {
     const val = form[f.key] ?? '';
