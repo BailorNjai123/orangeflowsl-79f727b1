@@ -305,7 +305,7 @@ export default function PlanningDashboard() {
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
   const [viewSite, setViewSite] = useState<SiteRow | null>(null);
   const [form, setForm] = useState<FormState>(emptyState);
-  const importRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<Record<string, File | null>>({});
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
