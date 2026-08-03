@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import * as XLSX from 'xlsx';
+import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Plus, FileText, Radio, Loader2, Upload, Save, ShieldCheck, Send,
   MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone,
@@ -151,143 +150,20 @@ const NATIVE_COLS = new Set([
   'foundation_depth','elevation','distance_nearest_bts','latitude','longitude',
   'tower_type','tower_material','antenna_type','number_of_antennas',
   'equipment_shelter','site_type','terrain_type','access_road_condition',
+  'site_photo_url','layout_plan_url','approval_letter_url',
 ]);
+
+const ATTACHMENTS: { key: string; label: string }[] = [
+  { key: 'site_photo_url', label: 'Site Photo' },
+  { key: 'layout_plan_url', label: 'Layout Plan' },
+  { key: 'approval_letter_url', label: 'Approval Letter' },
+];
 
 type FormState = Record<string, any> & { technology_classification?: string[] };
 
 type SiteRow = { id: string; site_id_code: string; site_name: string; region: string; district: string; town: string; status: 'pending'|'approved'|'rejected'; created_at: string; review_notes: string | null; notes?: string | null; [k: string]: any; };
 
 const emptyState: FormState = { technology_classification: [] };
-
-// Normalize an Excel header cell to a lookup key.
-const normKey = (s: any) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-
-// Map normalized header aliases -> internal field key.
-const HEADER_ALIASES: Record<string, string> = {
-  site_id: 'site_id_code', site_id_code: 'site_id_code', siteid: 'site_id_code',
-  site_name: 'site_name', name: 'site_name',
-  region: 'region', district: 'district', chiefdom: 'chiefdom', town: 'town', city: 'town', location: 'town',
-  latitude: 'latitude', lat: 'latitude', longitude: 'longitude', lon: 'longitude', long: 'longitude',
-  elevation: 'elevation', elevation_m: 'elevation',
-  dimensions: 'dimensions', dimensions_m: 'dimensions',
-  distance_from_nearest_bts: 'distance_nearest_bts', distance_nearest_bts: 'distance_nearest_bts',
-  tower_height: 'tower_height', tower_height_m: 'tower_height',
-  tower_type: 'tower_type', tower_material: 'tower_material',
-  foundation_depth: 'foundation_depth', foundation_depth_cm: 'foundation_depth',
-  terrain_type: 'terrain_type', access_road_condition: 'access_road_condition',
-  equipment_shelter: 'equipment_shelter', equipment_shelter_type: 'equipment_shelter',
-  antenna_type: 'antenna_type', number_of_antennas: 'number_of_antennas',
-  site_type: 'site_type', site_classification: 'site_classification',
-  natca_sites_classification: 'natca_classification', natca_classification: 'natca_classification',
-  owner_site_sharing_status: 'owner_sharing_status', owner_sharing_status: 'owner_sharing_status',
-};
-
-// Build a lookup of every recognisable token -> internal field key.
-function buildFieldIndex(): Record<string, FieldDef> {
-  const all: FieldDef[] = [...MOD1, ...MOD2_SELECTS, ...MOD3, ...MOD4, ...MOD5_2G, ...MOD6_3G, ...MOD7_4G];
-  const idx: Record<string, FieldDef> = {};
-  const add = (token: string, f: FieldDef) => { const n = normKey(token); if (n && !idx[n]) idx[n] = f; };
-  all.forEach(f => {
-    add(f.key, f);
-    add(f.label, f);
-    add(f.label.replace(/\([^)]*\)/g, ''), f);          // label without units
-    add(f.label.replace(/\/.*$/, ''), f);                 // label before slash
-    add(f.label.split('&')[0], f);                        // label before &
-  });
-  Object.entries(HEADER_ALIASES).forEach(([alias, key]) => {
-    const f = all.find(x => x.key === key);
-    if (f) add(alias, f);
-  });
-  return idx;
-}
-const FIELD_INDEX = buildFieldIndex();
-
-function matchField(raw: any): FieldDef | null {
-  const n = normKey(raw);
-  if (!n) return null;
-  if (FIELD_INDEX[n]) return FIELD_INDEX[n];
-  // tolerate trailing units/qualifiers: strip trailing _m, _cm, _km, _deg, _dbm, _no, _number
-  const stripped = n.replace(/_(m|cm|km|deg|degrees|dbm|db|no|number|value|s)$/,'');
-  return FIELD_INDEX[stripped] ?? null;
-}
-
-function coerce(f: FieldDef, v: any): any {
-  if (v == null || v === '') return null;
-  if (f.type === 'number') {
-    const num = typeof v === 'number' ? v : Number(String(v).replace(/[^0-9.\-]/g, ''));
-    return Number.isFinite(num) ? num : null;
-  }
-  if (f.type === 'date') {
-    if (v instanceof Date) return v.toISOString().slice(0, 10);
-    const d = new Date(v);
-    return isNaN(d.getTime()) ? String(v) : d.toISOString().slice(0, 10);
-  }
-  const s = String(v).trim();
-  if (f.type === 'select' && f.options) {
-    const hit = f.options.find(o => normKey(o) === normKey(s));
-    return hit ?? null; // ignore values that aren't valid options
-  }
-  return s;
-}
-
-function parseWorkbookIntoState(wb: XLSX.WorkBook): Partial<FormState> {
-  const collected: Record<string, any> = {};
-  const put = (f: FieldDef, v: any) => {
-    if (collected[f.key] != null && collected[f.key] !== '') return;
-    const c = coerce(f, v);
-    if (c != null && c !== '') collected[f.key] = c;
-  };
-
-  wb.SheetNames.forEach((name) => {
-    const grid = XLSX.utils.sheet_to_json<any[]>(wb.Sheets[name], { header: 1, defval: '', blankrows: false, raw: false });
-    if (!grid.length) return;
-    let found = 0;
-
-    // Pass 1 — key/value layout: a cell that names a field, value in a later cell of the same row.
-    grid.forEach(row => {
-      if (!Array.isArray(row)) return;
-      for (let c = 0; c < row.length; c++) {
-        const f = matchField(row[c]);
-        if (!f) continue;
-        for (let n = c + 1; n < row.length; n++) {
-          const v = row[n];
-          if (v !== '' && v != null && !matchField(v)) { put(f, v); found++; break; }
-        }
-      }
-    });
-
-    // Pass 2 — table layout: header row followed by a data row.
-    for (let r = 0; r < grid.length - 1; r++) {
-      const header = grid[r]; if (!Array.isArray(header)) continue;
-      const map = header.map(matchField);
-      const hits = map.filter(Boolean).length;
-      if (hits < 2) continue;
-      for (let d = r + 1; d < grid.length; d++) {
-        const data = grid[d];
-        if (!Array.isArray(data) || !data.some(v => v !== '' && v != null)) continue;
-        map.forEach((f, c) => { if (f) { put(f, data[c]); found++; } });
-        break;
-      }
-      break;
-    }
-
-    // Sheet-name hints for RAN sheets.
-    const upper = name.toUpperCase();
-    if (found && /2G|GSM/.test(upper)) collected.__tech_2g = true;
-    if (found && /3G|UMTS|WCDMA/.test(upper)) collected.__tech_3g = true;
-    if (found && /4G|LTE/.test(upper)) collected.__tech_4g = true;
-  });
-
-  // Also infer technology from populated per-tech fields.
-  const anyKey = (prefix: string) => Object.keys(collected).some(k => k.startsWith(prefix));
-  const tech: string[] = [];
-  if (collected.__tech_2g || anyKey('2g_') || collected.g900_trx != null || collected.g1800_trx != null) tech.push('2G');
-  if (collected.__tech_3g || anyKey('3g_')) tech.push('3G');
-  if (collected.__tech_4g || anyKey('4g_')) tech.push('4G');
-  delete collected.__tech_2g; delete collected.__tech_3g; delete collected.__tech_4g;
-  if (tech.length) collected.technology_classification = tech;
-  return collected;
-}
 
 
 export default function PlanningDashboard() {
@@ -298,7 +174,7 @@ export default function PlanningDashboard() {
   const [editSite, setEditSite] = useState<SiteRow | null>(null);
   const [viewSite, setViewSite] = useState<SiteRow | null>(null);
   const [form, setForm] = useState<FormState>(emptyState);
-  const importRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<Record<string, File | null>>({});
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
@@ -330,32 +206,6 @@ export default function PlanningDashboard() {
   const has = (t: string) => tech.includes(t);
   const toggleTech = (t: string) => setField('technology_classification', has(t) ? tech.filter(x => x !== t) : [...tech, t]);
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    try {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
-      const parsed = parseWorkbookIntoState(wb);
-      const count = Object.keys(parsed).filter(k => k !== 'technology_classification').length;
-      if (!count && !parsed.technology_classification) {
-        toast({ variant: 'destructive', title: 'Nothing imported', description: 'No recognisable parameter names were found in this workbook. Use the field labels (e.g. "Site ID Code", "Tower Height") as headers or in the first column.' });
-        return;
-      }
-      setForm(prev => {
-        const merged: FormState = { ...prev, ...parsed };
-        const incoming = parsed.technology_classification as string[] | undefined;
-        if (incoming?.length) merged.technology_classification = Array.from(new Set([...(prev.technology_classification || []), ...incoming]));
-        return merged;
-      });
-      toast({ title: 'Import complete', description: `Populated ${count} field(s) from ${file.name}.` });
-
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Import failed', description: err?.message || 'Could not read the workbook.' });
-    } finally {
-      if (importRef.current) importRef.current.value = '';
-    }
-  };
-
   const validateSchema = (): { ok: boolean; missing: string[] } => {
     const missing: string[] = [];
     [...MOD1, ...MOD3].forEach(f => { if (f.required && (form[f.key] == null || form[f.key] === '')) missing.push(f.label); });
@@ -363,10 +213,18 @@ export default function PlanningDashboard() {
     return { ok: missing.length === 0, missing };
   };
 
-  const runValidate = () => {
-    const { ok, missing } = validateSchema();
-    if (ok) toast({ title: 'Schema valid', description: 'All required fields are populated.' });
-    else toast({ variant: 'destructive', title: `${missing.length} required field(s) missing`, description: missing.slice(0, 6).join(', ') });
+  const uploadAttachments = async (): Promise<Record<string, string>> => {
+    const out: Record<string, string> = {};
+    for (const a of ATTACHMENTS) {
+      const file = files[a.key];
+      if (!file || file.size === 0) continue;
+      const ext = file.name.split('.').pop();
+      const path = `${user!.id}/${Date.now()}_${a.key}.${ext}`;
+      const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
+      if (error) { toast({ variant: 'destructive', title: `Upload failed (${a.label})`, description: error.message }); continue; }
+      out[a.key] = path;
+    }
+    return out;
   };
 
   const buildPayload = (status: 'pending') => {
@@ -391,7 +249,8 @@ export default function PlanningDashboard() {
       if (!ok) { toast({ variant: 'destructive', title: 'Cannot submit', description: `Missing: ${missing.slice(0, 4).join(', ')}` }); return; }
     }
     setSubmitting(true);
-    const payload = buildPayload('pending');
+    const uploaded = await uploadAttachments();
+    const payload = { ...buildPayload('pending'), ...uploaded };
     if (!payload.site_id_code) payload.site_id_code = `DRAFT-${Date.now()}`;
     if (!payload.site_name) payload.site_name = payload.site_id_code;
     if (!payload.region) payload.region = 'Western Area';
@@ -403,9 +262,10 @@ export default function PlanningDashboard() {
     setSubmitting(false);
     if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
     toast({ title: asDraft ? 'Draft saved' : (editSite ? 'Submission updated' : 'Submitted for review') });
-    setEditSite(null); setForm(emptyState); fetchSites();
+    setEditSite(null); setForm(emptyState); setFiles({}); fetchSites();
     if (!asDraft) setActiveTab('submissions');
   };
+
 
   const renderField = (f: FieldDef) => {
     const val = form[f.key] ?? '';
@@ -484,15 +344,8 @@ export default function PlanningDashboard() {
       {/* Action bar */}
       <Card>
         <CardContent className="pt-4 flex flex-wrap gap-2">
-          <input ref={importRef} type="file" accept=".xlsx,.xls" hidden onChange={handleImport} />
-          <Button type="button" variant="outline" onClick={() => importRef.current?.click()}>
-            <Upload className="h-4 w-4 mr-2" /> Import from Excel (.xlsx)
-          </Button>
           <Button type="button" variant="outline" onClick={() => persist(true)} disabled={submitting}>
             <Save className="h-4 w-4 mr-2" /> Save Draft
-          </Button>
-          <Button type="button" variant="outline" onClick={runValidate}>
-            <ShieldCheck className="h-4 w-4 mr-2" /> Validate Schema
           </Button>
           <Button type="button" className="gradient-orange border-0 text-primary-foreground ml-auto" onClick={() => persist(false)} disabled={submitting}>
             {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
@@ -500,6 +353,7 @@ export default function PlanningDashboard() {
           </Button>
         </CardContent>
       </Card>
+
 
       {/* Modules accordion */}
       <Accordion type="multiple" defaultValue={['m1','m2','m3','m4']} className="space-y-3">
@@ -536,6 +390,43 @@ export default function PlanningDashboard() {
           </AccordionItem>
         ))}
       </Accordion>
+
+      {/* Attachments */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Upload className="h-4 w-4 text-primary" /> Attachments
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {ATTACHMENTS.map(a => {
+            const existing = form[a.key] as string | undefined;
+            const picked = files[a.key];
+            return (
+              <div key={a.key} className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between rounded-lg border p-3 bg-muted/20">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{a.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {picked ? picked.name : existing ? existing.split('/').pop() : 'No file attached'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="max-w-[240px] text-xs"
+                    onChange={e => setFiles(prev => ({ ...prev, [a.key]: e.target.files?.[0] || null }))}
+                  />
+                  {picked && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setFiles(prev => ({ ...prev, [a.key]: null }))}>Clear</Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          <p className="text-xs text-muted-foreground">Images or PDF. Files upload when you save the draft or submit.</p>
+        </CardContent>
+      </Card>
 
       {/* Planner note — always last */}
       <Card>
