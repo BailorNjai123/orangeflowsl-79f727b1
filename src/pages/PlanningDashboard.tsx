@@ -432,6 +432,19 @@ export default function PlanningDashboard() {
           <p className="text-xs text-muted-foreground">Optional. This note is shared with Procurement, Power, Rollout and Admin reviewers.</p>
         </CardContent>
       </Card>
+
+      {/* Action bar — bottom */}
+      <Card>
+        <CardContent className="pt-4 flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => persist(true)} disabled={submitting}>
+            <Save className="h-4 w-4 mr-2" /> Save Draft
+          </Button>
+          <Button type="button" className="gradient-orange border-0 text-primary-foreground ml-auto" onClick={() => persist(false)} disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+            Submit Planning Data
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 
