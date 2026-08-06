@@ -346,7 +346,7 @@ export default function RolloutDashboard() {
 
     const updates: Record<string, any> = {
       scope: get('scope') || null,
-      vendor_name: get('civil_contractor') || null,
+      site_type: get('site_type') || null,
       contractor_name: get('civil_contractor') || null,
       handover_to_vendor: get('handover_to_vendor') || null,
       progress_percent: pct,
