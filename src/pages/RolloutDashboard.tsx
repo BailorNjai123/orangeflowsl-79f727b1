@@ -680,6 +680,13 @@ export default function RolloutDashboard() {
                         </Select>
                       </div>
                       <div className="space-y-1.5">
+                        <Label>Site Type</Label>
+                        <Select name="site_type" defaultValue={editSite.site_type || ext.rollout?.site_type || ''}>
+                          <SelectTrigger><SelectValue placeholder="Select site type" /></SelectTrigger>
+                          <SelectContent>{siteTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
                         <Label>Civil Works Contractor</Label>
                         <Select name="civil_contractor" defaultValue={ext.civil_contractor || editSite.vendor_name || ''}>
                           <SelectTrigger><SelectValue placeholder="Select contractor" /></SelectTrigger>
