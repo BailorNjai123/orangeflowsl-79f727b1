@@ -341,20 +341,6 @@ export default function PlanningDashboard() {
         {editSite && <Button variant="ghost" size="sm" onClick={() => setEditSite(null)}>Cancel Edit</Button>}
       </div>
 
-      {/* Action bar */}
-      <Card>
-        <CardContent className="pt-4 flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => persist(true)} disabled={submitting}>
-            <Save className="h-4 w-4 mr-2" /> Save Draft
-          </Button>
-          <Button type="button" className="gradient-orange border-0 text-primary-foreground ml-auto" onClick={() => persist(false)} disabled={submitting}>
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-            Submit Planning Data
-          </Button>
-        </CardContent>
-      </Card>
-
-
       {/* Modules accordion */}
       <Accordion type="multiple" defaultValue={['m1','m2','m3','m4']} className="space-y-3">
         {modules.filter(m => m.show).map(m => (
