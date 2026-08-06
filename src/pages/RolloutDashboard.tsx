@@ -32,6 +32,7 @@ const navItems = [
 
 const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
 const projectScopes = ['New Site Build', 'Technology Expansion', 'Equipment Swap', 'Capacity Upgrade', 'Colocation Upgrade'];
+const siteTypes = ['Densification', 'New Coverage', 'B2B', 'DRS'];
 const civilContractors = ['Huawei', 'ZTE', 'Ericsson', 'Nokia', 'Local Civil Contractor', 'Other'];
 const tiContractors = ['Huawei', 'ZTE', 'Ericsson', 'Nokia', 'Local TI Contractor', 'Other'];
 
