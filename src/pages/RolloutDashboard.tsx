@@ -32,6 +32,7 @@ const navItems = [
 
 const deploymentStatuses = ['Not Started', 'In Progress', 'Completed'];
 const projectScopes = ['New Site Build', 'Technology Expansion', 'Equipment Swap', 'Capacity Upgrade', 'Colocation Upgrade'];
+const siteTypes = ['Densification', 'New Coverage', 'B2B', 'DRS'];
 const civilContractors = ['Huawei', 'ZTE', 'Ericsson', 'Nokia', 'Local Civil Contractor', 'Other'];
 const tiContractors = ['Huawei', 'ZTE', 'Ericsson', 'Nokia', 'Local TI Contractor', 'Other'];
 
@@ -311,6 +312,7 @@ export default function RolloutDashboard() {
     const rollout = { ...ext.rollout };
 
     rollout.project_scope = get('scope');
+    rollout.site_type = get('site_type');
     rollout.civil_contractor = get('civil_contractor');
     rollout.ti_contractor = get('ti_contractor');
     rollout.project_manager = get('project_manager');
@@ -344,6 +346,7 @@ export default function RolloutDashboard() {
 
     const updates: Record<string, any> = {
       scope: get('scope') || null,
+      site_type: get('site_type') || null,
       vendor_name: get('civil_contractor') || null,
       contractor_name: get('civil_contractor') || null,
       handover_to_vendor: get('handover_to_vendor') || null,
@@ -674,6 +677,13 @@ export default function RolloutDashboard() {
                         <Select name="scope" defaultValue={editSite.scope || ext.project_scope || ''}>
                           <SelectTrigger><SelectValue placeholder="Select scope" /></SelectTrigger>
                           <SelectContent>{projectScopes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Site Type</Label>
+                        <Select name="site_type" defaultValue={editSite.site_type || ext.rollout?.site_type || ''}>
+                          <SelectTrigger><SelectValue placeholder="Select site type" /></SelectTrigger>
+                          <SelectContent>{siteTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-1.5">
