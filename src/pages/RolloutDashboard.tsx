@@ -312,6 +312,7 @@ export default function RolloutDashboard() {
     const rollout = { ...ext.rollout };
 
     rollout.project_scope = get('scope');
+    rollout.site_type = get('site_type');
     rollout.civil_contractor = get('civil_contractor');
     rollout.ti_contractor = get('ti_contractor');
     rollout.project_manager = get('project_manager');
