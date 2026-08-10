@@ -128,6 +128,7 @@ Cross-module consistency is preserved through merged JSON stage payloads, `REPLI
 3.16 Sequence Design of the Site Lifecycle
 3.17 Centralised Site ID Architecture
 3.18 Security Design
+3.18a Offline-First Synchronisation Design
 3.19 Interface Design Principles
 3.20 Software Development Methodology
 3.21 Technologies Used
@@ -149,7 +150,7 @@ Cross-module consistency is preserved through merged JSON stage payloads, `REPLI
 4.13 Document Management Implementation
 4.14 Workflow Integration and Synchronisation
 4.15 Notification Subsystem
-4.16 Progressive Web Application and Offline Capability
+4.16 Progressive Web Application and Offline-First Capability
 4.17 User Interface Implementation
 4.18 System Testing
 4.19 Security Testing
