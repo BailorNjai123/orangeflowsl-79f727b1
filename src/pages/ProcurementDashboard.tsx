@@ -134,17 +134,28 @@ export default function ProcurementDashboard() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from('procurement_feedback').insert({
-      site_id: selectedSite.id, user_id: user!.id, status, feedback_notes: feedbackNotes,
+    const { error, queued } = await offlineWrite({
+      type: 'procurement_feedback',
+      label: `Procurement feedback — ${selectedSite.site_id_code || selectedSite.site_name}`,
+      table: 'procurement_feedback',
+      operation: 'insert',
+      payload: { site_id: selectedSite.id, user_id: user!.id, status, feedback_notes: feedbackNotes },
+      siteIdCode: selectedSite.site_id_code || null,
+      siteRowId: selectedSite.id,
+      userId: user!.id,
+      role: 'procurement_team',
     });
     setSubmitting(false);
     if (!error) {
-      await supabase.from('activity_log').insert({
-        action: status === 'accepted' ? 'procurement_feedback_accepted' : 'procurement_feedback_rejected',
-        description: `Procurement ${status} site "${selectedSite.site_name}"`,
-        user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: selectedSite.id,
-      });
-      toast({ title: `Feedback submitted: ${status}` });
+      if (!queued) {
+        await supabase.from('activity_log').insert({
+          action: status === 'accepted' ? 'procurement_feedback_accepted' : 'procurement_feedback_rejected',
+          description: `Procurement ${status} site "${selectedSite.site_name}"`,
+          user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: selectedSite.id,
+        });
+      }
+      toast({ title: queued ? 'Feedback saved offline — pending sync' : `Feedback submitted: ${status}` });
+
       setSelectedSite(null); setFeedbackNotes(''); fetchData();
     } else toast({ variant: 'destructive', title: 'Error', description: error.message });
   };
