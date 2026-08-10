@@ -361,7 +361,8 @@ export default function RolloutDashboard() {
     }
 
     // ---- Extra Work / Unexpected Site Conditions (only stored when actually filled) ----
-    {
+    if (fd.has('ew_condition')) {
+
       const prev = rollout.extra_work || {};
       const condition = get('ew_condition');
       const required = get('ew_required') || 'No';
