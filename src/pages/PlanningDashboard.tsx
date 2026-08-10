@@ -4,6 +4,7 @@ import {
   MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone,
 } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
+import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
@@ -676,6 +677,14 @@ export default function PlanningDashboard() {
                     <p className="text-xs text-muted-foreground mt-1">
                       {site.site_id_code} • {site.region} • {new Date(site.created_at).toLocaleDateString()}
                     </p>
+                    {(() => {
+                      const xm = parsePlanningNotes(site.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined;
+                      return xm?.path ? (
+                        <div className="mt-2">
+                          <ExcelSubmissionView meta={xm} siteIdCode={site.site_id_code} submittedAt={site.created_at} compact />
+                        </div>
+                      ) : null;
+                    })()}
                     {site.review_notes && (
                       <p className="text-xs mt-2 p-2 rounded bg-muted text-muted-foreground">
                         <span className="font-medium">Review Notes:</span> {site.review_notes}
