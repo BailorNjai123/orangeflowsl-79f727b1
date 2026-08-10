@@ -69,6 +69,8 @@ The Planning module captures sixty-one site parameters across seven conditional 
 
 Cross-module consistency is preserved through merged JSON stage payloads, `REPLICA IDENTITY FULL` realtime publications and TanStack Query background refresh, giving near-instantaneous cross-dashboard updates. Documents are delivered exclusively through private storage buckets, owner- and role-scoped storage policies, and short-lived signed URLs converted to blob object URLs to circumvent browser privacy filters. Verification through role-based end-to-end scenarios, migration-level security audits, offline-synchronisation trials and responsive cross-browser testing demonstrated that OrangeFlow SL enforces least-privilege access, preserves data integrity under intermittent connectivity, and materially improves auditability, throughput and supervisory oversight relative to the incumbent manual process, confirming its suitability for adoption in live BTS rollout operations.
 
+The application is delivered as an installable, offline-first Progressive Web Application. Every data-mutating action in all four operational domains is routed through a durable store-and-forward outbox held in IndexedDB, which persists both the submission payload and its binary attachments — original Excel workbooks, certificates, supporting documents and site photographs — so that field staff in areas without coverage may complete forms, upload files and record unexpected site conditions without loss of work when the browser is closed. On reconnection the outbox is flushed automatically: attachments are uploaded first and marked individually so partially completed records resume, database writes are matched to the central row by the business Site ID so that no duplicate records are created, and a last-modified snapshot captured at the start of editing is compared against the central value so that a concurrent modification is flagged as a conflict for review rather than silently overwritten. Queued mutations are replayed through the ordinary authenticated client and remain subject to the same row-level security policies as online writes, so offline capability extends availability without widening privilege, and a synchronisation indicator reports the offline, pending, synchronising, synchronised, failed and conflict states to the user throughout.
+
 **Keywords:** BTS site rollout, Progressive Web Application, offline-first, role-based access control, Row-Level Security, PostgreSQL, centralised Site ID, Procurement checklist, Power RFI, realtime synchronisation.
 
 ---
@@ -128,6 +130,7 @@ Cross-module consistency is preserved through merged JSON stage payloads, `REPLI
 3.16 Sequence Design of the Site Lifecycle
 3.17 Centralised Site ID Architecture
 3.18 Security Design
+3.18a Offline-First Synchronisation Design
 3.19 Interface Design Principles
 3.20 Software Development Methodology
 3.21 Technologies Used
@@ -149,7 +152,7 @@ Cross-module consistency is preserved through merged JSON stage payloads, `REPLI
 4.13 Document Management Implementation
 4.14 Workflow Integration and Synchronisation
 4.15 Notification Subsystem
-4.16 Progressive Web Application and Offline Capability
+4.16 Progressive Web Application and Offline-First Capability
 4.17 User Interface Implementation
 4.18 System Testing
 4.19 Security Testing

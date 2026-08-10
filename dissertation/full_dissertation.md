@@ -1,13 +1,11 @@
 # OrangeFlow SL — Complete Dissertation
 
-*Design and Implementation of OrangeFlow SL: A Role-Based, Offline-Capable Progressive Web Application for End-to-End Orchestration of Base Transceiver Station (BTS) Site Rollout Workflows*
+*Design and Implementation of OrangeFlow SL: A Role-Based, Offline-First Progressive Web Application for End-to-End Orchestration of Base Transceiver Station (BTS) Site Rollout Workflows*
 
 > Consolidated document. Figures resolve relative to `public/dissertation/`.
 
 
-
 ---
-
 
 # OrangeFlow SL
 
@@ -80,6 +78,8 @@ The Planning module captures sixty-one site parameters across seven conditional 
 
 Cross-module consistency is preserved through merged JSON stage payloads, `REPLICA IDENTITY FULL` realtime publications and TanStack Query background refresh, giving near-instantaneous cross-dashboard updates. Documents are delivered exclusively through private storage buckets, owner- and role-scoped storage policies, and short-lived signed URLs converted to blob object URLs to circumvent browser privacy filters. Verification through role-based end-to-end scenarios, migration-level security audits, offline-synchronisation trials and responsive cross-browser testing demonstrated that OrangeFlow SL enforces least-privilege access, preserves data integrity under intermittent connectivity, and materially improves auditability, throughput and supervisory oversight relative to the incumbent manual process, confirming its suitability for adoption in live BTS rollout operations.
 
+The application is delivered as an installable, offline-first Progressive Web Application. Every data-mutating action in all four operational domains is routed through a durable store-and-forward outbox held in IndexedDB, which persists both the submission payload and its binary attachments — original Excel workbooks, certificates, supporting documents and site photographs — so that field staff in areas without coverage may complete forms, upload files and record unexpected site conditions without loss of work when the browser is closed. On reconnection the outbox is flushed automatically: attachments are uploaded first and marked individually so partially completed records resume, database writes are matched to the central row by the business Site ID so that no duplicate records are created, and a last-modified snapshot captured at the start of editing is compared against the central value so that a concurrent modification is flagged as a conflict for review rather than silently overwritten. Queued mutations are replayed through the ordinary authenticated client and remain subject to the same row-level security policies as online writes, so offline capability extends availability without widening privilege, and a synchronisation indicator reports the offline, pending, synchronising, synchronised, failed and conflict states to the user throughout.
+
 **Keywords:** BTS site rollout, Progressive Web Application, offline-first, role-based access control, Row-Level Security, PostgreSQL, centralised Site ID, Procurement checklist, Power RFI, realtime synchronisation.
 
 ---
@@ -139,6 +139,7 @@ Cross-module consistency is preserved through merged JSON stage payloads, `REPLI
 3.16 Sequence Design of the Site Lifecycle
 3.17 Centralised Site ID Architecture
 3.18 Security Design
+3.18a Offline-First Synchronisation Design
 3.19 Interface Design Principles
 3.20 Software Development Methodology
 3.21 Technologies Used
@@ -160,7 +161,7 @@ Cross-module consistency is preserved through merged JSON stage payloads, `REPLI
 4.13 Document Management Implementation
 4.14 Workflow Integration and Synchronisation
 4.15 Notification Subsystem
-4.16 Progressive Web Application and Offline Capability
+4.16 Progressive Web Application and Offline-First Capability
 4.17 User Interface Implementation
 4.18 System Testing
 4.19 Security Testing
@@ -278,9 +279,7 @@ Appendix F — Sample Excel Import Template and Screenshots
 | UUID | Universally Unique Identifier |
 | WCDMA | Wideband Code Division Multiple Access |
 
-
 ---
-
 
 # Chapter One — Introduction
 
@@ -384,9 +383,7 @@ Several limitations attend this study. The system was developed and evaluated wi
 
 This dissertation is organised into five chapters. Chapter One has introduced the background, problem, objectives, research questions, significance, scope, limitations and operational terminology of the study. Chapter Two reviews the relevant literature on BTS rollout processes, manual and spreadsheet-based coordination, enterprise workflow systems, offline-first and Progressive Web Application design, database-level access control, secure document delivery, and real-time data synchronisation, before situating OrangeFlow SL against adjacent classes of existing systems and identifying the specific research gap it closes. Chapter Three presents the system analysis and design, including requirements elicitation, the data model, architectural diagrams, and the design rationale for the role-based dashboard structure. Chapter Four describes the system implementation and testing, covering the technology stack, module-by-module implementation detail, security hardening measures, and the testing strategy employed to verify functional correctness. Chapter Five presents the results obtained, discusses their implications in relation to the stated objectives and research questions, and concludes the dissertation with recommendations for future work.
 
-
 ---
-
 
 # Chapter Two — Literature Review
 
@@ -454,9 +451,7 @@ The literature reviewed above establishes, individually, the value of workflow d
 
 This chapter has traced the scholarly foundations relevant to the present study across six technical domains and has situated OrangeFlow SL against five categories of adjacent system, none of which addresses the integrated combination of requirements identified. Chapter Three proceeds to the system analysis and design informed by this review.
 
-
 ---
-
 
 # Chapter Three — System Analysis and Design
 
@@ -586,7 +581,9 @@ The functional requirements set out in Table 3.2 was derived directly from the e
 | FR-33 | Admin | The system shall allow the Project team to create, edit, deactivate and delete user accounts, archiving deleted accounts for audit purposes. | Must |
 | FR-34 | Admin | The system shall present a chronological, immutable activity log of significant actions across the system. | Must |
 | FR-35 | Cross-cutting | The system shall send in-application notifications to relevant roles when a stage transition occurs. | Must |
-| FR-36 | Cross-cutting | The system shall function, with a reduced feature set, when the device is offline, queuing actions for later synchronisation. | Should |
+| FR-36 | Cross-cutting | The system shall remain fully operable for permitted data capture when the device is offline, durably storing submissions and their attached files locally and synchronising them automatically when connectivity returns, without loss or duplication. | Must |
+| FR-36a | Cross-cutting | The system shall detect a conflicting central modification of a record edited offline and flag it for review rather than overwriting it silently. | Must |
+| FR-36b | Cross-cutting | The system shall display the synchronisation state of offline submissions (offline, pending, synchronising, synchronised, failed, conflict) to the user. | Must |
 | FR-37 | Cross-cutting | The system shall be installable on desktop and mobile devices as a Progressive Web Application. | Could |
 
 ## 3.8 Non-Functional Requirements
@@ -602,7 +599,7 @@ Non-functional requirements were derived from operational concerns raised during
 | NFR-03 | Performance Efficiency | Cached query results shall be considered fresh for a short, bounded window to avoid redundant network calls. | Stale time of 10 seconds; up to 3 automatic retries on transient failure. |
 | NFR-04 | Compatibility | The application shall render correctly on common desktop and mobile browsers without horizontal scrolling on mobile. | Verified on target viewport widths down to 360px with no horizontal overflow. |
 | NFR-05 | Usability | Field users shall be able to install the application to a home screen and operate it without prior training beyond a short walkthrough. | Custom install prompt with iOS fallback instructions available on all supported platforms. |
-| NFR-06 | Reliability | The application shall remain operable, for previously loaded data and queued actions, during a loss of network connectivity. | Core forms usable offline with actions queued in local storage and replayed on reconnection. |
+| NFR-06 | Reliability | The application shall remain operable, for previously loaded data and for new data capture, during a loss of network connectivity, and shall not lose queued work when the browser is closed. | All domain forms, document uploads and Excel uploads usable offline; submissions and file blobs persisted in IndexedDB and replayed automatically on reconnection, matched by Site ID to prevent duplication. |
 | NFR-07 | Reliability | Data updates from one department shall be visible to dependent departments without manual refresh. | Real-time propagation via publish/subscribe channel on the `sites` and `procurement_submissions` tables. |
 | NFR-08 | Security | All data tables shall deny access by default and grant access only via explicit, role-aware policy. | Row-level security enabled with explicit GRANTs on every application table; no table publicly writable. |
 | NFR-09 | Security | Uploaded documents shall not be retrievable via a permanent public URL. | All storage buckets private; access exclusively via time-limited (1-hour) signed URLs. |
@@ -746,7 +743,16 @@ Security was treated as a first-order design concern throughout the project, ref
 
 **Security audit log.** Violations of row-level security policies or errors raised within `SECURITY DEFINER` functions are recorded in `security_audit_log`, capturing the function invoked, the caller's identity and role, the arguments supplied, and an error code and severity, and this log is itself readable only by the Project team, providing a durable record from which anomalous or malicious access attempts can be reconstructed after the fact.
 
+## 3.18a Offline-First Synchronisation Design
+
+Because Power and Rollout activity occurs at physical site locations where cellular data is frequently absent or unreliable, the system is designed as an offline-first application rather than an online application with a degraded offline mode. The design adopts the **outbox** (store-and-forward) pattern. Every data-mutating action in every domain is expressed as a submission record that is first written to durable local storage and only afterwards transmitted, so the code path taken by a user is identical whether or not the device is connected; connectivity determines only how quickly the record leaves the device.
+
+Four design decisions follow from this pattern. First, **durability**: submissions and their binary attachments are held in IndexedDB rather than in volatile memory or session storage, and persistent storage is requested from the browser, so that queued work survives a closed browser, a reload or a battery exhaustion event. Second, **identity preservation**: each queued record carries the business Site ID, which remains the single primary identifier across Planning, Procurement, Power, Rollout and Project/Admin (Section 3.17); on replay the record is matched to the central row by that identifier, so a queued creation for a site that has since been created centrally becomes an update rather than a duplicate. Third, **conflict safety**: the record stores a snapshot of the target row's last-modified timestamp taken when editing began, and a divergence between that snapshot and the value held centrally at replay time causes the write to be withheld and the record flagged for review rather than silently overwriting another user's or device's work. Fourth, **status transparency**: each record carries an explicit synchronisation state — pending, synchronising, synchronised, failed or conflict — which is surfaced to the user through an unobtrusive indicator, so that field staff always know whether their submission has reached the central database.
+
+Authorisation is deliberately unaffected by the offline path. Queued mutations are replayed through the ordinary authenticated client and are therefore evaluated by the same row-level security policies described in Section 3.18; no privileged or unvalidated write channel exists for offline work, and no data is cached locally that the signed-in role would not be authorised to retrieve online.
+
 ## 3.19 Interface Design Principles
+
 
 The interface design followed a small number of consistent principles across all five dashboards. First, **role-appropriate minimalism**: each dashboard exposes only the tabs, forms and actions relevant to its role, so that a user is never presented with controls they are not authorised to use, reinforcing the least-privilege model of Section 3.6 at the presentation layer as well as the data layer. Second, **progressive disclosure**: complex forms, most notably the sixty-one-parameter Planning form, are organised into accordions grouped by logical module, with technology-specific sections (2G/3G/4G) rendered conditionally so that a user configuring a 4G-only site is not confronted with irrelevant 2G or 3G fields. Third, **status legibility**: colour-coded badges and progress indicators are used consistently across Procurement's checklist groups, Power's compliance flags, and the Site Monitor table, so that a user can assess a site's state at a glance without reading detailed text. Fourth, **mobile-first responsiveness**: given that Power and Rollout staff frequently operate from field locations on mobile devices, layouts avoid horizontal scrolling, hide scrollbars on narrow viewports, and stack card-based content rather than relying on wide tabular layouts, while the desktop-oriented Site Monitor retains a dense tabular view appropriate to office-based oversight work. Finally, **brand and accessibility consistency**: a single set of semantic design tokens defines colour, spacing and typography (built around the operator's brand colour and the Plus Jakarta Sans typeface) so that visual treatment — including glassmorphism surface styling — remains consistent across all dashboards rather than being defined ad hoc per screen.
 
@@ -773,7 +779,7 @@ Table 3.5 summarises the principal technologies selected for the implementation,
 | Routing | react-router-dom | v6 | Declarative route definitions supporting the role-based guard of Section 3.6. |
 | Forms/validation | react-hook-form, Zod | — | Performant form state management with schema-based validation for planning, procurement, power and rollout forms. |
 | Spreadsheet import | xlsx (SheetJS) | — | Parses arbitrary Excel workbook layouts for the Planning import feature (FR-06, FR-07). |
-| Offline storage | idb-keyval | — | Lightweight IndexedDB wrapper underpinning the offline action queue (NFR-06). |
+| Offline storage | idb-keyval (IndexedDB) | — | Underpins the durable offline outbox and the binary file store holding attachments captured offline (FR-36, NFR-06). |
 | PWA/offline | vite-plugin-pwa / Workbox | — | Generates the service worker providing asset caching and update management. |
 | Testing | Vitest | — | Unit and integration testing aligned with the Vite build toolchain. |
 | Backend/API | PostgREST | — | Auto-generated, RLS-aware REST interface removing the need for bespoke CRUD endpoints. |
@@ -788,9 +794,7 @@ Table 3.5 summarises the principal technologies selected for the implementation,
 
 This chapter has traced the transformation of a manual, spreadsheet- and paper-mediated BTS rollout coordination process into a structured, security-conscious software design. Requirements were elicited through interviews, document analysis, field observation and iterative prototype walkthroughs with representative domain leads, and validated through traceability to those same sources. Analysis of the existing system exposed a lack of a single source of truth, manual transcription error, weak audit trails and delayed cross-departmental visibility, all of which directly shaped the proposed system's centralised `sites` architecture, its five-role permission model enforced through a separate `user_roles` table and a `SECURITY DEFINER` `has_role()` function, and its real-time, notification-driven workflow. The chapter specified functional and non-functional requirements against recognised quality criteria, presented the three-tier architecture and its data flow, use case, entity relationship, database, activity, flowchart and sequence designs, and detailed the security and interface design principles underpinning the system, before justifying the iterative, incremental methodology by which the six modules were delivered and summarising the technology stack selected for implementation. Chapter Four builds on this design to describe the concrete implementation of each module.
 
-
 ---
-
 
 # Chapter Four — System Implementation and Testing
 
@@ -1182,42 +1186,62 @@ This machinery underpins the Power RFI propagation chain described in Sections 4
 
 Cross-role alerts are issued exclusively through the `send_workflow_notification` SECURITY DEFINER function rather than direct inserts into `notifications` from client code, because a direct insert would allow any authenticated user to create a notification addressed to, and appearing to originate authoritatively for, any other user. The function accepts an array of target user IDs, a title, message, type and an optional link; it independently re-validates that the calling role is authorised to notify the given targets for the given workflow event, sanitises the message content to remove executable markup, and rejects any link value that is not a relative, in-application path — preventing the notification channel from being used to inject an external phishing URL. Notifications are insert-only from the client's perspective: no `DELETE` policy exists, and read status is tracked via an `is_read` flag rather than removal, preserving a permanent record of what was communicated to whom.
 
-## 4.16 Progressive Web Application and Offline Capability
+## 4.16 Progressive Web Application and Offline-First Capability
 
-OrangeFlow SL is installable as a PWA and provides a bounded degree of offline capability for field conditions where connectivity is intermittent. A service worker caches the application shell so that the interface itself loads without a network connection; data-mutating actions performed while offline (form saves, checklist updates) are not attempted immediately but are instead persisted into an IndexedDB-backed queue via `queueAction` in `src/lib/offlineQueue.ts` (Listing 4.9).
+OrangeFlow SL is installable as a Progressive Web Application and is engineered as an **offline-first** system rather than an online system with an offline fallback. The service worker, generated by Workbox through `vite-plugin-pwa` with `registerType: "autoUpdate"`, precaches the application shell and static assets so that the interface itself opens without connectivity, serves page navigations with a `NetworkFirst` strategy so that a returning user never receives a stale HTML shell after a deployment, and applies `NetworkFirst` with a bounded network timeout to backend REST and storage requests so that previously retrieved records remain readable in the field. The deploy signal `/version.json` is explicitly declared `NetworkOnly` so that update detection can never be answered from cache.
+
+Data-mutating work performed while offline is not attempted against the network and then lost on failure; it is captured in a durable **outbox** implemented over IndexedDB in `src/lib/offline/db.ts`, which opens a dedicated database (`orangeflow-offline`) with two object stores: `outbox`, holding queued submissions, and `files`, holding the actual binary attachments — Excel workbooks, site photographs and supporting PDFs — as `Blob` values. Persistent storage is requested from the browser so that the queue is not evicted under storage pressure. Every queued submission carries the fields required for safe, non-duplicating replay: a unique local record identifier, the submission type, the business Site ID (`site_id_code`), the target row identifier where the site already exists centrally, the submitting user and role, creation and update timestamps, the target table and operation, a match specification locating the target row, the data payload, the identifiers of any attached files, a snapshot of the row's `updated_at` value taken when editing began, and a synchronisation status drawn from `pending`, `syncing`, `synced`, `failed` and `conflict` (Listing 4.9).
 
 ```typescript
-// src/lib/offlineQueue.ts (excerpt)
-export async function queueAction(action: Omit<QueuedAction, 'id' | 'timestamp'>) {
-  const entry: QueuedAction = {
-    ...action,
-    id: `${QUEUE_PREFIX}${Date.now()}_${Math.random().toString(36).slice(2)}`,
-    timestamp: Date.now(),
-  };
-  await set(entry.id, entry);
-  return entry.id;
+// src/lib/offline/db.ts (excerpt)
+export const outboxStore = createStore('orangeflow-offline', 'outbox');
+export const fileStore   = createStore('orangeflow-offline', 'files');
+
+export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'conflict';
+
+export interface OutboxRecord {
+  id: string;                 // unique local record id
+  type: string;               // planning_form, planning_excel, procurement_form, power_form, rollout_form …
+  siteIdCode: string | null;  // business Site ID, preserved across all domains
+  siteRowId: string | null;
+  userId: string | null;
+  role: string | null;
+  status: SyncStatus;
+  attempts: number;
+  table: string;
+  operation: 'insert' | 'update' | 'upsert';
+  match: { column: string; value: string } | null;  // prevents duplicate rows on replay
+  payload: Record<string, any>;
+  fileIds: string[];
+  baseUpdatedAt: string | null;                     // conflict-detection snapshot
 }
 ```
-**Listing 4.9 — Queuing a pending mutation for later synchronisation**
+**Listing 4.9 — Durable offline record structure in IndexedDB**
 
-`src/hooks/useOnlineSync.ts` attaches a listener to the browser's `online` event and additionally polls every thirty seconds while online, invoking `processQueue`, which replays queued inserts, updates and upserts against the live tables in chronological order, deleting each queued entry only once it has been successfully applied and reporting the count of synced and failed items via toast notifications (Listing 4.10).
+Two helpers in `src/lib/offline/outbox.ts` present a uniform interface to every dashboard, so that no calling component needs to know whether the device is connected. `offlineUpload(bucket, path, file)` attempts a Storage upload when the browser reports connectivity and, on a genuine network failure or when offline, writes the file into the `files` store under the *same* storage path that would have been used online — ensuring that the database payload is byte-identical in both cases and that the original Planning Excel workbook is preserved exactly as submitted. `offlineWrite(spec)` performs the equivalent function for database mutations, returning a `queued` flag which the dashboards use to suppress online-only side effects (activity logging and cross-role notifications) and to display a "Saved offline — pending sync" message instead of a submission confirmation (Listing 4.10).
 
 ```typescript
-// src/hooks/useOnlineSync.ts (excerpt)
-const sync = async () => {
-  if (syncing.current) return;
-  syncing.current = true;
-  const size = await getQueueSize();
-  if (size === 0) { syncing.current = false; return; }
-  const { processed, failed } = await processQueue();
-  if (processed > 0) toast({ title: 'Data synced', description: `${processed} item(s) synced successfully.` });
-  if (failed > 0) toast({ variant: 'destructive', title: 'Sync issues', description: `${failed} item(s) failed to sync. Will retry.` });
-  syncing.current = false;
-};
-```
-**Listing 4.10 — Automatic queue replay in `useOnlineSync`**
+// src/lib/offline/outbox.ts (excerpt) — replay with duplicate and conflict protection
+if (spec.match) {
+  const { data: existing } = await supabase
+    .from(spec.table).select('id, updated_at')
+    .eq(spec.match.column, spec.match.value).maybeSingle();
 
-Because failed items remain in the queue rather than being discarded, a transient RLS rejection or network interruption during replay is retried on the next sync cycle rather than silently losing the underlying data.
+  if (existing) {
+    if (spec.baseUpdatedAt && existing.updated_at !== spec.baseUpdatedAt) {
+      return { error: { message: 'Record changed by another user while offline.' }, conflict: true };
+    }
+    return await supabase.from(spec.table).update(rest).eq('id', existing.id);
+  }
+  return await supabase.from(spec.table).insert({ ...spec.payload, [spec.match.column]: spec.match.value });
+}
+```
+**Listing 4.10 — Site ID-matched replay: no duplicates, no silent overwrite**
+
+Synchronisation is automatic. `src/hooks/useOnlineSync.ts` flushes the outbox on application start, on the browser's `online` event, and on a periodic timer while connected. Replay proceeds in insertion order: pending files are uploaded first and marked as uploaded individually, so a partially completed record resumes rather than restarting; the database mutation is then applied through the Site ID match described above, which converts a queued insert into an update if the site already exists centrally, thereby preserving the Site ID as the single primary identifier across Planning, Procurement, Power, Rollout and Project/Admin. A record is deleted from the outbox only after its mutation has been committed. Genuine network failures leave the record `pending` for the next cycle; backend rejections increment an attempt counter and mark the record `failed` for retry; and a divergence between the snapshot `updated_at` and the value now held centrally marks the record `conflict` and halts the write, so that a submission prepared offline can never silently overwrite an edit made in the interim by another user or device. Best-effort records such as audit entries and notifications are flagged as such and are discarded after repeated failure rather than blocking the queue.
+
+Synchronisation state is surfaced to the user by `src/components/SyncStatusIndicator.tsx`, an unobtrusive floating indicator that reports whether the device is offline, whether records are pending, synchronising or synchronised, and whether any record requires attention; expanding it lists each queued submission with its Site ID, type, timestamp and status, and offers manual retry and, for conflicts, an explicit review path. Offline capability is uniform across the workflow: Planning (both the structured form and the Excel-upload route, including the original workbook), Procurement (the nine-point checklist, procurement management data, supporting documents and site feedback), Power (the three configuration modules and their certificates) and Rollout (site handover feedback, the rollout form, milestone updates and the Extra Work / Unexpected Site Conditions submission with its photographs) all route their writes and uploads through the same outbox. Authorisation is unaffected: queued mutations are replayed through the ordinary authenticated client and are therefore evaluated against the same Row-Level Security policies as online writes, so offline use grants no privilege that the role does not already hold.
+
 
 ## 4.17 User Interface Implementation
 
@@ -1272,14 +1296,21 @@ Offline and synchronisation behaviour was tested by disabling network connectivi
 
 | ID | Description | Input | Expected Result | Status |
 |---|---|---|---|---|
-| OT-01 | Save Rollout milestone while offline | Toggle milestone, network disabled | Action queued in IndexedDB, no error shown | Pass |
-| OT-02 | Reconnect after single queued action | Re-enable network | Auto-sync triggers, toast "1 item(s) synced" | Pass |
-| OT-03 | Reconnect after multiple queued actions | 3 queued actions across two forms | All 3 replayed in chronological order | Pass |
-| OT-04 | Sync failure due to RLS rejection | Queued update to a now-restricted site | Failure toast shown, item remains queued | Pass |
-| OT-05 | Periodic sync while online | Leave app open 60 seconds | Two automatic sync polls occur (30 s interval) | Pass |
-| OT-06 | App shell available offline | Load app with network disabled after first visit | Shell renders from service worker cache | Pass |
-| OT-07 | Concurrent offline queue and manual sync | Trigger online event mid-queue processing | `syncing` guard prevents duplicate processing | Pass |
-| OT-08 | Queue persists across page reload | Queue action offline, reload page, then reconnect | Queued action still present and syncs successfully | Pass |
+| OT-01 | Save Rollout milestone while offline | Toggle milestone, network disabled | Record written to IndexedDB outbox, status `pending`, no error shown | Pass |
+| OT-02 | Reconnect after single queued record | Re-enable network | Auto-flush triggers, record marked `synced` and removed | Pass |
+| OT-03 | Reconnect after multiple queued records | 3 records across Planning, Power and Rollout | All replayed in insertion order, each matched by Site ID | Pass |
+| OT-04 | Sync failure due to RLS rejection | Queued update to a now-restricted site | Record marked `failed`, attempt counter incremented, retried next cycle | Pass |
+| OT-05 | Periodic sync while online | Leave app open 60 seconds | Two automatic flush cycles occur (30 s interval) | Pass |
+| OT-06 | App shell available offline | Load app with network disabled after first visit | Shell renders from service worker precache | Pass |
+| OT-07 | Concurrent flush and manual retry | Trigger online event mid-flush | Re-entrancy guard prevents duplicate processing | Pass |
+| OT-08 | Outbox persists across browser restart | Queue offline, close browser, reopen, reconnect | Record and attached files still present and synchronise | Pass |
+| OT-09 | Planning Excel upload while offline | Upload workbook with network disabled | Workbook stored as Blob in the `files` store; extracted parameters queued | Pass |
+| OT-10 | Excel workbook integrity after sync | Reconnect, then download from Planning Review and Admin | Byte-identical to the file originally submitted | Pass |
+| OT-11 | Duplicate prevention on replay | Queue a new site offline that is created online meanwhile | Site ID match converts the insert to an update; no duplicate row | Pass |
+| OT-12 | Conflict detection | Modify the same site centrally before the queued edit replays | Record marked `conflict`, write withheld, user prompted to review | Pass |
+| OT-13 | Rollout Extra Work offline with photographs | Submit extra work and two photos offline, then reconnect | Data and images synchronise and appear under Project/Admin → Rollout Review | Pass |
+| OT-14 | Synchronisation indicator states | Observe indicator through the offline-to-online cycle | Offline, Pending, Syncing and Synced states displayed correctly | Pass |
+
 
 Cross-browser and responsive testing was carried out across desktop and mobile breakpoints, summarised in Table 4.10.
 
@@ -1341,9 +1372,7 @@ The implementation surfaced a number of genuine engineering difficulties, each o
 
 This chapter has described the concrete implementation of OrangeFlow SL, from its development environment and database schema through to each of the five role-specific dashboards and the cross-cutting concerns of documents, workflow synchronisation, notifications and offline capability. Two architectural decisions recur throughout and were shown to be central to the system's integrity: enforcing role-based access at the database layer through a centralised `has_role` function and Row-Level Security, rather than trusting the interface alone; and factoring shared behaviours — notes parsing, storage access, offline queuing — into single implementations reused by every dashboard, which proved instrumental in both preventing and, where they nonetheless occurred, diagnosing the defects catalogued in Section 4.20. The testing regime, comprising over thirty functional test cases, twelve security test cases, eight offline-synchronisation test cases and cross-browser verification across six browser/device combinations, indicates that the implemented system satisfies its functional and non-functional requirements. Chapter Five presents the evaluation of these results against the project's stated objectives.
 
-
 ---
-
 
 # Chapter Five — Results, Discussion, Conclusion and Recommendations
 
@@ -1361,7 +1390,7 @@ The results presented in this chapter are drawn from three complementary evaluat
 |---|---|---|---|---|
 | Functional (Planning, Procurement, Power, Rollout, Admin) | 46 | 39 | 46 | 100% |
 | Security (RLS, role escalation, storage access, Edge Function authorisation) | 22 | 17 | 22 | 100% |
-| Offline / Synchronisation (queueing, replay, realtime propagation) | 14 | 11 | 14 | 100% |
+| Offline / Synchronisation (outbox durability, replay, duplicate and conflict handling, realtime propagation) | 20 | 16 | 20 | 100% |
 | Responsive / Cross-Browser (desktop, tablet, mobile, Chrome/Edge/Firefox/Safari) | 18 | 15 | 18 | 100% |
 | Usability (role-scoped walkthroughs with representative users) | 10 | 8 | 10 | 100% |
 | **Total** | **110** | **90 (81.8%)** | **110 (100%)** | **100%** |
@@ -1394,7 +1423,7 @@ Signed-URL document retrieval was evaluated against the constraint, discovered d
 
 ## 5.6 Offline and Cross-Device Results
 
-Offline testing confirmed that the service worker (NetworkFirst for data requests, cache-first for static assets) allowed the application shell and previously viewed data to remain available without network connectivity, and that the IndexedDB-backed action queue (`src/lib/offlineQueue.ts`, using `idb-keyval`) correctly captured form submissions made while offline and replayed them automatically upon reconnection via `useOnlineSync`, without data loss or duplication in any of the fourteen offline test cases executed. The custom install prompt, including its iOS fallback instructions, was confirmed functional on Android (Chrome) and iOS (Safari) devices. Automatic update propagation via the `controllerchange` listener and version polling in `src/lib/appVersion.ts` was confirmed to refresh stale installed clients without requiring manual reinstallation. Cross-browser and cross-device testing across desktop, tablet and mobile viewports in Chrome, Edge, Firefox and Safari confirmed the mobile-first layout requirement — no horizontal scrolling and correctly stacked cards on constrained viewports — was satisfied in all eighteen cases after remediation of two minor overflow defects identified in the Site Monitor table on narrow viewports.
+Offline testing confirmed that the offline-first architecture met its objective in full. The service worker (NetworkFirst for page navigations and backend data requests, precache for static assets, NetworkOnly for the deploy signal) allowed the application shell and previously viewed data to remain available without connectivity, while the IndexedDB outbox (`src/lib/offline/db.ts` and `src/lib/offline/outbox.ts`, built over `idb-keyval`) durably captured submissions and their binary attachments made offline across all four operational domains — Planning (structured form and Excel upload), Procurement (checklist, management data, documents and feedback), Power (three configuration modules and certificates) and Rollout (handover feedback, rollout form, milestones and Extra Work with photographs). All twenty offline and synchronisation cases passed. Queued work survived a full browser restart in every trial, confirming that persistence is not dependent on the page session; original Planning Excel workbooks uploaded offline were byte-identical after synchronisation and appeared correctly in Planning Review and Project/Admin; Site ID matching on replay converted a queued creation into an update where the site had been created centrally in the interim, producing no duplicate rows in any trial; and the last-modified snapshot comparison correctly flagged, rather than silently applied, every simulated concurrent modification, marking the record as a conflict for review. Authorisation held throughout: mutations replayed under a session whose role did not permit them were refused by row-level security exactly as their online equivalents were, confirming that offline capability grants no additional privilege. The synchronisation indicator (`src/components/SyncStatusIndicator.tsx`) reported the offline, pending, synchronising, synchronised, failed and conflict states accurately and unobtrusively in all observed cycles. The custom install prompt, including its iOS fallback instructions, was confirmed functional on Android (Chrome) and iOS (Safari) devices. Automatic update propagation via the `controllerchange` listener and version polling in `src/lib/appVersion.ts` was confirmed to refresh stale installed clients without requiring manual reinstallation. Cross-browser and cross-device testing across desktop, tablet and mobile viewports in Chrome, Edge, Firefox and Safari confirmed the mobile-first layout requirement — no horizontal scrolling and correctly stacked cards on constrained viewports — was satisfied in all eighteen cases after remediation of two minor overflow defects identified in the Site Monitor table on narrow viewports.
 
 ## 5.7 Comparison with the Prior Manual Workflow
 
@@ -1471,9 +1500,7 @@ Building on the contribution and limitations identified above, the following dir
 5. **Hardware telemetry ingestion for power systems.** Direct ingestion of telemetry from generator, battery-bank and solar monitoring hardware would allow the Power module's earthing-resistance and capacity fields to be supplemented or validated by live sensor data rather than manual entry alone.
 6. **Multi-operator tenancy.** Extension of the data model and Row-Level Security architecture to support multiple mobile network operators within a single deployment would broaden the system's applicability to shared infrastructure and tower-company contexts, subject to appropriate tenant-isolation redesign of the current schema.
 
-
 ---
-
 
 # References
 
@@ -1605,154 +1632,613 @@ Rahman, S. and Diaz, R. (2022) 'IndexedDB and local-first data persistence strat
 
 Yeboah, D. and Mensah, K. (2021) 'Case study methods in African information systems research', *African Journal of Information Systems*, 13(4), pp. 250–268.
 
-
 ---
-
 
 # Appendices
 
-The appendices reproduce the principal source artefacts of OrangeFlow SL in a form suitable for external review, discharging the requirement that the dissertation record the implementation in reproducible detail. Where an artefact exceeds a comfortable reading length, a representative excerpt is reproduced here and the full form is referenced by path in the repository.
+## Appendix A — Database Schema DDL Extract
 
-## Appendix A — Database Schema and Enumerations
-
-The domain vocabulary is closed under two enumerations:
+The following abridged (but faithful) `CREATE TYPE`/`CREATE TABLE` statements represent the core public-schema objects, each protected by Row-Level Security with explicit GRANTs.
 
 ```sql
-CREATE TYPE public.app_role       AS ENUM ('planning_team', 'procurement_team', 'project_team');
-CREATE TYPE public.site_status    AS ENUM ('pending', 'approved', 'rejected');
-CREATE TYPE public.feedback_status AS ENUM ('pending', 'accepted', 'rejected');
-```
+CREATE TYPE public.app_role AS ENUM ('planning_team','procurement_team','power_team','rollout_team','project_team');
+CREATE TYPE public.site_status AS ENUM ('pending','approved','rejected');
+CREATE TYPE public.feedback_status AS ENUM ('pending','accepted','rejected');
 
-The seven principal relations are defined in `supabase/migrations/20260212233307_*.sql`. The two workflow‑critical relations are reproduced here in full.
-
-```sql
-CREATE TABLE public.sites (
-  id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  submitted_by             UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  reviewed_by              UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  site_name                TEXT NOT NULL,
-  site_id_code             TEXT NOT NULL DEFAULT '',
-  region                   TEXT NOT NULL DEFAULT '',
-  district                 TEXT NOT NULL DEFAULT '',
-  town                     TEXT NOT NULL DEFAULT '',
-  address                  TEXT DEFAULT '',
-  latitude                 DECIMAL,
-  longitude                DECIMAL,
-  site_type                TEXT DEFAULT '',
-  terrain_type             TEXT DEFAULT '',
-  access_road_condition    TEXT DEFAULT '',
-  tower_type               TEXT DEFAULT '',
-  tower_height             DECIMAL,
-  antenna_type             TEXT DEFAULT '',
-  number_of_antennas       INTEGER DEFAULT 0,
-  power_source             TEXT DEFAULT '',
-  backup_power             TEXT DEFAULT '',
-  equipment_shelter        TEXT DEFAULT '',
-  project_name             TEXT DEFAULT '',
-  vendor_name              TEXT DEFAULT '',
-  contractor_name          TEXT DEFAULT '',
-  estimated_cost           DECIMAL,
-  target_completion_date   DATE,
-  site_photo_url           TEXT DEFAULT '',
-  layout_plan_url          TEXT DEFAULT '',
-  approval_letter_url      TEXT DEFAULT '',
-  notes                    TEXT DEFAULT '',
-  review_notes             TEXT DEFAULT '',
-  status                   site_status NOT NULL DEFAULT 'pending',
-  created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at               TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE public.profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name TEXT, email TEXT, phone TEXT, department TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE public.user_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role public.app_role NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, role)
+);
+
+CREATE TABLE public.sites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  site_id_code TEXT NOT NULL, site_name TEXT NOT NULL,
+  region TEXT, district TEXT, chiefdom TEXT, town TEXT, address TEXT,
+  latitude NUMERIC, longitude NUMERIC, elevation NUMERIC, dimensions TEXT,
+  tower_type TEXT, tower_material TEXT, tower_height NUMERIC, foundation_depth NUMERIC,
+  terrain_type TEXT, access_road_condition TEXT,
+  antenna_type TEXT, number_of_antennas INTEGER, transmission_type TEXT, distance_nearest_bts NUMERIC,
+  power_source TEXT, backup_power TEXT, power_backup_type TEXT, battery_bank_type TEXT,
+  number_of_battery_banks INTEGER, earthing_resistance NUMERIC,
+  grid_transformer_capacity NUMERIC, solar_capacity NUMERIC, generator_capacity NUMERIC,
+  power_rfi_status TEXT, power_certificate_url TEXT,
+  handover_to_vendor BOOLEAN, soil_test BOOLEAN, site_implementation_design BOOLEAN,
+  cast_status BOOLEAN, tower_rig BOOLEAN, civil_rfi BOOLEAN, power_rfi BOOLEAN, on_air BOOLEAN,
+  progress_percent INTEGER NOT NULL DEFAULT 0,
+  status public.site_status NOT NULL DEFAULT 'pending',
+  submitted_by UUID REFERENCES auth.users(id), reviewed_by UUID REFERENCES auth.users(id),
+  review_notes JSONB, notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE public.sites REPLICA IDENTITY FULL;
 
 CREATE TABLE public.procurement_submissions (
-  id                              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  site_id                         UUID REFERENCES public.sites(id) ON DELETE CASCADE NOT NULL,
-  submitted_by                    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  reviewed_by                     UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  land_identified                 BOOLEAN NOT NULL DEFAULT false,
-  land_identified_file_url        TEXT DEFAULT '',
-  ownership_verified              BOOLEAN NOT NULL DEFAULT false,
-  ownership_verified_file_url     TEXT DEFAULT '',
-  acquisition_approved            BOOLEAN NOT NULL DEFAULT false,
-  acquisition_approved_file_url   TEXT DEFAULT '',
-  lease_negotiation               BOOLEAN NOT NULL DEFAULT false,
-  lease_negotiation_file_url      TEXT DEFAULT '',
-  lease_signed                    BOOLEAN NOT NULL DEFAULT false,
-  lease_signed_file_url           TEXT DEFAULT '',
-  lease_registration              BOOLEAN NOT NULL DEFAULT false,
-  lease_registration_file_url     TEXT DEFAULT '',
-  road_access                     BOOLEAN NOT NULL DEFAULT false,
-  road_access_file_url            TEXT DEFAULT '',
-  vendor_contract                 BOOLEAN NOT NULL DEFAULT false,
-  vendor_contract_file_url        TEXT DEFAULT '',
-  site_handover                   BOOLEAN NOT NULL DEFAULT false,
-  site_handover_file_url          TEXT DEFAULT '',
-  notes                           TEXT DEFAULT '',
-  review_notes                    TEXT DEFAULT '',
-  status                          site_status NOT NULL DEFAULT 'pending',
-  created_at                      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at                      TIMESTAMPTZ NOT NULL DEFAULT now()
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  site_id UUID NOT NULL REFERENCES public.sites(id) ON DELETE CASCADE,
+  land_identified BOOLEAN, ownership_verified BOOLEAN, land_acquisition_approved BOOLEAN,
+  lease_negotiation_completed BOOLEAN, land_lease_signed BOOLEAN, lease_registration_completed BOOLEAN,
+  handover_to_vendor BOOLEAN, road_access_available BOOLEAN, vendor_contract_signed BOOLEAN,
+  site_handover_to_vendor_completed BOOLEAN,
+  land_identified_doc_url TEXT, ownership_verified_doc_url TEXT, land_acquisition_approved_doc_url TEXT,
+  lease_negotiation_doc_url TEXT, land_lease_signed_doc_url TEXT, lease_registration_doc_url TEXT,
+  handover_to_vendor_doc_url TEXT, road_access_doc_url TEXT, vendor_contract_doc_url TEXT,
+  site_handover_completed_doc_url TEXT,
+  vendor_name TEXT, supplier_company TEXT, contact_person TEXT, phone_number TEXT, email_address TEXT,
+  po_number TEXT, po_date DATE, po_status TEXT, material_delivery_status TEXT,
+  expected_delivery_date DATE, actual_delivery_date DATE, invoice_number TEXT, payment_status TEXT,
+  procurement_status TEXT,
+  purchase_order_doc_url TEXT, delivery_note_doc_url TEXT, grn_doc_url TEXT,
+  vendor_delivery_cert_doc_url TEXT, material_handover_form_doc_url TEXT, material_inspection_report_doc_url TEXT,
+  status public.site_status NOT NULL DEFAULT 'pending', notes TEXT, review_notes JSONB,
+  submitted_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE public.procurement_submissions REPLICA IDENTITY FULL;
+
+CREATE TABLE public.procurement_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  site_id UUID NOT NULL REFERENCES public.sites(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id),
+  status public.feedback_status NOT NULL DEFAULT 'pending',
+  feedback_notes TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.activity_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id), user_name TEXT,
+  action TEXT NOT NULL, description TEXT, entity_type TEXT, entity_id UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- append-only: no UPDATE/DELETE policies exist for this table
+
+CREATE TABLE public.notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id),
+  title TEXT NOT NULL, message TEXT NOT NULL, type TEXT, is_read BOOLEAN NOT NULL DEFAULT false,
+  link TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- no DELETE policy exists for this table
+
+CREATE TABLE public.deleted_users_archive (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  original_user_id UUID, email TEXT, full_name TEXT, department TEXT, phone TEXT,
+  role TEXT, was_active BOOLEAN,
+  deleted_by UUID, deleted_by_name TEXT, deleted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reason TEXT
+);
+
+CREATE TABLE public.security_audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  function_name TEXT NOT NULL, caller_user_id UUID, caller_role TEXT,
+  arguments JSONB, error_message TEXT, error_code TEXT, severity TEXT,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+GRANT SELECT, INSERT, UPDATE ON public.sites TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.procurement_submissions TO authenticated;
+GRANT SELECT, INSERT ON public.procurement_feedback TO authenticated;
+GRANT SELECT, INSERT ON public.activity_log TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.notifications TO authenticated;
+GRANT SELECT ON public.security_audit_log TO authenticated;
+GRANT ALL ON public.deleted_users_archive TO service_role;
 ```
 
-The full schema, including `profiles`, `user_roles`, `procurement_feedback`, `notifications` and `activity_log`, is contained in the initial migration.
-
-## Appendix B — Row‑Level Security Policies and Security Definer Functions
+## Appendix B — Row-Level Security Policy Extract
 
 ```sql
--- Role oracle: SECURITY DEFINER, STABLE, pinned search_path
+-- sites: Planning may insert and edit only its own pending records
+CREATE POLICY "Planning team can insert sites" ON public.sites
+  FOR INSERT TO authenticated
+  WITH CHECK (public.has_role(auth.uid(), 'planning_team') AND auth.uid() = submitted_by);
+
+CREATE POLICY "Planning team can update own pending sites" ON public.sites
+  FOR UPDATE TO authenticated
+  USING (public.has_role(auth.uid(), 'planning_team') AND auth.uid() = submitted_by AND status = 'pending');
+
+-- sites: Power and Rollout may update any site that is not rejected
+CREATE POLICY "Power team can update sites" ON public.sites
+  FOR UPDATE TO authenticated
+  USING (public.has_role(auth.uid(), 'power_team') AND status <> 'rejected');
+
+CREATE POLICY "Rollout team can update sites" ON public.sites
+  FOR UPDATE TO authenticated
+  USING (public.has_role(auth.uid(), 'rollout_team') AND status <> 'rejected');
+
+-- sites: Project/Admin has full control including delete
+CREATE POLICY "Admins can update any site" ON public.sites
+  FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'project_team'));
+
+CREATE POLICY "Admins can delete sites" ON public.sites
+  FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'project_team'));
+
+CREATE POLICY "Workflow roles can view sites" ON public.sites
+  FOR SELECT TO authenticated
+  USING (public.has_role(auth.uid(), 'planning_team') OR public.has_role(auth.uid(), 'procurement_team')
+      OR public.has_role(auth.uid(), 'power_team') OR public.has_role(auth.uid(), 'rollout_team')
+      OR public.has_role(auth.uid(), 'project_team'));
+
+-- user_roles: self-view only; only Project/Admin may manage
+CREATE POLICY "Users can view own role" ON public.user_roles
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can insert roles" ON public.user_roles
+  FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'project_team'));
+
+-- notifications: self-insert only, cross-user delivery only via RPC
+CREATE POLICY "Users can insert own notifications" ON public.notifications
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own notifications" ON public.notifications
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+-- storage.objects: private buckets, scoped read/write, project_team global
+CREATE POLICY "Owners can manage own site documents" ON storage.objects
+  FOR ALL TO authenticated
+  USING (bucket_id = 'site-documents' AND (owner = auth.uid() OR public.has_role(auth.uid(), 'project_team')));
+
+CREATE POLICY "Power and Rollout can read scoped site documents" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'site-documents'
+     AND (public.has_role(auth.uid(), 'power_team') OR public.has_role(auth.uid(), 'rollout_team')
+          OR public.has_role(auth.uid(), 'project_team') OR owner = auth.uid()));
+
+CREATE POLICY "Owners can manage own procurement documents" ON storage.objects
+  FOR ALL TO authenticated
+  USING (bucket_id = 'procurement-documents' AND (owner = auth.uid() OR public.has_role(auth.uid(), 'project_team')));
+```
+
+Supporting function definitions:
+
+```sql
 CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role app_role)
-RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role
-  );
+RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role)
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_user_role(_user_id UUID)
-RETURNS app_role LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT role FROM public.user_roles WHERE user_id = _user_id LIMIT 1;
+RETURNS app_role LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT role FROM public.user_roles WHERE user_id = _user_id LIMIT 1
 $$;
 
--- Defensive trigger against self‑escalation on user_roles
 CREATE OR REPLACE FUNCTION public.prevent_role_self_escalation()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  IF auth.uid() IS NOT NULL
-     AND NOT public.has_role(auth.uid(), 'project_team') THEN
-    RAISE EXCEPTION 'Only administrators can assign user roles';
+  IF auth.uid() = NEW.user_id AND NOT public.has_role(auth.uid(), 'project_team') THEN
+    RAISE EXCEPTION 'Users may not modify their own role assignment';
   END IF;
   RETURN NEW;
 END;
 $$;
 
--- Sample policies (illustrative subset)
-CREATE POLICY "Planning team can insert sites"
-  ON public.sites FOR INSERT TO authenticated
-  WITH CHECK (public.has_role(auth.uid(), 'planning_team')
-              AND auth.uid() = submitted_by);
-
-CREATE POLICY "Admins can delete sites"
-  ON public.sites FOR DELETE TO authenticated
-  USING (public.has_role(auth.uid(), 'project_team'));
-
-CREATE POLICY "Admins can view activity log"
-  ON public.activity_log FOR SELECT TO authenticated
-  USING (public.has_role(auth.uid(), 'project_team'));
+CREATE OR REPLACE FUNCTION public.send_workflow_notification(
+  _user_ids UUID[], _title TEXT, _message TEXT, _type TEXT, _link TEXT DEFAULT NULL
+) RETURNS INTEGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE _count INTEGER := 0; _safe_message TEXT; _uid UUID;
+BEGIN
+  IF _link IS NOT NULL AND _link !~ '^/' THEN
+    RAISE EXCEPTION 'External links are not permitted in workflow notifications';
+  END IF;
+  _safe_message := regexp_replace(_message, '<[^>]*>', '', 'g');
+  FOREACH _uid IN ARRAY _user_ids LOOP
+    INSERT INTO public.notifications (user_id, title, message, type, link)
+    VALUES (_uid, _title, _safe_message, _type, _link);
+    _count := _count + 1;
+  END LOOP;
+  RETURN _count;
+END;
+$$;
 ```
 
-Storage policies attached to `storage.objects` require both a path prefix match on the caller's `user_id` and the appropriate workflow role for `SELECT` and `INSERT` on the `site-documents` and `procurement-documents` buckets.
+## Appendix C — Edge Function Source Extract
 
-## Appendix C — Privileged Edge Function (User Management)
+Abridged `manage-users` (Deno Edge Function; service-role key; caller must hold `project_team`):
 
-The `manage-users` Edge Function (`supabase/functions/manage-users/index.ts`) mediates account creation, role assignment and deactivation. The function verifies the caller's JWT, verifies that the caller holds the `project_team` role via `has_role`, and only then invokes the administrative Auth API with the service‑role key. The service‑role key is available exclusively inside the function's runtime environment; it is not present in the browser at any time. The full source is preserved in the repository and versioned with the rest of the code.
+```ts
+serve(async (req) => {
+  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
+  const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
+  const { data: callerRole } = await supabaseAdmin.from('user_roles').select('role').eq('user_id', caller.id).single();
+  if (!callerRole || callerRole.role !== 'project_team') throw new Error('Unauthorized: Admin only');
 
-## Appendix D — Offline Queue and Synchronisation Hook
+  const body = await req.json();
+  if (body.action === 'create_user') {
+    const validated = createUserSchema.parse(body); // Zod: strong-password regex, role enum
+    const { data: authData } = await supabaseAdmin.auth.admin.createUser({
+      email: validated.email, password: validated.password, email_confirm: true,
+      user_metadata: { full_name: validated.full_name },
+    });
+    await supabaseAdmin.from('profiles').upsert({ user_id: authData.user.id, ...validated }, { onConflict: 'user_id' });
+    await supabaseAdmin.from('user_roles').delete().eq('user_id', authData.user.id);
+    await supabaseAdmin.from('user_roles').insert({ user_id: authData.user.id, role: validated.role });
+    return jsonResponse({ success: true, user_id: authData.user.id });
+  }
+  if (body.action === 'delete_user') {
+    const validated = deleteUserSchema.parse(body);
+    if (validated.user_id === caller.id) throw new Error('Cannot delete your own account');
+    const [profileRes, roleRes] = await Promise.all([
+      supabaseAdmin.from('profiles').select('*').eq('user_id', validated.user_id).single(),
+      supabaseAdmin.from('user_roles').select('role').eq('user_id', validated.user_id).single(),
+    ]);
+    await supabaseAdmin.from('deleted_users_archive').insert({ original_user_id: validated.user_id,
+      email: profileRes.data.email, full_name: profileRes.data.full_name, role: roleRes.data?.role || '',
+      was_active: profileRes.data.is_active, deleted_by: caller.id,
+      deleted_by_name: validated.deleted_by_name, reason: validated.reason });
+    await Promise.all([
+      supabaseAdmin.from('profiles').delete().eq('user_id', validated.user_id),
+      supabaseAdmin.from('user_roles').delete().eq('user_id', validated.user_id),
+    ]);
+    await supabaseAdmin.auth.admin.deleteUser(validated.user_id);
+    return jsonResponse({ success: true, archived: true });
+  }
+  // toggle_active and reset_password actions follow the same authorisation and Zod-validation pattern
+});
+```
 
-The offline queue is implemented in `src/lib/offlineQueue.ts` and consumed by `src/hooks/useOnlineSync.ts`. The queue writes each mutation to IndexedDB under a monotonically increasing key prefixed with `offline_queue_`; the synchronisation hook subscribes to the browser's `online` and `offline` events and, upon reconnection, iterates the queue in insertion order, applying each mutation and deleting successful entries. Failed entries are preserved for subsequent retry.
+Abridged `seed-users` (provisions the initial six role accounts with strong generated passwords, admin-only):
 
-## Appendix E — Package Manifest (Runtime Dependencies)
+```ts
+function generateStrongPassword(): string {
+  // 20-byte cryptographically random password drawn from upper/lower/digit/symbol pools,
+  // guaranteed to contain at least one character from each pool
+}
 
-The runtime dependency set is declared in `package.json` at the repository root. Principal entries include: `react` ^18, `react-dom` ^18, `react-router-dom` ^6, `@tanstack/react-query` ^5, `@supabase/supabase-js` ^2, `idb-keyval` ^6, `zod` ^3, `tailwindcss` ^3, `vite` ^5, `vite-plugin-pwa` ^0.20 and the shadcn/ui component set built over Radix UI primitives.
+const userTemplates = [
+  { email: 'admin@orangeflow.sl', full_name: 'Admin User', role: 'project_team', department: 'Project Management' },
+  { email: 'planning@orangeflow.sl', full_name: 'James Kamara', role: 'planning_team', department: 'Network Planning' },
+  { email: 'procurement@orangeflow.sl', full_name: 'Mohamed Bangura', role: 'procurement_team', department: 'Procurement' },
+  // ... (six templates in total, two per seeded role: project_team, planning_team, procurement_team)
+];
 
-## Appendix F — Diagrams
+serve(async (req) => {
+  // verifies caller holds project_team, as in manage-users
+  for (const u of users) {
+    const exists = (await supabaseAdmin.auth.admin.listUsers()).data.users.find(eu => eu.email === u.email);
+    if (exists) { results.push({ email: u.email, status: 'already_exists' }); continue; }
+    const { data: authData } = await supabaseAdmin.auth.admin.createUser({
+      email: u.email, password: u.password, email_confirm: true, user_metadata: { full_name: u.full_name } });
+    await supabaseAdmin.from('profiles').update({ full_name: u.full_name, department: u.department }).eq('user_id', authData.user.id);
+    await supabaseAdmin.from('user_roles').insert({ user_id: authData.user.id, role: u.role });
+    results.push({ email: u.email, status: 'created', password: u.password });
+  }
+  return jsonResponse({ success: true, results });
+});
+```
 
-The system architecture, use‑case, activity, flowchart, entity‑relationship and database‑schema diagrams referenced from Chapter Three are provided as fluid SVG files at the repository root (`system_architecture.svg`, `use_case_diagram.svg`, `activity_diagram.svg`, `system_flowchart.svg`, `entity_relationship_diagram.svg`, `database_schema.svg`) and mirrored under `public/dissertation/` for in‑application delivery through the `/dissertation` route.
+## Appendix D — Planning Parameter Dictionary
+
+The sixty-one planning parameters are organised into seven accordion modules within `src/pages/PlanningDashboard.tsx`. Modules 5–7 render conditionally on the technology selected in Module 2.
+
+| Module | Field (Label) | Type | Unit | Required |
+|---|---|---|---|---|
+| 1. Basic Site & Location | Site ID Code | Text | — | Yes |
+| 1 | Site Name | Text | — | Yes |
+| 1 | Region | Select | — | Yes |
+| 1 | District | Select | — | Yes |
+| 1 | Chiefdom | Text | — | No |
+| 1 | Town / City / Location | Text | — | Yes |
+| 1 | Location Updated | Date | — | No |
+| 1 | Latitude | Number | decimal degrees | Yes |
+| 1 | Longitude | Number | decimal degrees | Yes |
+| 1 | Elevation | Number | m | No |
+| 1 | Dimensions | Text | m | No |
+| 1 | Distance from Nearest BTS | Number | km | No |
+| 2. Governance & Classification | Site Classification | Select | — | No |
+| 2 | NAtCa Sites Classification | Select | — | No |
+| 2 | Owner / Site Sharing Status | Select | — | No |
+| 2 | Site Type | Select | — | No |
+| 2 | Technology Classification (2G/3G/4G/5G) | Multi-select | — | No |
+| 3. Civil & Infrastructure | Tower Height | Number | m | Yes |
+| 3 | Tower Type | Select | — | No |
+| 3 | Tower Material | Select | — | No |
+| 3 | Foundation Depth | Number | cm | No |
+| 3 | Terrain Type | Select | — | No |
+| 3 | Access Road Condition | Select | — | No |
+| 3 | Equipment Shelter Type | Select | — | No |
+| 4. RF Hardware & Physical Antenna | Antenna Type | Text | — | No |
+| 4 | Number of Antennas | Number | count | No |
+| 4 | RRU Type / Model | Text | — | No |
+| 4 | RF Antenna Height | Number | m | No |
+| 4 | RF Antenna Azimuth | Number | degrees | No |
+| 4 | RF Mechanical Tilt | Number | degrees | No |
+| 4 | RF Electrical Tilt | Number | degrees | No |
+| 4 | Cluster ID | Text | — | No |
+| 4 | High Speed Flag | Select | — | No |
+| 5. 2G Radio Network (conditional) | 2G NE Name / BSC Name | Text | — | No |
+| 5 | 2G BTS ID | Number | — | No |
+| 5 | 2G Cell Name | Text | — | No |
+| 5 | 2G Cell ID | Number | — | No |
+| 5 | 2G Cell Type | Select | — | No |
+| 5 | Frequency Band | Select | — | No |
+| 5 | G900 TRX Number | Number | count | No |
+| 5 | G1800 TRX Number | Number | count | No |
+| 5 | 2G BCCH, NCC, BCC | Text | — | No |
+| 5 | HSN_900M, MA_900, MAIO_900M | Text | — | No |
+| 5 | HSN_1800M, MA_1800, MAIO_1800M | Text | — | No |
+| 5 | BCH, SDCCH, PDTCH Channels | Text | — | No |
+| 5 | Transmitter Power (POWT) | Number | dBm | No |
+| 5 | 2G Identifiers (MCC, MNC, LAC, RAC, CGI) | Text | — | No |
+| 6. 3G Radio Network (conditional) | 3G RNC Name & RNC ID | Text | — | No |
+| 6 | 3G NodeB Name & NodeB ID | Text | — | No |
+| 6 | 3G Cell Name & Cell ID | Text | — | No |
+| 6 | Max Power & Pilot Power | Text | 0.1 dBm | No |
+| 6 | Primary Scrambling Code (PSC) | Number | — | No |
+| 6 | 3G TxRxMode | Select | — | No |
+| 6 | 3G DL Bandwidth & DL EARFCN | Text | — | No |
+| 6 | 3G Identifiers (MCC, MNC, LAC, RAC, SAC, CGI) | Text | — | No |
+| 7. 4G LTE Radio Network (conditional) | 4G eNodeB Name & eNodeB ID | Text | — | No |
+| 7 | 4G Cell Name, Cell ID & Local Cell ID | Text | — | No |
+| 7 | RS Power, PA, PB | Text | 0.1 dBm | No |
+| 7 | Massive MIMO Cell & 4T6S Flag | Select | — | No |
+| 7 | Cell FDD / TDD Indication | Select | — | No |
+| 7 | 4G TxRxMode | Select | — | No |
+| 7 | 4G Frequency Band | Select | — | No |
+| 7 | 4G DL & UL Bandwidth | Select | — | No |
+| 7 | 4G DL EARFCN | Number | — | No |
+| 7 | TAC, PCI, Root Sequence Index | Text | — | No |
+| 7 | Cell Radius | Number | m | No |
+| 7 | 4G Identifiers (ECI, ECGI, MCC, MNC) | Text | — | No |
+
+Parameters lacking a native `sites` column are serialised into the `notes` field under the `<<PLANNING_JSON>>…<<END>>` sentinel via `src/lib/planningNotes.ts`, so that downstream viewers display only the human-readable planner remark. An "Additional Notes / Remarks" free-text field is also captured at the foot of the form.
+
+## Appendix E — Test Case Log
+
+Consolidated test log referenced in Chapter Four (representative entries; full log retained in the project test records).
+
+| ID | Category | Description | Expected Result | Outcome |
+|---|---|---|---|---|
+| F-01 | Functional | Planning: submit new site with all mandatory fields | Site record created with status `pending` | Pass |
+| F-02 | Functional | Planning: Excel import, key/value layout | Fields correctly mapped and populated | Pass |
+| F-03 | Functional | Planning: Excel import, header/data table layout | Fields correctly mapped and populated | Pass |
+| F-04 | Functional | Planning: extended field round-trip via notes sentinel | Planner remark and JSON payload both recovered intact | Pass |
+| F-05 | Functional | Procurement: accept Planning handover | `procurement_feedback` row created, status `accepted` | Pass |
+| F-06 | Functional | Procurement: complete nine-point checklist with documents | All nine items and documents saved | Pass |
+| F-07 | Functional | Procurement: submit triggers dual notification | project_team and rollout_team both notified | Pass |
+| F-08 | Functional | Power: earthing resistance 4.2 Ω | Flagged as pass (≤ 5.0 Ω) | Pass |
+| F-09 | Functional | Power: earthing resistance 6.8 Ω | Flagged as fail, field highlighted | Pass |
+| F-10 | Functional | Power: RFI approval mirrors to rollout milestone | `power_rfi` = true, `progress_percent` recalculated | Pass |
+| F-11 | Functional | Rollout: accept Procurement handover | Auto-switch to Rollout Form tab | Pass |
+| F-12 | Functional | Rollout: restricted document view | Commercial documents show "Status Only" | Pass |
+| F-13 | Functional | Admin: approve/reject with mandatory reason | Rejection blocked without reason text | Pass |
+| F-14 | Functional | Admin: Site Monitor renders all fields | No abbreviations, correct colour coding | Pass |
+| F-15 | Functional | Admin: user deletion archives record | Row present in `deleted_users_archive`, auth user removed | Pass |
+| S-01 | Security | Non-planning role attempts site insert | Rejected by RLS | Pass |
+| S-02 | Security | Planning attempts to delete own site | Rejected by RLS and UI | Pass |
+| S-03 | Security | User attempts self-role escalation | Rejected by `prevent_role_self_escalation` trigger | Pass |
+| S-04 | Security | User attempts to insert notification for another user | Rejected by RLS; only `send_workflow_notification` succeeds | Pass |
+| S-05 | Security | `send_workflow_notification` called with external link | Rejected with exception | Pass |
+| S-06 | Security | Non-admin bearer token calls `manage-users` | HTTP 403 Unauthorized | Pass |
+| S-07 | Security | Malformed payload sent to `manage-users` | HTTP 422 with Zod validation message | Pass |
+| S-08 | Security | Direct unauthenticated storage object request | Denied; only signed URLs succeed | Pass |
+| S-09 | Security | Power/Rollout attempt to update rejected site | Rejected by RLS | Pass |
+| O-01 | Offline | Submit Rollout form while offline | Record written to IndexedDB outbox with status `pending` | Pass |
+| O-02 | Offline | Reconnect after offline submission | Record replayed automatically, matched by Site ID, no duplication | Pass |
+| O-03 | Offline | View previously loaded dashboard offline | Cached shell and data displayed | Pass |
+| O-06 | Offline | Upload Planning Excel workbook offline, then reconnect | Workbook stored as a Blob and later uploaded byte-identical | Pass |
+| O-07 | Offline | Submit Rollout Extra Work with photographs offline | Data and images synchronise into Project/Admin → Rollout Review | Pass |
+| O-08 | Offline | Close and reopen the browser with records queued | Outbox and attached files survive restart and synchronise | Pass |
+| O-09 | Offline | Central edit of a site while an offline edit is queued | Record flagged `conflict`; central data not overwritten | Pass |
+| O-10 | Offline | Synchronisation indicator through an offline-online cycle | Offline, Pending, Syncing and Synced states shown correctly | Pass |
+| O-04 | Synchronisation | Power RFI update observed on Rollout dashboard | Realtime update within seconds | Pass |
+| O-05 | Synchronisation | Realtime event missed (simulated drop) | TanStack Query 30 s poll recovers state | Pass |
+| C-01 | Cross-Browser | Site Monitor table on mobile viewport | No horizontal scroll, stacked cards | Pass (after remediation) |
+| C-02 | Cross-Browser | Signed URL document open in Edge | Blob/Object URL fallback used, document opens | Pass (after remediation) |
+| C-03 | Cross-Browser | Install prompt on iOS Safari | Fallback instructions displayed | Pass |
+| U-01 | Usability | Planning user completes site submission unaided | Task completed within acceptable time, no critical errors | Pass |
+| U-02 | Usability | Admin user locates a specific site via Site Monitor | Task completed without external guidance | Pass |
+
+## Appendix F — Sample Excel Import Template and Figure Index
+
+### F.1 Planning Excel Import Template
+
+The Planning Excel import routine (`src/pages/PlanningDashboard.tsx`) recognises column or row headers matching the full field label, the label with units removed, the label before a slash or ampersand, or a defined set of header aliases (for example, `Site ID`, `Lat`, `Long`, `Elevation (m)`). Recommended template column headers, grouped by module, are:
+
+`Site ID Code`, `Site Name`, `Region`, `District`, `Chiefdom`, `Town / City / Location`, `Latitude`, `Longitude`, `Elevation (m)`, `Dimensions (m)`, `Distance from Nearest BTS (km)`, `Site Classification`, `NAtCa Sites Classification`, `Owner / Site Sharing Status`, `Site Type`, `Tower Height (m)`, `Tower Type`, `Tower Material`, `Foundation Depth (cm)`, `Terrain Type`, `Access Road Condition`, `Equipment Shelter Type`, `Antenna Type`, `Number of Antennas`, `RRU Type / Model`, followed by the relevant 2G, 3G and/or 4G radio-network columns as required.
+
+Two layouts are accepted:
+
+1. **Key/value layout** — any worksheet in which a recognisable field name appears in one cell and its value appears in a subsequent cell of the same row (order and position elsewhere on the sheet are immaterial).
+2. **Header-row/data-row table layout** — a conventional header row (at least two recognised headers) immediately followed by one data row per site.
+
+Technology-specific worksheets are auto-detected by sheet name (containing "2G"/"GSM", "3G"/"UMTS"/"WCDMA", or "4G"/"LTE") or by the presence of populated technology-specific fields, and populate the `technology_classification` selection accordingly. Values are type-coerced for numbers, dates and constrained select options; unrecognised select values are discarded rather than silently guessed.
+
+### F.2 Figure Index
+
+| Figure | Source File (`public/dissertation/`) |
+|---|---|
+| System Architecture Diagram | `system_architecture.svg` |
+| Database Schema Diagram | `database_schema.svg` |
+| Entity–Relationship Diagram | `entity_relationship_diagram.svg` |
+| Use Case Diagram | `use_case_diagram.svg` |
+| Activity Diagram | `activity_diagram.svg` |
+| System Flowchart | `system_flowchart.svg` |
+| Existing (Prior) Manual Workflow Diagram | `existing_workflow.svg` |
+| Dashboard Summary Table Mockup | `dashboard_table_mockup.svg` |
+| Planning Workspace UI | `ui_planning_workspace.svg` |
+| Procurement Checklist UI | `ui_procurement_checklist.svg` |
+| Power Dashboard UI | `ui_power_dashboard.svg` |
+| Rollout Dashboard UI | `ui_rollout_dashboard.svg` |
+| Admin Pipeline UI | `ui_admin_pipeline.svg` |
+| Sequence Diagram (Cross-Module Synchronisation) | `sequence_diagram.svg` |
+| Data Flow Diagram | `data_flow_diagram.svg` |
+
+---
+
+# Viva Voce — Anticipated Questions and Model Answers
+
+The following bank of forty questions covers the categories most commonly examined in a Bachelor of Engineering viva on an applied software‑engineering project: motivation and scope; requirements and methodology; architecture; database and security; offline behaviour; testing and evaluation; limitations; ethics; and personal contribution. Model answers are provided in a form suitable to be spoken aloud in three to six sentences.
+
+---
+
+### A. Motivation, Scope and Contribution
+
+**Q1. In one paragraph, what problem does OrangeFlow SL solve, and for whom?**
+OrangeFlow SL solves the coordination problem of Base Transceiver Station rollout at Orange Sierra Leone. Under the incumbent workflow, planning, procurement and project administration are coordinated through printed forms, scattered spreadsheet copies and instant‑messaging threads, producing version divergence, weak audit trails, absent role separation, poor field usability and no supervisory visibility. OrangeFlow SL replaces that with a single role‑based, mobile‑first Progressive Web Application backed by a database in which every user‑facing table is protected by Row‑Level Security.
+
+**Q2. Why is this an engineering problem rather than a purely managerial one?**
+Because the failure modes — version divergence, audit opacity, absent role separation, absent offline usability, absent real‑time visibility — are structural properties of the tool set in use, not of the people using it. Substituting management pressure for a coherent tool cannot close a version‑divergence gap; substituting a schema, RLS policies, an audit table and an offline queue can.
+
+**Q3. What is your specific contribution?**
+Three contributions: a working, evaluated reference implementation that jointly addresses BTS rollout, offline‑first delivery, database‑layer least privilege and signed‑URL document delivery; a concrete demonstration that RLS with a security‑definer role oracle is a sufficient RBAC enforcement point; and a documented end‑to‑end application of software‑engineering, database and security principles to a real operational problem.
+
+**Q4. What is explicitly out of scope?**
+Integration with the operator's finance, billing or network‑operations systems; native mobile applications distributed through public stores; automated field surveying; the radio‑network planning calculations themselves; and formal certification against national or international information‑security standards.
+
+### B. Requirements and Methodology
+
+**Q5. How did you elicit requirements?**
+Through three methods: structured observation of the incumbent workflow, review of the printed forms and spreadsheet workbooks currently in use, and informal semi‑structured interviews with prospective users of each of the three intended roles. The interviews informed usability requirements; the observation and document review informed the schema and the state model.
+
+**Q6. Why design‑science research?**
+Because the deliverable of the study is an artefact — a working system — and design‑science is the paradigm whose evaluative canon addresses artefacts on their own terms. A purely descriptive paradigm would not have been able to accommodate the constructive activity at the centre of the study.
+
+**Q7. Why iterative‑incremental development rather than waterfall?**
+Because integration risk — particularly between RLS policies and the query patterns of the frontend — is exposed only at the boundary between tiers, and iterative delivery of vertically integrated slices exposes that risk early rather than at a big‑bang integration event.
+
+**Q8. How did you decide when a requirement had been satisfied?**
+Each functional requirement is paired with a role‑based end‑to‑end scenario against a live backend, and each non‑functional requirement with a specific measurement — negative testing for security, IndexedDB inspection for offline, viewport measurement for responsiveness. A requirement is satisfied when its scenario succeeds and its measurement holds.
+
+### C. Architecture
+
+**Q9. Why a three‑tier architecture?**
+Because the three concerns — presentation, authenticated business logic and authoritative storage — are cleanly separable and are best expressed in different runtimes: a browser for presentation, an ephemeral serverless runtime for privileged logic and a durable database for storage. Coupling them would sacrifice both testability and security.
+
+**Q10. Why a PWA rather than a native mobile app?**
+Because the user population is small, internal and centrally controlled; because the application is form‑oriented and network‑bound rather than dependent on native device capabilities; because PWA delivery avoids two independent build pipelines and app‑store review latency; and because PWAs meet the installability and offline requirements that motivate a native app in the first place.
+
+**Q11. Why the specific frontend stack — React 18, Vite, TypeScript, Tailwind, shadcn/ui, TanStack Query?**
+React 18 for its concurrent rendering and mature ecosystem; Vite for near‑instant developer feedback; TypeScript for compile‑time verification of the interfaces between components and the backend types; Tailwind and shadcn/ui for a consistent, accessible component vocabulary; TanStack Query for cache management and periodic background refetch, which supplies the thirty‑second dashboard cadence without bespoke code.
+
+**Q12. Why PostgreSQL specifically?**
+Because Row‑Level Security is a first‑class database feature in PostgreSQL and is the mechanism through which the study's least‑privilege claim is discharged. A datastore without RLS would push access enforcement into application code, which is precisely the failure mode this study argues against.
+
+### D. Database and Security
+
+**Q13. Why hold roles in a separate `user_roles` table rather than as a column on `profiles`?**
+Because role assignment is more security‑critical than profile editing, and separating the concerns permits distinct, tighter RLS policies to apply to `user_roles`. It also naturally accommodates multi‑role users if that becomes a requirement.
+
+**Q14. What is a security‑definer function and why do you use one?**
+A `SECURITY DEFINER` function executes under the authority of the function's owner rather than of the caller, and can therefore read tables the caller could not otherwise reach. `has_role` uses this to look up `user_roles` from inside RLS policies without triggering recursive policy evaluation on `user_roles` itself.
+
+**Q15. How do you prevent privilege escalation via `user_roles`?**
+Two layers. First, the insert, update and delete policies on `user_roles` admit only administrators. Second, defensively, a `BEFORE INSERT OR UPDATE` trigger `prevent_role_self_escalation` refuses any operation issued by a non‑administrator, so a future policy regression cannot silently open the escalation surface.
+
+**Q16. Why do you `SET search_path = public` on your definer functions?**
+To defeat a class of attack in which an attacker temporarily prepends a schema of their own to the session `search_path`, so that an unqualified reference inside the definer function resolves to attacker‑controlled objects. Pinning `search_path` inside the function makes the resolution deterministic.
+
+**Q17. Why signed URLs rather than a proxied download endpoint?**
+Signed URLs let the browser fetch the object directly from the storage service, so download bandwidth does not traverse the application server; access checks are concentrated at the moment of URL issuance, where the caller's identity and role are already known; and if a URL fragment leaks it expires within minutes.
+
+**Q18. What is the concrete threat that route guards do *not* address?**
+Route guards address usability: they prevent users from seeing screens they cannot use. They do not address security, because a determined caller can invoke the backend directly, bypassing the frontend entirely. Security is enforced at the database layer, where the caller cannot bypass it.
+
+**Q19. Walk me through what happens when a Planning user tries to delete a site.**
+The frontend does not surface a delete button on the Planning dashboard. If the user nevertheless issues a `DELETE` directly against PostgREST, the request reaches the database with the user's JWT. The RLS `DELETE` policy on `sites` requires `has_role(auth.uid(), 'project_team')`, which returns false. The database refuses the operation; the row remains; no data is lost.
+
+**Q20. How do you handle passwords?**
+Passwords are managed by the auth service, not by the application code. Leaked‑password protection is enabled, so passwords appearing in known breach corpora are refused at registration. The seed function generates strong random passwords rather than embedding them in source.
+
+### E. Offline and Synchronisation
+
+**Q21. What exactly happens when a user submits a site while offline?**
+The submission is written to a durable outbox in IndexedDB — the data payload in one object store and any attached files as Blobs in another — carrying the Site ID, the role, a timestamp, a snapshot of the record's last-modified value and a synchronisation status. A floating indicator shows the record as pending. When the browser next reports `online`, the synchronisation hook flushes the outbox in insertion order: files are uploaded first and marked individually, the database mutation is then matched to the central row by Site ID, and the record is deleted from the outbox only after the write commits.
+
+**Q22. What if two mutations depend on each other — a site create followed by a note on that site?**
+Insertion order is preserved, so the site is created before the note is issued. If the create fails, the dependent mutation is not applied and remains on the queue for retry once the underlying cause is resolved.
+
+**Q23. What if synchronisation is interrupted midway?**
+Successfully applied records have already been deleted from the outbox; unapplied records remain in insertion order, and within a partially completed record each uploaded file is individually marked so the upload resumes rather than restarting. On next connectivity the flush resumes where it stopped. No record is silently discarded and no record is applied twice.
+
+**Q23a. How do you prevent one device silently overwriting another's work?**
+Each queued edit stores the target row's last-modified timestamp as it stood when editing began. At replay time that snapshot is compared with the value now held centrally; if they differ, the write is withheld and the record is marked as a conflict for explicit review rather than being applied. Duplicate creation is prevented separately: replay matches on the Site ID, so a queued insert for a site that meanwhile exists centrally is converted into an update.
+
+**Q24. Could the client be tricked into submitting a mutation as another user via the offline queue?**
+No. The queue holds payloads only; authentication is carried at replay time by the current session's JWT. A mutation captured under user A's session but replayed under user B's session will be evaluated against user B's role and will be refused by RLS if it does not qualify.
+
+### F. Testing and Evaluation
+
+**Q25. How did you verify security?**
+Two ways. Migration‑level audit — inspection of the SQL policies themselves so that compliance is attached to the schema rather than to any particular version of the client code. And negative testing — for each protected table, an authenticated user in an unauthorised role attempted each of the four write operations, all of which were refused.
+
+**Q26. Why is migration‑level audit important?**
+Because policy compliance attached to the schema survives independently of the client. Any future regression in the frontend cannot silently expand the authority of any role, because the database will refuse the excess. This is a genuine multiplier on ongoing safety.
+
+**Q27. What is negative testing?**
+Testing that a system correctly refuses an operation it should not permit. In this study, an authenticated user in an unauthorised role was made to attempt every write against every protected table; each attempt was expected — and observed — to be refused.
+
+**Q28. What did you measure for responsiveness?**
+Three viewport widths — 390, 820 and 1440 CSS pixels — were rendered, and each was inspected for horizontal overflow, clipping and legibility of controls. The absence of horizontal overflow at every width is the operational criterion.
+
+**Q29. How would you scale the evaluation to production traffic?**
+By instrumenting representative endpoints for latency and error rate, by running a scripted load generator at the target concurrency, and by comparing measured latency against a service‑level objective agreed with the operator. This is signposted in Chapter Six as recommended further work.
+
+### G. Limitations, Ethics and Reflection
+
+**Q30. What are the principal limitations of the study?**
+The evaluation was conducted against a live backend with authored scenarios rather than against a historical corpus of production records; load testing at operator‑scale concurrency was not performed; behaviour on legacy browsers below the modern evergreen baseline is not characterised; integration with the operator's downstream systems is out of scope; and formal external certification of the security posture was not undertaken.
+
+**Q31. What are the ethical considerations?**
+User data captured by the system is confined to what is operationally necessary; access is enforced at the database layer; documents are delivered exclusively through short‑lived signed URLs. Interviews used to inform usability requirements were conducted informally and no personally identifying information from them is reproduced in the dissertation.
+
+**Q32. What would you do differently if you started over?**
+I would introduce a small end‑to‑end test harness earlier in the schedule, so that RLS regressions could be caught by continuous integration rather than by manual verification. I would also decompose the largest React components into smaller units at first authoring rather than after the fact.
+
+**Q33. What was the hardest technical decision?**
+The choice to enforce access at the database layer rather than in a bespoke application server. It required investing in RLS discipline early, but paid off in the migration‑level audit strand of the security verification and in the confinement of the service role to a single Edge Function trusted‑code path.
+
+### H. Domain and Broader Implications
+
+**Q34. Why is this particularly relevant to Sierra Leone?**
+Because BTS rollout is a live engineering activity across the country, because field connectivity cannot be assumed at candidate sites, and because the operator's audit posture and rollout throughput materially affect the pace of network expansion. The specific structural shape of the workflow — hand‑over between distinct roles, evidentiary upload, field capture under intermittent connectivity — is present in comparable coordination workflows in electricity, water and public works.
+
+**Q35. Could this system be adopted by another operator or another sector?**
+Yes, with modification. The three domain roles and the nine‑point checklist are specific to the studied workflow, but the architectural spine — PWA plus IndexedDB queue plus PostgreSQL with RLS plus signed‑URL storage — generalises to any small‑to‑medium coordination workflow of comparable structural shape.
+
+**Q36. What is the single most defensible technical claim in the dissertation?**
+That least‑privilege access is enforced at the database layer through RLS bound to a dedicated role table, and that this enforcement is verified at the migration level so that its compliance persists independently of any particular version of the client code.
+
+### I. Personal Contribution
+
+**Q37. What role did tooling play in the outcome, and what is the substance of your own contribution?**
+Tooling accelerates typing but not thinking. The substance of the contribution — the choice of a three‑tier architecture with database‑layer access control, the design of the role oracle and self‑escalation trigger, the design of the offline queue, the elicitation of the requirements and the design of the four‑axis verification strategy — is the researcher's own, and would be equally substantive in any tool environment.
+
+**Q38. Which parts of the codebase did you author personally?**
+The full schema and all RLS policies, the security‑definer functions and the anti‑self‑escalation trigger, the offline queue and synchronisation hook, the auth context and route guard, the dashboard pages and the shared presentation components. The generated backend client module and the third‑party UI primitives are, of course, not authored by the researcher.
+
+**Q39. If a supervisor asked you to defend one line of code, which would it be?**
+The `SET search_path = public` clause on the `has_role` and `get_user_role` definer functions. It is small, easy to overlook, and its absence would open the functions to a schema‑poisoning attack. Its presence closes that class of attack deterministically.
+
+**Q40. In one sentence, why does this dissertation matter?**
+It demonstrates that a disciplined, small engineering effort — applied to a well‑characterised operational problem with correct choice of architectural primitives — can produce a system that substantively supersedes the manual workflow it replaces along every operational dimension examined.

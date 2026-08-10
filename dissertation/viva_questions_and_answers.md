@@ -75,13 +75,16 @@ Passwords are managed by the auth service, not by the application code. Leaked�
 ### E. Offline and Synchronisation
 
 **Q21. What exactly happens when a user submits a site while offline?**
-The mutation is serialised to IndexedDB under a key prefixed with `offline_queue_` and a monotonically increasing sequence number. The UI shows a pending indicator. When the browser next reports `online`, the synchronisation hook iterates the queue in insertion order, applies each mutation to the backend, and deletes the queue entry on success.
+The submission is written to a durable outbox in IndexedDB — the data payload in one object store and any attached files as Blobs in another — carrying the Site ID, the role, a timestamp, a snapshot of the record's last-modified value and a synchronisation status. A floating indicator shows the record as pending. When the browser next reports `online`, the synchronisation hook flushes the outbox in insertion order: files are uploaded first and marked individually, the database mutation is then matched to the central row by Site ID, and the record is deleted from the outbox only after the write commits.
 
 **Q22. What if two mutations depend on each other — a site create followed by a note on that site?**
 Insertion order is preserved, so the site is created before the note is issued. If the create fails, the dependent mutation is not applied and remains on the queue for retry once the underlying cause is resolved.
 
 **Q23. What if synchronisation is interrupted midway?**
-Successfully applied entries have already been deleted from the queue; unapplied entries remain in insertion order. On next connectivity the sync resumes from where it stopped. No entry is silently discarded and no entry is applied twice.
+Successfully applied records have already been deleted from the outbox; unapplied records remain in insertion order, and within a partially completed record each uploaded file is individually marked so the upload resumes rather than restarting. On next connectivity the flush resumes where it stopped. No record is silently discarded and no record is applied twice.
+
+**Q23a. How do you prevent one device silently overwriting another's work?**
+Each queued edit stores the target row's last-modified timestamp as it stood when editing began. At replay time that snapshot is compared with the value now held centrally; if they differ, the write is withheld and the record is marked as a conflict for explicit review rather than being applied. Duplicate creation is prevented separately: replay matches on the Site ID, so a queued insert for a site that meanwhile exists centrally is converted into an update.
 
 **Q24. Could the client be tricked into submitting a mutation as another user via the offline queue?**
 No. The queue holds payloads only; authentication is carried at replay time by the current session's JWT. A mutation captured under user A's session but replayed under user B's session will be evaluated against user B's role and will be refused by RLS if it does not qualify.
