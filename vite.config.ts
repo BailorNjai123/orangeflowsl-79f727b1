@@ -47,25 +47,15 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        navigationPreload: true,
-        // Never let the SW serve a stale version.json — it's our deploy signal.
+        // SPA shell served from the precache so navigations work fully offline.
+        // The precache manifest is revisioned per build, and registerType
+        // "autoUpdate" + the version checker handle freshness after a deploy.
         navigateFallback: "/index.html",
         runtimeCaching: [
           {
             // Deploy signal — never cache.
             urlPattern: ({ url }) => url.pathname === "/version.json",
             handler: "NetworkOnly",
-          },
-          {
-            // Always try the network for page navigations so returning users
-            // never see a stale HTML shell after a new deploy.
-            urlPattern: ({ request }) => request.mode === "navigate",
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "html-navigations",
-              networkTimeoutSeconds: 3,
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 },
-            },
           },
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
