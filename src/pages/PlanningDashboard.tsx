@@ -254,6 +254,7 @@ export default function PlanningDashboard() {
         name: excelFile.name,
         size: excelFile.size,
         uploaded_at: new Date().toISOString(),
+        submitted_by_name: profile?.full_name || user.email || 'Planning user',
         sheets: excelResult.sheets,
         extracted_fields: excelResult.matched,
       };

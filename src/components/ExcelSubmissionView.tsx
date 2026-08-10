@@ -8,6 +8,7 @@ export interface ExcelSubmissionMeta {
   name?: string;
   uploaded_at?: string;
   size?: number;
+  submitted_by_name?: string;
 }
 
 const BUCKET = 'site-documents';
@@ -46,6 +47,7 @@ export default function ExcelSubmissionView({
   };
 
   const date = meta.uploaded_at || submittedAt;
+  const byName = submittedByName || meta.submitted_by_name;
 
   if (compact) {
     return (
@@ -55,8 +57,13 @@ export default function ExcelSubmissionView({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium truncate">{meta.name || meta.path.split('/').pop()}</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground truncate">
             Excel (.xlsx){formatSize(meta.size) ? ` · ${formatSize(meta.size)}` : ''}
+            {siteIdCode ? ` · ${siteIdCode}` : ''}
+          </p>
+          <p className="text-[11px] text-muted-foreground truncate">
+            {byName ? `By ${byName}` : ''}{byName && date ? ' · ' : ''}
+            {date ? new Date(date).toLocaleString() : ''}
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={handleDownload} disabled={downloading} className="shrink-0 h-8">
@@ -82,7 +89,7 @@ export default function ExcelSubmissionView({
             <dl className="text-[11px] text-muted-foreground space-y-0.5">
               {siteIdCode && <div><span className="font-medium text-foreground/70">Site ID:</span> {siteIdCode}</div>}
               {date && <div><span className="font-medium text-foreground/70">Submitted:</span> {new Date(date).toLocaleString()}</div>}
-              {submittedByName && <div><span className="font-medium text-foreground/70">Submitted by:</span> {submittedByName}</div>}
+              {byName && <div><span className="font-medium text-foreground/70">Submitted by:</span> {byName}</div>}
               <div>
                 <span className="font-medium text-foreground/70">File type:</span> Excel (.xlsx)
                 {formatSize(meta.size) ? ` · ${formatSize(meta.size)}` : ''}
