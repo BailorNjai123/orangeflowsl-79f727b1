@@ -283,8 +283,6 @@ Appendix F — Sample Excel Import Template and Screenshots
 
 # Chapter One — Introduction
 
-# Chapter One — Introduction
-
 ## 1.1 Background of the Study
 
 The expansion of mobile telecommunications infrastructure across Sierra Leone has accelerated markedly over the past decade, driven by rising smartphone penetration, competitive pressure among operators, and national policy priorities aimed at closing the digital divide (Kamara and Sesay, 2020; GSMA, 2022). Central to this expansion is the physical deployment of Base Transceiver Stations (BTS), the radio towers and associated civil, electrical and radio-frequency infrastructure that extend network coverage into new communities. Each BTS site progresses through a well-defined but organisationally complex rollout lifecycle that begins with technical planning, proceeds through procurement of land and materials, requires the provisioning of reliable power, and culminates in physical construction and commissioning of the site — commonly referred to in industry parlance as bringing the site "on air" (Osei and Boateng, 2019; ITU, 2021).
@@ -389,8 +387,6 @@ This dissertation is organised into five chapters. Chapter One has introduced th
 
 # Chapter Two — Literature Review
 
-# Chapter Two — Literature Review
-
 ## 2.1 Introduction
 
 This chapter reviews the body of scholarly and technical literature relevant to the design and implementation of OrangeFlow SL. It begins by examining the BTS site rollout lifecycle as documented in telecommunications engineering practice, before turning to the well-established critique of manual and spreadsheet-based coordination in infrastructure projects. It then surveys the literature on workflow management and enterprise information systems, offline-first and Progressive Web Application design, database-level access control, secure object storage, and real-time synchronisation in distributed teams. The chapter closes with a critical comparison of adjacent classes of existing systems and a statement of the research gap that the present study addresses.
@@ -456,8 +452,6 @@ The literature reviewed above establishes, individually, the value of workflow d
 This chapter has traced the scholarly foundations relevant to the present study across six technical domains and has situated OrangeFlow SL against five categories of adjacent system, none of which addresses the integrated combination of requirements identified. Chapter Three proceeds to the system analysis and design informed by this review.
 
 ---
-
-# Chapter Three — System Analysis and Design
 
 # Chapter Three — System Analysis and Design
 
@@ -801,8 +795,6 @@ Table 3.5 summarises the principal technologies selected for the implementation,
 This chapter has traced the transformation of a manual, spreadsheet- and paper-mediated BTS rollout coordination process into a structured, security-conscious software design. Requirements were elicited through interviews, document analysis, field observation and iterative prototype walkthroughs with representative domain leads, and validated through traceability to those same sources. Analysis of the existing system exposed a lack of a single source of truth, manual transcription error, weak audit trails and delayed cross-departmental visibility, all of which directly shaped the proposed system's centralised `sites` architecture, its five-role permission model enforced through a separate `user_roles` table and a `SECURITY DEFINER` `has_role()` function, and its real-time, notification-driven workflow. The chapter specified functional and non-functional requirements against recognised quality criteria, presented the three-tier architecture and its data flow, use case, entity relationship, database, activity, flowchart and sequence designs, and detailed the security and interface design principles underpinning the system, before justifying the iterative, incremental methodology by which the six modules were delivered and summarising the technology stack selected for implementation. Chapter Four builds on this design to describe the concrete implementation of each module.
 
 ---
-
-# Chapter Four — System Implementation and Testing
 
 # Chapter Four — System Implementation and Testing
 
@@ -1382,8 +1374,6 @@ This chapter has described the concrete implementation of OrangeFlow SL, from it
 
 ---
 
-# Chapter Five — Results, Discussion and Conclusion
-
 # Chapter Five — Results, Discussion, Conclusion and Recommendations
 
 ## 5.1 Introduction
@@ -1511,8 +1501,6 @@ Building on the contribution and limitations identified above, the following dir
 6. **Multi-operator tenancy.** Extension of the data model and Row-Level Security architecture to support multiple mobile network operators within a single deployment would broaden the system's applicability to shared infrastructure and tower-company contexts, subject to appropriate tenant-isolation redesign of the current schema.
 
 ---
-
-# References
 
 # References
 
@@ -1645,8 +1633,6 @@ Rahman, S. and Diaz, R. (2022) 'IndexedDB and local-first data persistence strat
 Yeboah, D. and Mensah, K. (2021) 'Case study methods in African information systems research', *African Journal of Information Systems*, 13(4), pp. 250–268.
 
 ---
-
-# Appendices
 
 # Appendices
 
@@ -2109,8 +2095,6 @@ Technology-specific worksheets are auto-detected by sheet name (containing "2G"/
 | Data Flow Diagram | `data_flow_diagram.svg` |
 
 ---
-
-# Viva Questions and Model Answers
 
 # Viva Voce — Anticipated Questions and Model Answers
 
