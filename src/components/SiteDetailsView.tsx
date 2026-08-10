@@ -291,6 +291,11 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
       {/* Full planning parameter set (native columns + extended JSON payload) */}
       <PlanningParameters site={site} />
 
+      {/* Original Planning Excel submission — full workbook view + download */}
+      {excelMeta?.path && <ExcelSubmissionView meta={excelMeta} />}
+
+
+
       {cleanNote(site.notes) && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
