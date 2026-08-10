@@ -380,12 +380,27 @@ export default function PlanningDashboard() {
     if (!payload.district) payload.district = 'Western Area Urban';
     if (!payload.town) payload.town = payload.site_name;
 
-    const { error } = editSite
-      ? await supabase.from('sites').update(payload as any).eq('id', editSite.id)
-      : await supabase.from('sites').insert(payload as any);
+    const code = String(payload.site_id_code || editSite?.site_id_code || '');
+    const { error, queued } = await offlineWrite({
+      type: 'planning_form',
+      label: `Planning form — ${code || 'new site'}`,
+      table: 'sites',
+      operation: editSite ? 'update' : 'insert',
+      match: code ? { column: 'site_id_code', value: code } : null,
+      payload,
+      siteIdCode: code || null,
+      siteRowId: editSite?.id ?? null,
+      userId: user.id,
+      role: 'planning_team',
+      baseUpdatedAt: (editSite as any)?.updated_at ?? null,
+    });
     setSubmitting(false);
     if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
-    toast({ title: asDraft ? 'Draft saved' : (editSite ? 'Submission updated' : 'Submitted for review') });
+    toast({
+      title: queued ? 'Saved offline — pending sync' : (asDraft ? 'Draft saved' : (editSite ? 'Submission updated' : 'Submitted for review')),
+      description: queued ? 'Your submission and attachments are stored on this device and will sync automatically.' : undefined,
+    });
+
     setEditSite(null); setForm(emptyState); setFiles({}); fetchSites();
     if (!asDraft) setActiveTab('submissions');
   };
