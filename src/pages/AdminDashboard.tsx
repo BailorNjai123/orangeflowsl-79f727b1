@@ -297,6 +297,38 @@ export default function AdminDashboard() {
     setActionLoading(false);
   };
 
+  // Approve / reject an Extra Work request submitted from the Rollout form
+  const handleExtraWorkDecision = async (site: any, decision: 'Approved' | 'Rejected') => {
+    const ext = parseExt(site);
+    const rollout = { ...(ext.rollout || {}) };
+    if (!rollout.extra_work) return;
+    rollout.extra_work = {
+      ...rollout.extra_work,
+      status: decision,
+      reviewed_by: profile?.full_name || null,
+      reviewed_at: new Date().toISOString(),
+    };
+    setActionLoading(true);
+    const { error } = await supabase.from('sites').update({
+      review_notes: JSON.stringify({ ...(rawNotesObj(site) || {}), ...ext, rollout }),
+    }).eq('id', site.id);
+    setActionLoading(false);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      return;
+    }
+    await supabase.from('activity_log').insert({
+      action: `extra_work_${decision.toLowerCase()}`,
+      description: `Extra work request for "${site.site_name}" was ${decision.toLowerCase()}`,
+      user_id: user!.id, user_name: profile?.full_name,
+      entity_type: 'site', entity_id: site.id,
+    });
+    toast({ title: `Extra work ${decision.toLowerCase()}` });
+    setStageReview(prev => (prev ? { ...prev, site: { ...site, review_notes: JSON.stringify({ ...(rawNotesObj(site) || {}), ...ext, rollout }) } } : prev));
+    fetchData();
+  };
+
+
   const validatePassword = (pw: string): string | null => {
     if (pw.length < 8) return 'Password must be at least 8 characters';
     if (!/[a-z]/.test(pw)) return 'Password must contain a lowercase letter';
