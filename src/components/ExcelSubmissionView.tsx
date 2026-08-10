@@ -89,7 +89,7 @@ export default function ExcelSubmissionView({
             <dl className="text-[11px] text-muted-foreground space-y-0.5">
               {siteIdCode && <div><span className="font-medium text-foreground/70">Site ID:</span> {siteIdCode}</div>}
               {date && <div><span className="font-medium text-foreground/70">Submitted:</span> {new Date(date).toLocaleString()}</div>}
-              {submittedByName && <div><span className="font-medium text-foreground/70">Submitted by:</span> {submittedByName}</div>}
+              {byName && <div><span className="font-medium text-foreground/70">Submitted by:</span> {byName}</div>}
               <div>
                 <span className="font-medium text-foreground/70">File type:</span> Excel (.xlsx)
                 {formatSize(meta.size) ? ` · ${formatSize(meta.size)}` : ''}
