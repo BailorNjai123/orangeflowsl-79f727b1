@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 import { cleanNote, parsePlanningNotes } from '@/lib/planningNotes';
 import { PLANNING_FIELD_GROUPS, formatPlanningValue, isKnownPlanningKey, prettifyKey } from '@/lib/planningFieldLabels';
+import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
+
 
 import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock, ListChecks } from 'lucide-react';
 
@@ -144,9 +146,10 @@ function PlanningParameters({ site }: { site: any }) {
     .filter(g => g.rows.length > 0);
 
   const extraRows = Object.entries(extended || {})
-    .filter(([k]) => !isKnownPlanningKey(k) && k !== 'planner_note')
+    .filter(([k, v]) => !isKnownPlanningKey(k) && k !== 'planner_note' && k !== 'excel_submission' && (typeof v !== 'object' || Array.isArray(v)))
     .map(([k, v]) => ({ label: prettifyKey(k), value: formatPlanningValue(v) }))
     .filter(r => r.value !== null);
+
 
   if (!groups.length && !extraRows.length) return null;
 
@@ -176,9 +179,11 @@ function PlanningParameters({ site }: { site: any }) {
 }
 
 export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }: SiteDetailsViewProps) {
+  const excelMeta = parsePlanningNotes(site?.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined;
 
   return (
     <div className="space-y-4">
+
       {/* Submission Info */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
@@ -285,6 +290,11 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
 
       {/* Full planning parameter set (native columns + extended JSON payload) */}
       <PlanningParameters site={site} />
+
+      {/* Original Planning Excel submission — full workbook view + download */}
+      {excelMeta?.path && <ExcelSubmissionView meta={excelMeta} />}
+
+
 
       {cleanNote(site.notes) && (
         <div>

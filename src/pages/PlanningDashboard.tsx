@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { parsePlanningNotes, buildPlanningNotes } from '@/lib/planningNotes';
+import { readWorkbook, extractPlanningFromWorkbook, validateExtracted, EXCEL_FIELDS } from '@/lib/planningExcel';
+
 
 
 import { Label } from '@/components/ui/label';
@@ -175,10 +177,103 @@ export default function PlanningDashboard() {
   const [viewSite, setViewSite] = useState<SiteRow | null>(null);
   const [form, setForm] = useState<FormState>(emptyState);
   const [files, setFiles] = useState<Record<string, File | null>>({});
+  const [entryMode, setEntryMode] = useState<'manual' | 'excel'>('manual');
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [excelBusy, setExcelBusy] = useState(false);
+  const [excelResult, setExcelResult] = useState<{
+    values: Record<string, any>; matched: string[]; sheets: string[];
+    errors: string[]; warnings: string[];
+  } | null>(null);
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
   const setField = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }));
+
+  // ---- Excel upload (alternative to manual entry) ----
+  const EXCEL_NATIVE = ['site_id_code','site_name','region','district','town','latitude','longitude','elevation','dimensions','distance_nearest_bts','site_type'];
+
+  const analyseExcel = async (file: File) => {
+    setExcelBusy(true);
+    setExcelResult(null);
+    try {
+      if (!/\.xlsx$/i.test(file.name)) {
+        setExcelResult({ values: {}, matched: [], sheets: [], errors: ['Only .xlsx Excel workbooks are accepted.'], warnings: [] });
+        return;
+      }
+      const wb = await readWorkbook(file);
+      const extracted = extractPlanningFromWorkbook(wb);
+      const validation = validateExtracted(extracted);
+      setExcelFile(file);
+      setExcelResult({
+        values: extracted.values,
+        matched: extracted.matchedLabels,
+        sheets: extracted.sheetNames,
+        errors: validation.errors,
+        warnings: validation.warnings,
+      });
+    } catch (e: any) {
+      setExcelResult({ values: {}, matched: [], sheets: [], errors: ['The file could not be read as a valid Excel workbook.'], warnings: [] });
+    } finally {
+      setExcelBusy(false);
+    }
+  };
+
+  const submitExcel = async () => {
+    if (!user || !excelFile || !excelResult || excelResult.errors.length) return;
+    setExcelBusy(true);
+    try {
+      const v = excelResult.values;
+      const code = String(v.site_id_code);
+
+      // Store the complete original workbook untouched.
+      const path = `${user.id}/excel/${Date.now()}_${excelFile.name.replace(/[^\w.\-]+/g, '_')}`;
+      const { error: upErr } = await supabase.storage.from('site-documents').upload(path, excelFile, { upsert: true });
+      if (upErr) { toast({ variant: 'destructive', title: 'Upload failed', description: upErr.message }); return; }
+
+      // Site ID is the primary identifier — update instead of duplicating.
+      const { data: existing } = await supabase.from('sites').select('*').eq('site_id_code', code).maybeSingle();
+
+      const prevExtended = existing ? parsePlanningNotes((existing as any).notes).extended : {};
+      const prevText = existing ? parsePlanningNotes((existing as any).notes).text : '';
+
+      const native: Record<string, any> = { submitted_by: user.id, status: 'pending' };
+      EXCEL_NATIVE.forEach(k => { if (v[k] !== undefined && v[k] !== '') native[k] = v[k]; });
+      native.site_id_code = code;
+      native.site_name = v.site_name || code;
+      native.region = native.region || (existing as any)?.region || 'Western Area';
+      native.district = native.district || (existing as any)?.district || 'Western Area Urban';
+      native.town = native.town || (existing as any)?.town || '—';
+
+      const extended: Record<string, any> = { ...prevExtended };
+      ['chiefdom','location_updated','site_classification','natca_classification','owner_sharing_status','technology_classification']
+        .forEach(k => { if (v[k] !== undefined) extended[k] = v[k]; });
+      extended.excel_submission = {
+        path,
+        name: excelFile.name,
+        size: excelFile.size,
+        uploaded_at: new Date().toISOString(),
+        sheets: excelResult.sheets,
+        extracted_fields: excelResult.matched,
+      };
+      native.notes = buildPlanningNotes(prevText, extended);
+
+      const { error } = existing
+        ? await supabase.from('sites').update(native as any).eq('id', (existing as any).id)
+        : await supabase.from('sites').insert(native as any);
+      if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
+
+      toast({
+        title: existing ? `Site ${code} updated from Excel` : `Site ${code} created from Excel`,
+        description: 'Basic, Governance and Classification data propagated downstream. Full workbook stored for Planning Review.',
+      });
+      setExcelFile(null); setExcelResult(null);
+      fetchSites();
+      setActiveTab('submissions');
+    } finally {
+      setExcelBusy(false);
+    }
+  };
+
 
   const fetchSites = async () => {
     if (!user) return;
@@ -334,15 +429,123 @@ export default function PlanningDashboard() {
     </div>
   );
 
+  const renderExcelUpload = () => {
+    const labelFor = (k: string) => EXCEL_FIELDS.find(f => f.key === k)?.label || k;
+    const cats: { id: 'basic'|'governance'|'classification'; title: string }[] = [
+      { id: 'basic', title: 'Basic Site & Location' },
+      { id: 'governance', title: 'Governance' },
+      { id: 'classification', title: 'Classification' },
+    ];
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Upload className="h-4 w-4 text-primary" /> Upload Planning Excel File
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Upload the complete Planning workbook (.xlsx). Only Basic Site &amp; Location, Governance and
+            Classification data is extracted and shared with Procurement and the other dashboards — the full
+            workbook is stored and viewable in Planning Review.
+          </p>
+          <Input
+            type="file"
+            accept=".xlsx"
+            className="max-w-md text-xs"
+            onChange={e => { const f = e.target.files?.[0]; setExcelFile(f || null); if (f) analyseExcel(f); }}
+          />
+
+          {excelBusy && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing workbook…
+            </div>
+          )}
+
+          {excelResult && (
+            <div className="space-y-3">
+              {excelResult.errors.length > 0 && (
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 space-y-1">
+                  <p className="text-xs font-semibold text-destructive">Validation failed — no site record was created.</p>
+                  {excelResult.errors.map(e => <p key={e} className="text-xs text-destructive">• {e}</p>)}
+                </div>
+              )}
+
+              {excelResult.errors.length === 0 && (
+                <>
+                  <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+                    {cats.map(c => {
+                      const rows = EXCEL_FIELDS.filter(f => f.category === c.id && excelResult.values[f.key] !== undefined);
+                      if (!rows.length) return null;
+                      return (
+                        <div key={c.id}>
+                          <p className="text-[11px] font-semibold mb-1">{c.title}</p>
+                          {rows.map(f => (
+                            <div key={f.key} className="flex justify-between gap-2 py-1 border-b border-border/50 last:border-0">
+                              <span className="text-xs text-muted-foreground">{labelFor(f.key)}</span>
+                              <span className="text-xs font-medium text-right">
+                                {Array.isArray(excelResult.values[f.key]) ? excelResult.values[f.key].join(', ') : String(excelResult.values[f.key])}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    <p className="text-[11px] text-muted-foreground">
+                      Worksheets detected: {excelResult.sheets.join(', ')} — the complete file is stored unchanged.
+                    </p>
+                  </div>
+                  {excelResult.warnings.length > 0 && (
+                    <p className="text-[11px] text-warning">
+                      Not found in the workbook (optional): {excelResult.warnings.join(', ')}
+                    </p>
+                  )}
+                  <Button type="button" className="gradient-orange border-0 text-primary-foreground" onClick={submitExcel} disabled={excelBusy}>
+                    {excelBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                    Submit Excel Planning Data
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   const renderSubmitForm = () => (
+
     <div className="space-y-4 max-w-5xl">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg sm:text-xl font-bold">{editSite ? 'Update Planning Submission' : 'New Planning Submission'}</h2>
         {editSite && <Button variant="ghost" size="sm" onClick={() => setEditSite(null)}>Cancel Edit</Button>}
       </div>
 
+      {/* Entry method — manual form or Excel upload */}
+      {!editSite && (
+        <Card>
+          <CardContent className="pt-4 flex flex-wrap gap-2">
+            <Button type="button" variant={entryMode === 'manual' ? 'default' : 'outline'} size="sm"
+              className={entryMode === 'manual' ? 'gradient-orange border-0 text-primary-foreground' : ''}
+              onClick={() => setEntryMode('manual')}>
+              <FileText className="h-4 w-4 mr-2" /> Manual Form Entry
+            </Button>
+            <Button type="button" variant={entryMode === 'excel' ? 'default' : 'outline'} size="sm"
+              className={entryMode === 'excel' ? 'gradient-orange border-0 text-primary-foreground' : ''}
+              onClick={() => setEntryMode('excel')}>
+              <Upload className="h-4 w-4 mr-2" /> Upload Planning Excel File
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!editSite && entryMode === 'excel' && renderExcelUpload()}
+
+      {(editSite || entryMode === 'manual') && (<>
+
       {/* Modules accordion */}
       <Accordion type="multiple" defaultValue={['m1','m2','m3','m4']} className="space-y-3">
+
         {modules.filter(m => m.show).map(m => (
           <AccordionItem key={m.id} value={m.id} className="border rounded-lg bg-card">
             <AccordionTrigger className="px-4 hover:no-underline">
@@ -445,8 +648,11 @@ export default function PlanningDashboard() {
           </Button>
         </CardContent>
       </Card>
+
+      </>)}
     </div>
   );
+
 
 
   const renderSubmissions = () => (
