@@ -342,7 +342,7 @@ export default function PlanningDashboard() {
       if (!file || file.size === 0) continue;
       const ext = file.name.split('.').pop();
       const path = `${user!.id}/${Date.now()}_${a.key}.${ext}`;
-      const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
+      const { error } = await offlineUpload('site-documents', path, file);
       if (error) { toast({ variant: 'destructive', title: `Upload failed (${a.label})`, description: error.message }); continue; }
       out[a.key] = path;
     }
