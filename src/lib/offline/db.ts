@@ -5,8 +5,11 @@ import { createStore, get, set, del, values } from 'idb-keyval';
  * - outbox : queued submissions waiting to reach the central database
  * - files  : the actual binary attachments captured while offline
  */
-export const outboxStore = createStore('orangeflow-offline', 'outbox');
-export const fileStore = createStore('orangeflow-offline', 'files');
+// NOTE: idb-keyval creates exactly one object store per database, so each
+// store MUST live in its own database name — sharing one name makes the
+// second store missing ("object stores was not found").
+export const outboxStore = createStore('orangeflow-offline-outbox', 'outbox');
+export const fileStore = createStore('orangeflow-offline-files', 'files');
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'conflict';
 
