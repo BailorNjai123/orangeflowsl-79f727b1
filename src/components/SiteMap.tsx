@@ -45,12 +45,17 @@ const num = (v: any): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+type BaseView = 'satellite' | 'hybrid' | 'standard';
+
 export default function SiteMap({ sites }: { sites: any[] }) {
   const [query, setQuery] = useState('');
+  const [view, setView] = useState<BaseView>('satellite');
   const [offline, setOffline] = useState(!navigator.onLine);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
+  const baseRef = useRef<L.TileLayer | null>(null);
+  const labelsRef = useRef<L.TileLayer | null>(null);
   const markersRef = useRef<Record<string, L.Marker>>({});
 
   useEffect(() => {
@@ -119,10 +124,6 @@ export default function SiteMap({ sites }: { sites: any[] }) {
       [8.4606, -11.7799], // Sierra Leone fallback view
       7
     );
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     setTimeout(() => map.invalidateSize(), 100);
@@ -130,8 +131,48 @@ export default function SiteMap({ sites }: { sites: any[] }) {
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
+      baseRef.current = null;
+      labelsRef.current = null;
     };
   }, []);
+
+  // Base layer switching (satellite / hybrid / standard)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (baseRef.current) { map.removeLayer(baseRef.current); baseRef.current = null; }
+    if (labelsRef.current) { map.removeLayer(labelsRef.current); labelsRef.current = null; }
+
+    if (view === 'standard') {
+      baseRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
+      });
+    } else {
+      // Esri World Imagery — real satellite/aerial imagery, no API key required.
+      baseRef.current = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+          maxZoom: 19,
+          maxNativeZoom: 19,
+          attribution:
+            'Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+        }
+      );
+      if (view === 'hybrid') {
+        labelsRef.current = L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+          { maxZoom: 19, pane: 'overlayPane', attribution: 'Labels &copy; Esri' }
+        );
+      }
+    }
+
+    baseRef.current.addTo(map);
+    baseRef.current.setZIndex(0);
+    labelsRef.current?.addTo(map);
+  }, [view]);
+
 
   // Render markers whenever data / filter changes
   useEffect(() => {
@@ -171,7 +212,7 @@ export default function SiteMap({ sites }: { sites: any[] }) {
     const map = mapRef.current;
     const marker = markersRef.current[s.id];
     if (!map || !marker) return;
-    map.setView([s.latitude, s.longitude], 15, { animate: true });
+    map.setView([s.latitude, s.longitude], 18, { animate: true });
     marker.openPopup();
   };
 
@@ -186,14 +227,34 @@ export default function SiteMap({ sites }: { sites: any[] }) {
             {filtered.length} of {allSites.length} site{allSites.length === 1 ? '' : 's'} with valid coordinates
           </p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by Site ID or Site Name"
-            className="pl-9"
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs">
+            {([
+              ['satellite', 'Satellite'],
+              ['hybrid', 'Hybrid'],
+              ['standard', 'Standard'],
+            ] as [BaseView, string][]).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  view === v ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by Site ID or Site Name"
+              className="pl-9"
+            />
+          </div>
         </div>
       </div>
 
@@ -201,12 +262,13 @@ export default function SiteMap({ sites }: { sites: any[] }) {
         <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
           <WifiOff className="h-3.5 w-3.5 shrink-0" />
           <span>
-            Showing site data from the last synchronisation
-            {cached.current?.at ? ` (${new Date(cached.current.at).toLocaleString()})` : ''}. Map tiles may be
-            unavailable while offline.
+            Offline — Showing Last Synchronized Site Data
+            {cached.current?.at ? ` (${new Date(cached.current.at).toLocaleString()})` : ''}. Satellite imagery is
+            only available for areas already viewed and cached while online.
           </span>
         </div>
       )}
+
 
       <Card className="overflow-hidden">
         <CardContent className="p-0">
