@@ -850,6 +850,105 @@ export default function RolloutDashboard() {
                     </div>
                   </section>
 
+                  {/* Extra Work / Unexpected Site Conditions — collapsed by default */}
+                  {(() => {
+                    const ew = ext.extra_work || {};
+                    return (
+                      <Collapsible open={extraOpen} onOpenChange={setExtraOpen} className="rounded-lg border">
+                        <CollapsibleTrigger asChild>
+                          <button type="button" className="w-full flex items-center justify-between gap-2 p-3 text-left">
+                            <span className="text-sm font-semibold text-primary flex items-center gap-2">
+                              <HardHat className="h-4 w-4" /> Extra Work / Unexpected Site Conditions
+                              {ew.submitted_at && (
+                                <Badge variant="outline" className="text-[10px]">{ew.status || 'Draft'}</Badge>
+                              )}
+                            </span>
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${extraOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="p-3 pt-0 space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label>Unexpected Site Condition</Label>
+                                <Select name="ew_condition" defaultValue={ew.unexpected_condition || 'None'}>
+                                  <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
+                                  <SelectContent>{unexpectedConditions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label>Extra Work Required?</Label>
+                                <Select name="ew_required" value={extraRequired} onValueChange={setExtraRequired}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Yes">Yes</SelectItem>
+                                    <SelectItem value="No">No</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {extraRequired === 'Yes' && (
+                              <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div className="space-y-1.5">
+                                    <Label>Type of Extra Work</Label>
+                                    <Select name="ew_type" defaultValue={ew.work_type || ''}>
+                                      <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                                      <SelectContent>{extraWorkTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label>Estimated Additional Cost</Label>
+                                    <Input name="ew_cost" type="number" step="0.01" min="0" placeholder="0.00" defaultValue={ew.estimated_cost || ''} />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label>Estimated Additional Duration (days)</Label>
+                                    <Input name="ew_duration" type="number" min="0" placeholder="0" defaultValue={ew.estimated_duration_days || ''} />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label>Extra Work Status</Label>
+                                    <Select name="ew_status" defaultValue={ew.status || 'Draft'}>
+                                      <SelectTrigger><SelectValue /></SelectTrigger>
+                                      <SelectContent>{extraWorkStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-1.5 md:col-span-2">
+                                    <Label>Description of Extra Work</Label>
+                                    <Textarea name="ew_description" rows={3} defaultValue={ew.description || ''} placeholder="Describe the unexpected condition and the additional work required..." />
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            <div className="space-y-1.5">
+                              <Label>Supporting Evidence / Documents <span className="text-xs text-muted-foreground">(photos, engineer or inspection reports — max 15MB each)</span></Label>
+                              <Input name="ew_documents" type="file" multiple accept=".pdf,.doc,.docx,image/jpeg,image/png" />
+                              {Array.isArray(ew.documents) && ew.documents.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {ew.documents.map((p: string, i: number) => (
+                                    <button key={p + i} type="button" onClick={() => handleDownload(p)} className="text-xs text-primary underline inline-flex items-center gap-1">
+                                      <Download className="h-3 w-3" /> {ew.document_metas?.[i]?.file_name || `Document ${i + 1}`}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {ew.submitted_at && (
+                              <p className="text-[11px] text-muted-foreground">
+                                Last submitted {new Date(ew.submitted_at).toLocaleString()}
+                                {ew.submitted_by ? ` by ${ew.submitted_by}` : ''} • sent to Admin Rollout Review.
+                              </p>
+                            )}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })()}
+
+
+
                   <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
                     <Button type="submit" className="flex-1 gradient-orange border-0 text-primary-foreground" disabled={saving || !canEdit}>
                       {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
