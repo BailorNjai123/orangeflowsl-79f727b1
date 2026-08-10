@@ -19,29 +19,73 @@ interface SiteDetailsViewProps {
   showExcelSubmission?: boolean;
 }
 
-const PROCUREMENT_PLANNING_GROUPS = PLANNING_FIELD_GROUPS.slice(0, 2);
+/** The three parameter sets Procurement receives — identical for manual Planning
+ * form entries and Excel uploads (both write to the same site record fields). */
+const PROCUREMENT_SECTIONS: { title: string; core?: string[]; fields: { key: string; label: string }[] }[] = [
+  {
+    title: 'Basic Site & Location',
+    core: ['site_id_code', 'site_name', 'latitude', 'longitude', 'dimensions'],
+    fields: [
+      { key: 'site_id_code', label: 'Site ID Code' },
+      { key: 'site_name', label: 'Site Name' },
+      { key: 'region', label: 'Region' },
+      { key: 'district', label: 'District' },
+      { key: 'chiefdom', label: 'Chiefdom' },
+      { key: 'town', label: 'Town / City / Location' },
+      { key: 'location_updated', label: 'Location Updated' },
+      { key: 'latitude', label: 'Latitude' },
+      { key: 'longitude', label: 'Longitude' },
+      { key: 'elevation', label: 'Elevation (m)' },
+      { key: 'dimensions', label: 'Dimensions (m)' },
+      { key: 'distance_nearest_bts', label: 'Distance from Nearest BTS (km)' },
+    ],
+  },
+  {
+    title: 'Governance',
+    fields: [
+      { key: 'owner_sharing_status', label: 'Owner / Site Sharing Status' },
+      { key: 'site_classification', label: 'Site Classification' },
+      { key: 'natca_classification', label: 'NAtCa Sites Classification' },
+    ],
+  },
+  {
+    title: 'Classification',
+    fields: [
+      { key: 'site_type', label: 'Site Type' },
+      { key: 'technology_classification', label: 'Technology Classification' },
+    ],
+  },
+];
 
 /** Approved Planning fields shared with Procurement. The original workbook and
  * all technical worksheets/parameters are deliberately excluded. */
 export function ProcurementPlanningDetails({ site }: { site: any }) {
   const { extended } = parsePlanningNotes(site?.notes);
-  const merged: Record<string, any> = { ...(site || {}), ...(extended || {}) };
+  const merged: Record<string, any> = { ...(extended || {}), ...(site || {}) };
+  // Native columns win only when populated; otherwise fall back to extracted values.
+  Object.entries(extended || {}).forEach(([k, v]) => {
+    if (merged[k] === null || merged[k] === undefined || merged[k] === '') merged[k] = v;
+  });
 
   return (
     <div className="space-y-4">
-      {PROCUREMENT_PLANNING_GROUPS.map(group => {
-        const rows = group.fields
-          .map(field => ({ label: field.label, value: formatPlanningValue(merged[field.key]) }))
-          .filter(row => row.value !== null);
+      {PROCUREMENT_SECTIONS.map(section => {
+        const rows = section.fields
+          .map(field => ({
+            label: field.label,
+            value: formatPlanningValue(merged[field.key]),
+            core: section.core?.includes(field.key),
+          }))
+          .filter(row => row.value !== null || row.core);
         if (!rows.length) return null;
         return (
-          <div key={group.title}>
+          <div key={section.title}>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-              {group.title === 'Basic Site & Location' ? <MapPin className="h-3.5 w-3.5" /> : <ListChecks className="h-3.5 w-3.5" />}
-              {group.title}
+              {section.title === 'Basic Site & Location' ? <MapPin className="h-3.5 w-3.5" /> : <ListChecks className="h-3.5 w-3.5" />}
+              {section.title}
             </h4>
             <div className="rounded-lg border bg-card p-3">
-              {rows.map(row => <DetailRow key={row.label} label={row.label} value={row.value} />)}
+              {rows.map(row => <AlwaysShowRow key={row.label} label={row.label} value={row.value} />)}
             </div>
           </div>
         );
@@ -49,6 +93,8 @@ export function ProcurementPlanningDetails({ site }: { site: any }) {
     </div>
   );
 }
+
+
 
 function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   if (value === null || value === undefined || value === '') return null;

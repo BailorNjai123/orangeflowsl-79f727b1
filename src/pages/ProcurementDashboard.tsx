@@ -425,6 +425,14 @@ export default function ProcurementDashboard() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm">Planning Parameters Received</CardTitle></CardHeader>
+            <CardContent>
+              <ProcurementPlanningDetails site={formSite} />
+            </CardContent>
+          </Card>
+
+
           {procSections.map((section, si) => (
             <Card key={section.title} className={`border-l-4 ${section.color}`}>
               <CardHeader className="pb-3">
