@@ -429,7 +429,92 @@ export default function PlanningDashboard() {
     </div>
   );
 
+  const renderExcelUpload = () => {
+    const labelFor = (k: string) => EXCEL_FIELDS.find(f => f.key === k)?.label || k;
+    const cats: { id: 'basic'|'governance'|'classification'; title: string }[] = [
+      { id: 'basic', title: 'Basic Site & Location' },
+      { id: 'governance', title: 'Governance' },
+      { id: 'classification', title: 'Classification' },
+    ];
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Upload className="h-4 w-4 text-primary" /> Upload Planning Excel File
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Upload the complete Planning workbook (.xlsx). Only Basic Site &amp; Location, Governance and
+            Classification data is extracted and shared with Procurement and the other dashboards — the full
+            workbook is stored and viewable in Planning Review.
+          </p>
+          <Input
+            type="file"
+            accept=".xlsx"
+            className="max-w-md text-xs"
+            onChange={e => { const f = e.target.files?.[0]; setExcelFile(f || null); if (f) analyseExcel(f); }}
+          />
+
+          {excelBusy && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing workbook…
+            </div>
+          )}
+
+          {excelResult && (
+            <div className="space-y-3">
+              {excelResult.errors.length > 0 && (
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 space-y-1">
+                  <p className="text-xs font-semibold text-destructive">Validation failed — no site record was created.</p>
+                  {excelResult.errors.map(e => <p key={e} className="text-xs text-destructive">• {e}</p>)}
+                </div>
+              )}
+
+              {excelResult.errors.length === 0 && (
+                <>
+                  <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+                    {cats.map(c => {
+                      const rows = EXCEL_FIELDS.filter(f => f.category === c.id && excelResult.values[f.key] !== undefined);
+                      if (!rows.length) return null;
+                      return (
+                        <div key={c.id}>
+                          <p className="text-[11px] font-semibold mb-1">{c.title}</p>
+                          {rows.map(f => (
+                            <div key={f.key} className="flex justify-between gap-2 py-1 border-b border-border/50 last:border-0">
+                              <span className="text-xs text-muted-foreground">{labelFor(f.key)}</span>
+                              <span className="text-xs font-medium text-right">
+                                {Array.isArray(excelResult.values[f.key]) ? excelResult.values[f.key].join(', ') : String(excelResult.values[f.key])}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    <p className="text-[11px] text-muted-foreground">
+                      Worksheets detected: {excelResult.sheets.join(', ')} — the complete file is stored unchanged.
+                    </p>
+                  </div>
+                  {excelResult.warnings.length > 0 && (
+                    <p className="text-[11px] text-warning">
+                      Not found in the workbook (optional): {excelResult.warnings.join(', ')}
+                    </p>
+                  )}
+                  <Button type="button" className="gradient-orange border-0 text-primary-foreground" onClick={submitExcel} disabled={excelBusy}>
+                    {excelBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                    Submit Excel Planning Data
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   const renderSubmitForm = () => (
+
     <div className="space-y-4 max-w-5xl">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg sm:text-xl font-bold">{editSite ? 'Update Planning Submission' : 'New Planning Submission'}</h2>
