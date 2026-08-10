@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineUpload, offlineWrite } from '@/lib/offline/outbox';
 
 const DATE_KEYS = ['po_date', 'expected_delivery_date', 'actual_delivery_date'];
 
@@ -133,17 +134,28 @@ export default function ProcurementDashboard() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from('procurement_feedback').insert({
-      site_id: selectedSite.id, user_id: user!.id, status, feedback_notes: feedbackNotes,
+    const { error, queued } = await offlineWrite({
+      type: 'procurement_feedback',
+      label: `Procurement feedback — ${selectedSite.site_id_code || selectedSite.site_name}`,
+      table: 'procurement_feedback',
+      operation: 'insert',
+      payload: { site_id: selectedSite.id, user_id: user!.id, status, feedback_notes: feedbackNotes },
+      siteIdCode: selectedSite.site_id_code || null,
+      siteRowId: selectedSite.id,
+      userId: user!.id,
+      role: 'procurement_team',
     });
     setSubmitting(false);
     if (!error) {
-      await supabase.from('activity_log').insert({
-        action: status === 'accepted' ? 'procurement_feedback_accepted' : 'procurement_feedback_rejected',
-        description: `Procurement ${status} site "${selectedSite.site_name}"`,
-        user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: selectedSite.id,
-      });
-      toast({ title: `Feedback submitted: ${status}` });
+      if (!queued) {
+        await supabase.from('activity_log').insert({
+          action: status === 'accepted' ? 'procurement_feedback_accepted' : 'procurement_feedback_rejected',
+          description: `Procurement ${status} site "${selectedSite.site_name}"`,
+          user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: selectedSite.id,
+        });
+      }
+      toast({ title: queued ? 'Feedback saved offline — pending sync' : `Feedback submitted: ${status}` });
+
       setSelectedSite(null); setFeedbackNotes(''); fetchData();
     } else toast({ variant: 'destructive', title: 'Error', description: error.message });
   };
@@ -168,7 +180,7 @@ export default function ProcurementDashboard() {
     }
     const ext = file.name.split('.').pop();
     const path = `${user!.id}/${siteId}/${key}_${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('procurement-documents').upload(path, file, { upsert: true });
+    const { error } = await offlineUpload('procurement-documents', path, file);
     if (error) {
       toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
       return null;
@@ -200,38 +212,54 @@ export default function ProcurementDashboard() {
       }
     }
 
-    const { error } = await supabase.from('procurement_submissions').insert({
-      site_id: formSite.id, submitted_by: user!.id,
-      ...formValues, ...mgmtPayload(mgmtValues), ...fileUrls,
-      notes: formNotes || null, status: 'pending',
+    const { error, queued } = await offlineWrite({
+      type: 'procurement_form',
+      label: `Procurement form — ${formSite.site_id_code || formSite.site_name}`,
+      table: 'procurement_submissions',
+      operation: 'insert',
+      payload: {
+        site_id: formSite.id, submitted_by: user!.id,
+        ...formValues, ...mgmtPayload(mgmtValues), ...fileUrls,
+        notes: formNotes || null, status: 'pending',
+      },
+      siteIdCode: formSite.site_id_code || null,
+      siteRowId: formSite.id,
+      userId: user!.id,
+      role: 'procurement_team',
     });
     setSubmitting(false);
     if (!error) {
-      await supabase.from('activity_log').insert({
-        action: 'procurement_submitted',
-        description: `Procurement form submitted for "${formSite.site_name}"`,
-        user_id: user!.id, user_name: profile?.full_name,
-        entity_type: 'procurement_submission', entity_id: formSite.id,
-      });
-      // Route the submission to both Admin (review) and Rollout (visibility)
-      const { data: recipients } = await supabase
-        .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
-      if (recipients?.length) {
-        const notify = async (roleName: string, link: string) => {
-          const ids = recipients.filter((r: any) => r.role === roleName).map((r: any) => r.user_id);
-          if (!ids.length) return;
-          await supabase.rpc('send_workflow_notification', {
-            _user_ids: ids,
-            _title: 'New procurement submission',
-            _message: `Procurement form submitted for "${formSite.site_name}".`,
-            _type: 'info',
-            _link: link,
-          });
-        };
-        await notify('rollout_team', '/rollout');
-        await notify('project_team', '/admin');
+      if (!queued) {
+        await supabase.from('activity_log').insert({
+          action: 'procurement_submitted',
+          description: `Procurement form submitted for "${formSite.site_name}"`,
+          user_id: user!.id, user_name: profile?.full_name,
+          entity_type: 'procurement_submission', entity_id: formSite.id,
+        });
+        // Route the submission to both Admin (review) and Rollout (visibility)
+        const { data: recipients } = await supabase
+          .from('user_roles').select('user_id, role').in('role', ['rollout_team', 'project_team']);
+        if (recipients?.length) {
+          const notify = async (roleName: string, link: string) => {
+            const ids = recipients.filter((r: any) => r.role === roleName).map((r: any) => r.user_id);
+            if (!ids.length) return;
+            await supabase.rpc('send_workflow_notification', {
+              _user_ids: ids,
+              _title: 'New procurement submission',
+              _message: `Procurement form submitted for "${formSite.site_name}".`,
+              _type: 'info',
+              _link: link,
+            });
+          };
+          await notify('rollout_team', '/rollout');
+          await notify('project_team', '/admin');
+        }
       }
-      toast({ title: 'Procurement form submitted to Admin & Rollout!' });
+      toast({
+        title: queued ? 'Saved offline — pending sync' : 'Procurement form submitted to Admin & Rollout!',
+        description: queued ? 'Documents are stored on this device and will upload automatically when the connection returns.' : undefined,
+      });
+
       setFormSite(null); fetchData();
 
     } else toast({ variant: 'destructive', title: 'Error', description: error.message });

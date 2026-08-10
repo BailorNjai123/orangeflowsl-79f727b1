@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { parsePlanningNotes, buildPlanningNotes } from '@/lib/planningNotes';
 import { readWorkbook, extractPlanningFromWorkbook, validateExtracted, EXCEL_FIELDS } from '@/lib/planningExcel';
+import { offlineUpload, offlineWrite, isOnline } from '@/lib/offline/outbox';
 
 
 
@@ -233,13 +234,15 @@ export default function PlanningDashboard() {
       const v = excelResult.values;
       const code = String(v.site_id_code);
 
-      // Store the complete original workbook untouched.
+      // Store the complete original workbook untouched (locally when offline).
       const path = `${user.id}/excel/${Date.now()}_${excelFile.name.replace(/[^\w.\-]+/g, '_')}`;
-      const { error: upErr } = await supabase.storage.from('site-documents').upload(path, excelFile, { upsert: true });
+      const { error: upErr } = await offlineUpload('site-documents', path, excelFile);
       if (upErr) { toast({ variant: 'destructive', title: 'Upload failed', description: upErr.message }); return; }
 
       // Site ID is the primary identifier — update instead of duplicating.
-      const { data: existing } = await supabase.from('sites').select('*').eq('site_id_code', code).maybeSingle();
+      const existing = isOnline()
+        ? (await supabase.from('sites').select('*').eq('site_id_code', code).maybeSingle()).data
+        : (sites.find(s => s.site_id_code === code) as any) || null;
 
       const prevExtended = existing ? parsePlanningNotes((existing as any).notes).extended : {};
       const prevText = existing ? parsePlanningNotes((existing as any).notes).text : '';
@@ -266,18 +269,33 @@ export default function PlanningDashboard() {
       };
       native.notes = buildPlanningNotes(prevText, extended);
 
-      const { error } = existing
-        ? await supabase.from('sites').update(native as any).eq('id', (existing as any).id)
-        : await supabase.from('sites').insert(native as any);
+      const { error, queued } = await offlineWrite({
+        type: 'planning_excel',
+        label: `Planning Excel upload — ${code}`,
+        table: 'sites',
+        operation: 'upsert',
+        match: { column: 'site_id_code', value: code },
+        payload: native,
+        siteIdCode: code,
+        siteRowId: (existing as any)?.id ?? null,
+        userId: user.id,
+        role: 'planning_team',
+        baseUpdatedAt: (existing as any)?.updated_at ?? null,
+      });
       if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
 
       toast({
-        title: existing ? `Site ${code} updated from Excel` : `Site ${code} created from Excel`,
-        description: 'Basic, Governance and Classification data propagated downstream. Full workbook stored for Planning Review.',
+        title: queued
+          ? `Saved offline — Site ${code} pending sync`
+          : existing ? `Site ${code} updated from Excel` : `Site ${code} created from Excel`,
+        description: queued
+          ? 'The workbook and extracted parameters are stored on this device and will upload automatically when the connection returns.'
+          : 'Basic, Governance and Classification data propagated downstream. Full workbook stored for Planning Review.',
       });
       setExcelFile(null); setExcelResult(null);
       fetchSites();
       setActiveTab('submissions');
+
     } finally {
       setExcelBusy(false);
     }
@@ -324,7 +342,7 @@ export default function PlanningDashboard() {
       if (!file || file.size === 0) continue;
       const ext = file.name.split('.').pop();
       const path = `${user!.id}/${Date.now()}_${a.key}.${ext}`;
-      const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
+      const { error } = await offlineUpload('site-documents', path, file);
       if (error) { toast({ variant: 'destructive', title: `Upload failed (${a.label})`, description: error.message }); continue; }
       out[a.key] = path;
     }
@@ -362,12 +380,27 @@ export default function PlanningDashboard() {
     if (!payload.district) payload.district = 'Western Area Urban';
     if (!payload.town) payload.town = payload.site_name;
 
-    const { error } = editSite
-      ? await supabase.from('sites').update(payload as any).eq('id', editSite.id)
-      : await supabase.from('sites').insert(payload as any);
+    const code = String(payload.site_id_code || editSite?.site_id_code || '');
+    const { error, queued } = await offlineWrite({
+      type: 'planning_form',
+      label: `Planning form — ${code || 'new site'}`,
+      table: 'sites',
+      operation: editSite ? 'update' : 'insert',
+      match: code ? { column: 'site_id_code', value: code } : null,
+      payload,
+      siteIdCode: code || null,
+      siteRowId: editSite?.id ?? null,
+      userId: user.id,
+      role: 'planning_team',
+      baseUpdatedAt: (editSite as any)?.updated_at ?? null,
+    });
     setSubmitting(false);
     if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
-    toast({ title: asDraft ? 'Draft saved' : (editSite ? 'Submission updated' : 'Submitted for review') });
+    toast({
+      title: queued ? 'Saved offline — pending sync' : (asDraft ? 'Draft saved' : (editSite ? 'Submission updated' : 'Submitted for review')),
+      description: queued ? 'Your submission and attachments are stored on this device and will sync automatically.' : undefined,
+    });
+
     setEditSite(null); setForm(emptyState); setFiles({}); fetchSites();
     if (!asDraft) setActiveTab('submissions');
   };

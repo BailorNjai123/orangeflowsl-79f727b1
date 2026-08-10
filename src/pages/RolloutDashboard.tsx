@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineUpload, offlineWrite } from '@/lib/offline/outbox';
 import { getSignedUrl, openFileInNewTab } from '@/lib/storageUtils';
 import ProcurementManagementView, { procurementStatusBadge } from '@/components/ProcurementManagement';
 import RolloutProcurementReadiness, { RolloutReadinessTracker } from '@/components/RolloutProcurementReadiness';
@@ -238,14 +239,32 @@ export default function RolloutDashboard() {
     if (decision === 'accepted' && !rollout.status) rollout.status = 'Pending Deployment';
     if (decision === 'rejected') rollout.status = 'Handover Rejected';
 
-    const { error } = await supabase.from('sites').update({
-      review_notes: JSON.stringify({ ...(rawNotesObj(feedbackSite) || {}), ...ext, feedback, rollout }),
-    }).eq('id', feedbackSite.id);
+    const { error, queued } = await offlineWrite({
+      type: 'rollout_feedback',
+      label: `Site handover feedback — ${feedbackSite.site_id_code || feedbackSite.site_name}`,
+      table: 'sites',
+      operation: 'update',
+      match: { column: 'id', value: feedbackSite.id },
+      payload: { review_notes: JSON.stringify({ ...(rawNotesObj(feedbackSite) || {}), ...ext, feedback, rollout }) },
+      siteIdCode: feedbackSite.site_id_code || null,
+      siteRowId: feedbackSite.id,
+      userId: user!.id,
+      role: 'rollout_team',
+      baseUpdatedAt: (feedbackSite as any)?.updated_at ?? null,
+    });
     if (error) {
       setFeedbackSaving(false);
       toast({ variant: 'destructive', title: 'Error', description: error.message });
       return;
     }
+    if (queued) {
+      setFeedbackSaving(false);
+      setFeedbackSite(null);
+      setFeedbackText('');
+      toast({ title: 'Feedback saved offline — pending sync' });
+      return;
+    }
+
 
     // Notify procurement team members
     const { data: procUsers } = await supabase
@@ -308,7 +327,7 @@ export default function RolloutDashboard() {
     }
     const ext = file.name.split('.').pop();
     const path = `rollout/${siteId}/${Date.now()}_${key}.${ext}`;
-    const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
+    const { error } = await offlineUpload('site-documents', path, file);
     if (error) { toast({ variant: 'destructive', title: `Upload failed (${key})`, description: error.message }); return null; }
     return path;
   };
@@ -435,12 +454,32 @@ export default function RolloutDashboard() {
       if (k !== 'power_rfi') updates[k] = enforcedMilestones[k] || 'Not Started';
     });
 
-    const { error } = await supabase.from('sites').update(updates).eq('id', editSite.id);
+    const { error, queued } = await offlineWrite({
+      type: 'rollout_form',
+      label: `Rollout form — ${editSite.site_id_code || editSite.site_name}`,
+      table: 'sites',
+      operation: 'update',
+      match: { column: 'id', value: editSite.id },
+      payload: updates,
+      siteIdCode: editSite.site_id_code || null,
+      siteRowId: editSite.id,
+      userId: user!.id,
+      role: 'rollout_team',
+      baseUpdatedAt: (editSite as any)?.updated_at ?? null,
+    });
     setSaving(false);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
       return;
     }
+    if (queued) {
+      toast({
+        title: 'Saved offline — pending sync',
+        description: 'Rollout data, extra work details and photos are stored on this device and will sync automatically.',
+      });
+      return;
+    }
+
     await supabase.from('activity_log').insert({
       action: 'rollout_updated',
       description: `Rollout progress updated for "${editSite.site_name}" (${pct}%)`,

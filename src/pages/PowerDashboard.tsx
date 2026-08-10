@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineUpload, offlineWrite } from '@/lib/offline/outbox';
 import { openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 
 const navItems = [
@@ -173,7 +174,7 @@ export default function PowerDashboard() {
     if (!file || file.size === 0) return null;
     const ext = file.name.split('.').pop();
     const path = `power/${siteId}/${Date.now()}_${key}.${ext}`;
-    const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
+    const { error } = await offlineUpload('site-documents', path, file);
     if (error) { toast({ variant: 'destructive', title: `Upload failed (${key})`, description: error.message }); return null; }
     return {
       path,
@@ -258,12 +259,31 @@ export default function PowerDashboard() {
       updates.progress_percent = Math.round((done / milestoneCols.length) * 100);
     }
 
-    const { error } = await supabase.from('sites').update(updates).eq('id', editSite.id);
+    const { error, queued } = await offlineWrite({
+      type: 'power_form',
+      label: `Power record — ${editSite.site_id_code || editSite.site_name}`,
+      table: 'sites',
+      operation: 'update',
+      match: { column: 'id', value: editSite.id },
+      payload: updates,
+      siteIdCode: editSite.site_id_code || null,
+      siteRowId: editSite.id,
+      userId: user?.id ?? null,
+      role: 'power_team',
+      baseUpdatedAt: (editSite as any)?.updated_at ?? null,
+    });
     setSaving(false);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
       return;
     }
+    if (queued) {
+      toast({ title: 'Saved offline — pending sync', description: 'Power data and documents will upload automatically when the connection returns.' });
+      setEditSite(null);
+      fetchData();
+      return;
+    }
+
 
     await supabase.from('activity_log').insert({
       action: justCompleted ? 'power_rfi_completed' : 'power_updated',
