@@ -180,7 +180,7 @@ function PlanningParameters({ site }: { site: any }) {
   );
 }
 
-export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }: SiteDetailsViewProps) {
+export default function SiteDetailsView({ site, allowFileManage, onFileUpdated, showExcelSubmission = true }: SiteDetailsViewProps) {
   const excelMeta = parsePlanningNotes(site?.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined;
 
   return (
