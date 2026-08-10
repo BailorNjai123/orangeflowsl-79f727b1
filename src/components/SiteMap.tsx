@@ -45,12 +45,17 @@ const num = (v: any): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+type BaseView = 'satellite' | 'hybrid' | 'standard';
+
 export default function SiteMap({ sites }: { sites: any[] }) {
   const [query, setQuery] = useState('');
+  const [view, setView] = useState<BaseView>('satellite');
   const [offline, setOffline] = useState(!navigator.onLine);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
+  const baseRef = useRef<L.TileLayer | null>(null);
+  const labelsRef = useRef<L.TileLayer | null>(null);
   const markersRef = useRef<Record<string, L.Marker>>({});
 
   useEffect(() => {
