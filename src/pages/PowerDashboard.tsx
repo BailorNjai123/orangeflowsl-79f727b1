@@ -259,12 +259,31 @@ export default function PowerDashboard() {
       updates.progress_percent = Math.round((done / milestoneCols.length) * 100);
     }
 
-    const { error } = await supabase.from('sites').update(updates).eq('id', editSite.id);
+    const { error, queued } = await offlineWrite({
+      type: 'power_form',
+      label: `Power record — ${editSite.site_id_code || editSite.site_name}`,
+      table: 'sites',
+      operation: 'update',
+      match: { column: 'id', value: editSite.id },
+      payload: updates,
+      siteIdCode: editSite.site_id_code || null,
+      siteRowId: editSite.id,
+      userId: user?.id ?? null,
+      role: 'power_team',
+      baseUpdatedAt: (editSite as any)?.updated_at ?? null,
+    });
     setSaving(false);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
       return;
     }
+    if (queued) {
+      toast({ title: 'Saved offline — pending sync', description: 'Power data and documents will upload automatically when the connection returns.' });
+      setEditSite(null);
+      fetchData();
+      return;
+    }
+
 
     await supabase.from('activity_log').insert({
       action: justCompleted ? 'power_rfi_completed' : 'power_updated',
