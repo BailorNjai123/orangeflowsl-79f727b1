@@ -250,7 +250,7 @@ CREATE POLICY "admin updates any site" ON public.sites
               ['T-03', 'Site Submission', 'Valid form for SL-FT-001', 'Row inserted, status=pending', 'Row present', 'Pass'],
               ['T-04', 'Procurement Checklist', '9 items toggled, PDF uploaded', 'feedback row + signed URL', 'Verified', 'Pass'],
               ['T-05', 'Approval', 'Admin approves SL-KEN-019', 'sites.status=approved', 'approved', 'Pass'],
-              ['T-06', 'Offline Queue', 'Insert while offline, then reconnect', 'Queued entry replayed', 'Replayed 1 entry', 'Pass'],
+              ['T-06', 'Offline Outbox', 'Submit offline with attachment, then reconnect', 'Record and file replayed once, matched by Site ID', 'Replayed, no duplicate', 'Pass'],
               ['T-07', 'Auto-refresh', 'Wait 30 s on dashboard', 'Queries revalidated', 'Refetch observed', 'Pass'],
               ['T-08', 'Audit Log', 'Any approval/rejection', 'Row appended to activity_log', 'Appended', 'Pass'],
               ['T-09', 'Signed URL', 'Request bid pack after 1h', 'URL expired, re-mint required', 'Expired as expected', 'Pass'],
