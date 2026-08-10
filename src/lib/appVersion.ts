@@ -75,6 +75,7 @@ export function initVersionChecker() {
   let latestKnown = APP_VERSION;
 
   const check = async () => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
     const remote = await fetchRemoteVersion();
     if (!remote) return;
     if (remote !== latestKnown && remote !== APP_VERSION) {
