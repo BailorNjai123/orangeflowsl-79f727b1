@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 import { cleanNote, parsePlanningNotes } from '@/lib/planningNotes';
 import { PLANNING_FIELD_GROUPS, formatPlanningValue, isKnownPlanningKey, prettifyKey } from '@/lib/planningFieldLabels';
+import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
+
 
 import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock, ListChecks } from 'lucide-react';
 
