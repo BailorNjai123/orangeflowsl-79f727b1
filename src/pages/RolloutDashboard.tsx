@@ -130,6 +130,11 @@ export default function RolloutDashboard() {
   const [milestones, setMilestones] = useState<Record<string, string>>({});
   const [formKey, setFormKey] = useState(0);
 
+  // Extra Work / Unexpected Site Conditions (additive, collapsed by default)
+  const [extraOpen, setExtraOpen] = useState(false);
+  const [extraRequired, setExtraRequired] = useState('No');
+
+
 
   const { user, profile, role } = useAuth();
   const { toast } = useToast();
