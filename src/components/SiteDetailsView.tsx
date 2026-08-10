@@ -294,7 +294,14 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated, 
       <PlanningParameters site={site} />
 
       {/* Original Planning Excel submission — full workbook view + download */}
-      {excelMeta?.path && <ExcelSubmissionView meta={excelMeta} />}
+      {showExcelSubmission && excelMeta?.path && (
+        <ExcelSubmissionView
+          meta={excelMeta}
+          siteIdCode={site.site_id_code}
+          submittedAt={site.created_at}
+          submittedByName={site.profiles?.full_name || site.submitted_by_name}
+        />
+      )}
 
 
 
