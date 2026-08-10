@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineUpload, offlineWrite } from '@/lib/offline/outbox';
 
 const DATE_KEYS = ['po_date', 'expected_delivery_date', 'actual_delivery_date'];
 
@@ -168,7 +169,7 @@ export default function ProcurementDashboard() {
     }
     const ext = file.name.split('.').pop();
     const path = `${user!.id}/${siteId}/${key}_${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('procurement-documents').upload(path, file, { upsert: true });
+    const { error } = await offlineUpload('procurement-documents', path, file);
     if (error) {
       toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
       return null;

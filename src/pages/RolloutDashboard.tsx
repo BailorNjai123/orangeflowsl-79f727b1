@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineUpload, offlineWrite } from '@/lib/offline/outbox';
 import { getSignedUrl, openFileInNewTab } from '@/lib/storageUtils';
 import ProcurementManagementView, { procurementStatusBadge } from '@/components/ProcurementManagement';
 import RolloutProcurementReadiness, { RolloutReadinessTracker } from '@/components/RolloutProcurementReadiness';
@@ -308,7 +309,7 @@ export default function RolloutDashboard() {
     }
     const ext = file.name.split('.').pop();
     const path = `rollout/${siteId}/${Date.now()}_${key}.${ext}`;
-    const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
+    const { error } = await offlineUpload('site-documents', path, file);
     if (error) { toast({ variant: 'destructive', title: `Upload failed (${key})`, description: error.message }); return null; }
     return path;
   };

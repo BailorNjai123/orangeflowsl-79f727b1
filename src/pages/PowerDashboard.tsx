@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineUpload, offlineWrite } from '@/lib/offline/outbox';
 import { openFileInNewTab, downloadFile } from '@/lib/storageUtils';
 
 const navItems = [
@@ -173,7 +174,7 @@ export default function PowerDashboard() {
     if (!file || file.size === 0) return null;
     const ext = file.name.split('.').pop();
     const path = `power/${siteId}/${Date.now()}_${key}.${ext}`;
-    const { error } = await supabase.storage.from('site-documents').upload(path, file, { upsert: true });
+    const { error } = await offlineUpload('site-documents', path, file);
     if (error) { toast({ variant: 'destructive', title: `Upload failed (${key})`, description: error.message }); return null; }
     return {
       path,
