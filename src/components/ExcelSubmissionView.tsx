@@ -29,11 +29,13 @@ export default function ExcelSubmissionView({
   siteIdCode,
   submittedByName,
   submittedAt,
+  compact = false,
 }: {
   meta: ExcelSubmissionMeta;
   siteIdCode?: string;
   submittedByName?: string;
   submittedAt?: string;
+  compact?: boolean;
 }) {
   const [downloading, setDownloading] = useState(false);
 
@@ -44,6 +46,26 @@ export default function ExcelSubmissionView({
   };
 
   const date = meta.uploaded_at || submittedAt;
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border bg-muted/40 p-2">
+        <div className="rounded bg-primary/10 p-1.5 shrink-0">
+          <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium truncate">{meta.name || meta.path.split('/').pop()}</p>
+          <p className="text-[11px] text-muted-foreground">
+            Excel (.xlsx){formatSize(meta.size) ? ` · ${formatSize(meta.size)}` : ''}
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={handleDownload} disabled={downloading} className="shrink-0 h-8">
+          {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+          <span className="ml-1.5 hidden sm:inline">Download</span>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div>
