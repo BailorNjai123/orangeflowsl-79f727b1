@@ -172,14 +172,21 @@ export default function RolloutDashboard() {
   // Statuses at which Procurement releases a site to Rollout
   const RELEASED = ['Ready for Handover', 'Handed Over to Rollout', 'Completed'];
 
+  // Placeholder / empty planning drafts must never reach Rollout — they carry no
+  // usable parameters and render as a blank details panel.
+  const isPlaceholder = (s: SiteRow) =>
+    /^DRAFT-\d+$/i.test(String(s.site_id_code || '')) ||
+    (!s.latitude && !s.longitude && (!s.town || s.town === '—') && !s.tower_height);
+
   // Any site with a submitted Procurement form reaches Rollout (Site Feedback
   // + Rollout Form). Released records are simply prioritised in the list.
   const handoverPool = useMemo(
     () => sites
       .filter(s => {
         const sub = procSubs[s.id];
-        return !!sub && s.status !== 'rejected';
+        return !!sub && s.status !== 'rejected' && !isPlaceholder(s);
       })
+
       .sort((a, b) => {
         const sa = procSubs[a.id], sb = procSubs[b.id];
         const rank = (x: any) =>

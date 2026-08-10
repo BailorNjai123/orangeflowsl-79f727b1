@@ -343,15 +343,17 @@ export default function PlanningDashboard() {
     if (!asDraft) {
       const { ok, missing } = validateSchema();
       if (!ok) { toast({ variant: 'destructive', title: 'Cannot submit', description: `Missing: ${missing.slice(0, 4).join(', ')}` }); return; }
+    } else if (!String(form.site_id_code || '').trim() || !String(form.site_name || '').trim()) {
+      toast({ variant: 'destructive', title: 'Cannot save draft', description: 'Enter at least the Site ID Code and Site Name so downstream teams see real data.' });
+      return;
     }
     setSubmitting(true);
     const uploaded = await uploadAttachments();
     const payload = { ...buildPayload('pending'), ...uploaded };
-    if (!payload.site_id_code) payload.site_id_code = `DRAFT-${Date.now()}`;
-    if (!payload.site_name) payload.site_name = payload.site_id_code;
     if (!payload.region) payload.region = 'Western Area';
     if (!payload.district) payload.district = 'Western Area Urban';
-    if (!payload.town) payload.town = '—';
+    if (!payload.town) payload.town = payload.site_name;
+
     const { error } = editSite
       ? await supabase.from('sites').update(payload as any).eq('id', editSite.id)
       : await supabase.from('sites').insert(payload as any);
