@@ -17,6 +17,8 @@ interface SiteDetailsViewProps {
   onFileUpdated?: () => void;
   /** Procurement must not see the raw Planning workbook — only the usual parameters. */
   showExcelSubmission?: boolean;
+  /** Admin only — allows permanently deleting the uploaded Planning Excel file. */
+  allowExcelDelete?: boolean;
 }
 
 /** The three parameter sets Procurement receives — identical for manual Planning
