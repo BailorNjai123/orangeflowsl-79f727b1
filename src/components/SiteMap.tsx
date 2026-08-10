@@ -212,7 +212,7 @@ export default function SiteMap({ sites }: { sites: any[] }) {
     const map = mapRef.current;
     const marker = markersRef.current[s.id];
     if (!map || !marker) return;
-    map.setView([s.latitude, s.longitude], 15, { animate: true });
+    map.setView([s.latitude, s.longitude], 18, { animate: true });
     marker.openPopup();
   };
 
@@ -227,14 +227,34 @@ export default function SiteMap({ sites }: { sites: any[] }) {
             {filtered.length} of {allSites.length} site{allSites.length === 1 ? '' : 's'} with valid coordinates
           </p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by Site ID or Site Name"
-            className="pl-9"
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs">
+            {([
+              ['satellite', 'Satellite'],
+              ['hybrid', 'Hybrid'],
+              ['standard', 'Standard'],
+            ] as [BaseView, string][]).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  view === v ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by Site ID or Site Name"
+              className="pl-9"
+            />
+          </div>
         </div>
       </div>
 
@@ -242,12 +262,13 @@ export default function SiteMap({ sites }: { sites: any[] }) {
         <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
           <WifiOff className="h-3.5 w-3.5 shrink-0" />
           <span>
-            Showing site data from the last synchronisation
-            {cached.current?.at ? ` (${new Date(cached.current.at).toLocaleString()})` : ''}. Map tiles may be
-            unavailable while offline.
+            Offline — Showing Last Synchronized Site Data
+            {cached.current?.at ? ` (${new Date(cached.current.at).toLocaleString()})` : ''}. Satellite imagery is
+            only available for areas already viewed and cached while online.
           </span>
         </div>
       )}
+
 
       <Card className="overflow-hidden">
         <CardContent className="p-0">
