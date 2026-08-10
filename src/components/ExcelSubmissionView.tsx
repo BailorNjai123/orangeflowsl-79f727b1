@@ -8,6 +8,7 @@ export interface ExcelSubmissionMeta {
   name?: string;
   uploaded_at?: string;
   size?: number;
+  submitted_by_name?: string;
 }
 
 const BUCKET = 'site-documents';
