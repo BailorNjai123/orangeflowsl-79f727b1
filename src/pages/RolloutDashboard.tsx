@@ -239,14 +239,32 @@ export default function RolloutDashboard() {
     if (decision === 'accepted' && !rollout.status) rollout.status = 'Pending Deployment';
     if (decision === 'rejected') rollout.status = 'Handover Rejected';
 
-    const { error } = await supabase.from('sites').update({
-      review_notes: JSON.stringify({ ...(rawNotesObj(feedbackSite) || {}), ...ext, feedback, rollout }),
-    }).eq('id', feedbackSite.id);
+    const { error, queued } = await offlineWrite({
+      type: 'rollout_feedback',
+      label: `Site handover feedback — ${feedbackSite.site_id_code || feedbackSite.site_name}`,
+      table: 'sites',
+      operation: 'update',
+      match: { column: 'id', value: feedbackSite.id },
+      payload: { review_notes: JSON.stringify({ ...(rawNotesObj(feedbackSite) || {}), ...ext, feedback, rollout }) },
+      siteIdCode: feedbackSite.site_id_code || null,
+      siteRowId: feedbackSite.id,
+      userId: user!.id,
+      role: 'rollout_team',
+      baseUpdatedAt: (feedbackSite as any)?.updated_at ?? null,
+    });
     if (error) {
       setFeedbackSaving(false);
       toast({ variant: 'destructive', title: 'Error', description: error.message });
       return;
     }
+    if (queued) {
+      setFeedbackSaving(false);
+      setFeedbackSite(null);
+      setFeedbackText('');
+      toast({ title: 'Feedback saved offline — pending sync' });
+      return;
+    }
+
 
     // Notify procurement team members
     const { data: procUsers } = await supabase
