@@ -563,8 +563,11 @@ export default function PlanningDashboard() {
           </Button>
         </CardContent>
       </Card>
+
+      </>)}
     </div>
   );
+
 
 
   const renderSubmissions = () => (
