@@ -42,6 +42,8 @@ const App = () => (
         <Sonner />
         <SyncManager />
         <InstallPrompt />
+        <SyncStatusIndicator />
+
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
