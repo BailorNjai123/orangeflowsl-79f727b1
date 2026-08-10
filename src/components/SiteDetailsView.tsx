@@ -4,6 +4,8 @@ import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from
 import { cleanNote, parsePlanningNotes } from '@/lib/planningNotes';
 import { PLANNING_FIELD_GROUPS, formatPlanningValue, isKnownPlanningKey, prettifyKey } from '@/lib/planningFieldLabels';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
+import { deleteExcelSubmission } from '@/lib/deleteExcelSubmission';
+import { toast } from '@/hooks/use-toast';
 
 
 import { FileDown, MapPin, Radio, Calendar, User, Trash2, Upload, ExternalLink, Clock, ListChecks } from 'lucide-react';
@@ -259,7 +261,7 @@ function PlanningParameters({ site }: { site: any }) {
   );
 }
 
-export default function SiteDetailsView({ site, allowFileManage, onFileUpdated, showExcelSubmission = true }: SiteDetailsViewProps) {
+export default function SiteDetailsView({ site, allowFileManage, onFileUpdated, showExcelSubmission = true, allowExcelDelete = false }: SiteDetailsViewProps) {
   const excelMeta = parsePlanningNotes(site?.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined;
 
   return (
@@ -380,6 +382,16 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated, 
             siteIdCode={site.site_id_code}
             submittedAt={excelMeta.uploaded_at || site.created_at}
             submittedByName={excelMeta.submitted_by_name || site.profiles?.full_name || site.submitted_by_name}
+            allowDelete={allowExcelDelete}
+            onDelete={async () => {
+              const { error } = await deleteExcelSubmission(site);
+              if (error) {
+                toast({ variant: 'destructive', title: 'Delete failed', description: error });
+              } else {
+                toast({ title: 'Excel submission deleted' });
+                onFileUpdated?.();
+              }
+            }}
           />
         </div>
       )}

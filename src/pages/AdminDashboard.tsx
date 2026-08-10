@@ -563,6 +563,21 @@ export default function AdminDashboard() {
                       submittedAt={excelMeta.uploaded_at || site.created_at}
                       submittedByName={excelMeta.submitted_by_name}
                       compact
+                      allowDelete
+                      onDelete={async () => {
+                        const { error } = await deleteExcelSubmission(site);
+                        if (error) {
+                          toast({ variant: 'destructive', title: 'Delete failed', description: error });
+                          return;
+                        }
+                        await supabase.from('activity_log').insert({
+                          action: 'planning_excel_deleted',
+                          description: `Planning Excel file for site "${site.site_name}" was deleted`,
+                          user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: site.id,
+                        });
+                        toast({ title: 'Excel submission deleted' });
+                        fetchData();
+                      }}
                     />
                   </div>
                 ) : null;
