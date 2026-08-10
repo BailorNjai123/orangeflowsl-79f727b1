@@ -594,7 +594,7 @@ export default function AdminDashboard() {
           <DialogHeader><DialogTitle>{selectedSite?.site_name}</DialogTitle></DialogHeader>
           {selectedSite && (
             <div className="space-y-4">
-              <SiteDetailsView site={selectedSite} allowFileManage={true} onFileUpdated={fetchData} />
+              <SiteDetailsView site={selectedSite} allowFileManage={true} allowExcelDelete={true} onFileUpdated={fetchData} />
               {selectedSite.status === 'pending' && (
                 <div className="space-y-3 border-t pt-4">
                   <Label>Review Notes</Label>
