@@ -144,9 +144,10 @@ function PlanningParameters({ site }: { site: any }) {
     .filter(g => g.rows.length > 0);
 
   const extraRows = Object.entries(extended || {})
-    .filter(([k]) => !isKnownPlanningKey(k) && k !== 'planner_note')
+    .filter(([k, v]) => !isKnownPlanningKey(k) && k !== 'planner_note' && k !== 'excel_submission' && (typeof v !== 'object' || Array.isArray(v)))
     .map(([k, v]) => ({ label: prettifyKey(k), value: formatPlanningValue(v) }))
     .filter(r => r.value !== null);
+
 
   if (!groups.length && !extraRows.length) return null;
 
