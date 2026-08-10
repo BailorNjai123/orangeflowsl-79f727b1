@@ -407,9 +407,14 @@ Consolidated test log referenced in Chapter Four (representative entries; full l
 | S-07 | Security | Malformed payload sent to `manage-users` | HTTP 422 with Zod validation message | Pass |
 | S-08 | Security | Direct unauthenticated storage object request | Denied; only signed URLs succeed | Pass |
 | S-09 | Security | Power/Rollout attempt to update rejected site | Rejected by RLS | Pass |
-| O-01 | Offline | Submit Rollout form while offline | Action queued in IndexedDB | Pass |
-| O-02 | Offline | Reconnect after offline submission | Queued action replayed automatically, no duplication | Pass |
+| O-01 | Offline | Submit Rollout form while offline | Record written to IndexedDB outbox with status `pending` | Pass |
+| O-02 | Offline | Reconnect after offline submission | Record replayed automatically, matched by Site ID, no duplication | Pass |
 | O-03 | Offline | View previously loaded dashboard offline | Cached shell and data displayed | Pass |
+| O-06 | Offline | Upload Planning Excel workbook offline, then reconnect | Workbook stored as a Blob and later uploaded byte-identical | Pass |
+| O-07 | Offline | Submit Rollout Extra Work with photographs offline | Data and images synchronise into Project/Admin → Rollout Review | Pass |
+| O-08 | Offline | Close and reopen the browser with records queued | Outbox and attached files survive restart and synchronise | Pass |
+| O-09 | Offline | Central edit of a site while an offline edit is queued | Record flagged `conflict`; central data not overwritten | Pass |
+| O-10 | Offline | Synchronisation indicator through an offline-online cycle | Offline, Pending, Syncing and Synced states shown correctly | Pass |
 | O-04 | Synchronisation | Power RFI update observed on Rollout dashboard | Realtime update within seconds | Pass |
 | O-05 | Synchronisation | Realtime event missed (simulated drop) | TanStack Query 30 s poll recovers state | Pass |
 | C-01 | Cross-Browser | Site Monitor table on mobile viewport | No horizontal scroll, stacked cards | Pass (after remediation) |

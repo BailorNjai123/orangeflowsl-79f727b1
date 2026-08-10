@@ -14,7 +14,7 @@ The results presented in this chapter are drawn from three complementary evaluat
 |---|---|---|---|---|
 | Functional (Planning, Procurement, Power, Rollout, Admin) | 46 | 39 | 46 | 100% |
 | Security (RLS, role escalation, storage access, Edge Function authorisation) | 22 | 17 | 22 | 100% |
-| Offline / Synchronisation (queueing, replay, realtime propagation) | 14 | 11 | 14 | 100% |
+| Offline / Synchronisation (outbox durability, replay, duplicate and conflict handling, realtime propagation) | 20 | 16 | 20 | 100% |
 | Responsive / Cross-Browser (desktop, tablet, mobile, Chrome/Edge/Firefox/Safari) | 18 | 15 | 18 | 100% |
 | Usability (role-scoped walkthroughs with representative users) | 10 | 8 | 10 | 100% |
 | **Total** | **110** | **90 (81.8%)** | **110 (100%)** | **100%** |
