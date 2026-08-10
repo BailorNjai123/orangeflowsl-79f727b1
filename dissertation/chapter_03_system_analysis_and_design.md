@@ -126,7 +126,9 @@ The functional requirements set out in Table 3.2 was derived directly from the e
 | FR-33 | Admin | The system shall allow the Project team to create, edit, deactivate and delete user accounts, archiving deleted accounts for audit purposes. | Must |
 | FR-34 | Admin | The system shall present a chronological, immutable activity log of significant actions across the system. | Must |
 | FR-35 | Cross-cutting | The system shall send in-application notifications to relevant roles when a stage transition occurs. | Must |
-| FR-36 | Cross-cutting | The system shall function, with a reduced feature set, when the device is offline, queuing actions for later synchronisation. | Should |
+| FR-36 | Cross-cutting | The system shall remain fully operable for permitted data capture when the device is offline, durably storing submissions and their attached files locally and synchronising them automatically when connectivity returns, without loss or duplication. | Must |
+| FR-36a | Cross-cutting | The system shall detect a conflicting central modification of a record edited offline and flag it for review rather than overwriting it silently. | Must |
+| FR-36b | Cross-cutting | The system shall display the synchronisation state of offline submissions (offline, pending, synchronising, synchronised, failed, conflict) to the user. | Must |
 | FR-37 | Cross-cutting | The system shall be installable on desktop and mobile devices as a Progressive Web Application. | Could |
 
 ## 3.8 Non-Functional Requirements
@@ -142,7 +144,7 @@ Non-functional requirements were derived from operational concerns raised during
 | NFR-03 | Performance Efficiency | Cached query results shall be considered fresh for a short, bounded window to avoid redundant network calls. | Stale time of 10 seconds; up to 3 automatic retries on transient failure. |
 | NFR-04 | Compatibility | The application shall render correctly on common desktop and mobile browsers without horizontal scrolling on mobile. | Verified on target viewport widths down to 360px with no horizontal overflow. |
 | NFR-05 | Usability | Field users shall be able to install the application to a home screen and operate it without prior training beyond a short walkthrough. | Custom install prompt with iOS fallback instructions available on all supported platforms. |
-| NFR-06 | Reliability | The application shall remain operable, for previously loaded data and queued actions, during a loss of network connectivity. | Core forms usable offline with actions queued in local storage and replayed on reconnection. |
+| NFR-06 | Reliability | The application shall remain operable, for previously loaded data and for new data capture, during a loss of network connectivity, and shall not lose queued work when the browser is closed. | All domain forms, document uploads and Excel uploads usable offline; submissions and file blobs persisted in IndexedDB and replayed automatically on reconnection, matched by Site ID to prevent duplication. |
 | NFR-07 | Reliability | Data updates from one department shall be visible to dependent departments without manual refresh. | Real-time propagation via publish/subscribe channel on the `sites` and `procurement_submissions` tables. |
 | NFR-08 | Security | All data tables shall deny access by default and grant access only via explicit, role-aware policy. | Row-level security enabled with explicit GRANTs on every application table; no table publicly writable. |
 | NFR-09 | Security | Uploaded documents shall not be retrievable via a permanent public URL. | All storage buckets private; access exclusively via time-limited (1-hour) signed URLs. |
@@ -313,7 +315,7 @@ Table 3.5 summarises the principal technologies selected for the implementation,
 | Routing | react-router-dom | v6 | Declarative route definitions supporting the role-based guard of Section 3.6. |
 | Forms/validation | react-hook-form, Zod | — | Performant form state management with schema-based validation for planning, procurement, power and rollout forms. |
 | Spreadsheet import | xlsx (SheetJS) | — | Parses arbitrary Excel workbook layouts for the Planning import feature (FR-06, FR-07). |
-| Offline storage | idb-keyval | — | Lightweight IndexedDB wrapper underpinning the offline action queue (NFR-06). |
+| Offline storage | idb-keyval (IndexedDB) | — | Underpins the durable offline outbox and the binary file store holding attachments captured offline (FR-36, NFR-06). |
 | PWA/offline | vite-plugin-pwa / Workbox | — | Generates the service worker providing asset caching and update management. |
 | Testing | Vitest | — | Unit and integration testing aligned with the Vite build toolchain. |
 | Backend/API | PostgREST | — | Auto-generated, RLS-aware REST interface removing the need for bespoke CRUD endpoints. |
