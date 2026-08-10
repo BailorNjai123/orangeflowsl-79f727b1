@@ -194,24 +194,33 @@ CREATE POLICY "admin updates any site" ON public.sites
 
       <H2>4.5 Core Architectural Feature Implementations</H2>
 
-      <H3>4.5.1 Offline-First IndexedDB Buffer Algorithm</H3>
+      <H3>4.5.1 Offline-First Outbox Algorithm</H3>
       <p className="text-justify indent-8">
-        Every mutating action is first serialised as a <code>QueuedAction</code> record containing the target table,
-        the operation type, and the payload. The record is persisted to IndexedDB under a namespaced key
-        (<code>offline_queue_&#123;timestamp&#125;_&#123;nonce&#125;</code>) via <code>idb-keyval</code>. Because the key encodes the
-        timestamp, ordered replay is guaranteed by a simple ascending sort. This mapping between in-memory application
-        state and durable local state means the user experience never blocks on connectivity.
+        Every mutating action is first serialised as an <code>OutboxRecord</code> containing the target table, the
+        operation, the payload, the business Site ID, the submitting role, the identifiers of any attached files and a
+        snapshot of the row&rsquo;s <code>updated_at</code> value taken when editing began. Records are persisted to the
+        <code> orangeflow-offline</code> IndexedDB database in an <code>outbox</code> store, while binary attachments —
+        Excel workbooks, certificates and site photographs — are held as Blobs in a companion <code>files</code> store,
+        so queued work survives a closed browser. On reconnection the outbox is flushed in insertion order: files upload
+        first and are marked individually so partial records resume, the database write is matched to the central row by
+        Site ID to prevent duplication, and a divergent <code>updated_at</code> marks the record as a conflict rather
+        than overwriting another user&rsquo;s edit. The user experience therefore never blocks on connectivity.
       </p>
       <pre className="bg-slate-900 text-slate-100 text-xs rounded-md p-4 overflow-x-auto font-mono leading-relaxed">
-{`export async function queueAction(action) {
-  const entry = {
-    ...action,
-    id: \`offline_queue_\${Date.now()}_\${Math.random().toString(36).slice(2)}\`,
-    timestamp: Date.now(),
-  };
-  await set(entry.id, entry);
+{`if (spec.match) {
+  const { data: existing } = await supabase.from(spec.table)
+    .select('id, updated_at').eq(spec.match.column, spec.match.value).maybeSingle();
+
+  if (existing) {
+    if (spec.baseUpdatedAt && existing.updated_at !== spec.baseUpdatedAt)
+      return { conflict: true };               // never overwrite silently
+    return supabase.from(spec.table).update(rest).eq('id', existing.id);
+  }
+  return supabase.from(spec.table)             // no duplicate Site ID rows
+    .insert({ ...spec.payload, [spec.match.column]: spec.match.value });
 }`}
       </pre>
+
 
       <H3>4.5.2 Delta-t Synchronisation Loop</H3>
       <p className="text-justify indent-8">
