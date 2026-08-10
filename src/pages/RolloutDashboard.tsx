@@ -68,6 +68,18 @@ const uploadFields: Array<[string, string, string, number, boolean]> = [
 
 const PROC_BUCKET = 'procurement-documents';
 
+const unexpectedConditions = [
+  'None', 'Rocky Ground', 'Hard Soil', 'Soft/Unstable Soil', 'Swampy/Waterlogged Area',
+  'Steep/Hilly Terrain', 'Existing Underground Obstruction', 'Other',
+];
+const extraWorkTypes = [
+  'Rock Excavation', 'Additional Excavation', 'Additional Foundation Work', 'Soil Replacement',
+  'Dewatering', 'Additional Concrete Work', 'Additional Reinforcement', 'Ground Stabilisation', 'Other',
+];
+const extraWorkStatuses = ['Draft', 'Submitted for Review', 'Approved', 'Rejected', 'Completed'];
+
+
+
 type SiteRow = any;
 
 function rawNotesObj(site: SiteRow): any | null {
