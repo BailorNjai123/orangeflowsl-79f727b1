@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties, Zap, HardHat, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties, Zap, HardHat, ClipboardList, Map } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
 import { deleteExcelSubmission } from '@/lib/deleteExcelSubmission';
 import SiteMonitorTable from '@/components/SiteMonitorTable';
+import SiteMap from '@/components/SiteMap';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import ProcurementManagementView from '@/components/ProcurementManagement';
 
@@ -44,6 +45,7 @@ const fmtFileSize = (b?: number) => {
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, value: 'overview' },
   { label: 'Site Monitor', icon: TableProperties, value: 'monitor' },
+  { label: 'Site Map', icon: Map, value: 'sitemap' },
   { label: 'Planning Review', icon: ClipboardList, value: 'approvals' },
   { label: 'Procurement Review', icon: FileCheck, value: 'procurement' },
   { label: 'Power Review', icon: Zap, value: 'power_review' },
@@ -1142,6 +1144,7 @@ export default function AdminDashboard() {
       <DashboardLayout title="Admin Dashboard" navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab}>
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'monitor' && <SiteMonitorTable sites={sites} onFileUpdated={fetchData} />}
+        {activeTab === 'sitemap' && <SiteMap sites={sites} />}
         {activeTab === 'approvals' && renderApprovals()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'procurement' && renderProcurement()}
