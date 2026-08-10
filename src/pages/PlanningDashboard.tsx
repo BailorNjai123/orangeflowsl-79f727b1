@@ -436,8 +436,31 @@ export default function PlanningDashboard() {
         {editSite && <Button variant="ghost" size="sm" onClick={() => setEditSite(null)}>Cancel Edit</Button>}
       </div>
 
+      {/* Entry method — manual form or Excel upload */}
+      {!editSite && (
+        <Card>
+          <CardContent className="pt-4 flex flex-wrap gap-2">
+            <Button type="button" variant={entryMode === 'manual' ? 'default' : 'outline'} size="sm"
+              className={entryMode === 'manual' ? 'gradient-orange border-0 text-primary-foreground' : ''}
+              onClick={() => setEntryMode('manual')}>
+              <FileText className="h-4 w-4 mr-2" /> Manual Form Entry
+            </Button>
+            <Button type="button" variant={entryMode === 'excel' ? 'default' : 'outline'} size="sm"
+              className={entryMode === 'excel' ? 'gradient-orange border-0 text-primary-foreground' : ''}
+              onClick={() => setEntryMode('excel')}>
+              <Upload className="h-4 w-4 mr-2" /> Upload Planning Excel File
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!editSite && entryMode === 'excel' && renderExcelUpload()}
+
+      {(editSite || entryMode === 'manual') && (<>
+
       {/* Modules accordion */}
       <Accordion type="multiple" defaultValue={['m1','m2','m3','m4']} className="space-y-3">
+
         {modules.filter(m => m.show).map(m => (
           <AccordionItem key={m.id} value={m.id} className="border rounded-lg bg-card">
             <AccordionTrigger className="px-4 hover:no-underline">
