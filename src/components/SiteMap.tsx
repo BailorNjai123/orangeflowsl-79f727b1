@@ -124,10 +124,6 @@ export default function SiteMap({ sites }: { sites: any[] }) {
       [8.4606, -11.7799], // Sierra Leone fallback view
       7
     );
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     setTimeout(() => map.invalidateSize(), 100);
@@ -135,8 +131,48 @@ export default function SiteMap({ sites }: { sites: any[] }) {
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
+      baseRef.current = null;
+      labelsRef.current = null;
     };
   }, []);
+
+  // Base layer switching (satellite / hybrid / standard)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (baseRef.current) { map.removeLayer(baseRef.current); baseRef.current = null; }
+    if (labelsRef.current) { map.removeLayer(labelsRef.current); labelsRef.current = null; }
+
+    if (view === 'standard') {
+      baseRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
+      });
+    } else {
+      // Esri World Imagery — real satellite/aerial imagery, no API key required.
+      baseRef.current = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+          maxZoom: 19,
+          maxNativeZoom: 19,
+          attribution:
+            'Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+        }
+      );
+      if (view === 'hybrid') {
+        labelsRef.current = L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+          { maxZoom: 19, pane: 'overlayPane', attribution: 'Labels &copy; Esri' }
+        );
+      }
+    }
+
+    baseRef.current.addTo(map);
+    baseRef.current.setZIndex(0);
+    labelsRef.current?.addTo(map);
+  }, [view]);
+
 
   // Render markers whenever data / filter changes
   useEffect(() => {
