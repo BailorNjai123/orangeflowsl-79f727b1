@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-import * as XLSX from 'xlsx';
+import { useState } from 'react';
 import { FileSpreadsheet, FileDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { fetchAsObjectUrl, downloadFile } from '@/lib/storageUtils';
+import { downloadFile } from '@/lib/storageUtils';
 
 export interface ExcelSubmissionMeta {
   path: string;
@@ -13,45 +12,30 @@ export interface ExcelSubmissionMeta {
 
 const BUCKET = 'site-documents';
 
-/**
- * Planning Review viewer for an uploaded Planning Excel submission.
- * Renders every worksheet of the original workbook and offers a download of the
- * untouched .xlsx file.
- */
-export default function ExcelSubmissionView({ meta }: { meta: ExcelSubmissionMeta }) {
-  const [sheets, setSheets] = useState<{ name: string; rows: any[][] }[] | null>(null);
-  const [active, setActive] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
+const formatSize = (bytes?: number) => {
+  if (!bytes) return null;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      const res = await fetchAsObjectUrl(BUCKET, meta.path);
-      if (!res) {
-        if (!cancelled) { setError('Unable to load the Excel file.'); setLoading(false); }
-        return;
-      }
-      try {
-        const buf = await res.blob.arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array' });
-        const parsed = wb.SheetNames.map(name => ({
-          name,
-          rows: XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '', blankrows: false }) as any[][],
-        }));
-        if (!cancelled) setSheets(parsed);
-      } catch {
-        if (!cancelled) setError('The file could not be read as a valid Excel workbook.');
-      } finally {
-        URL.revokeObjectURL(res.url);
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [meta.path]);
+/**
+ * Planning Excel submission card.
+ * The original workbook is preserved untouched — it is never converted into a
+ * table, PDF or form. Only file metadata plus a download action is shown.
+ */
+export default function ExcelSubmissionView({
+  meta,
+  siteIdCode,
+  submittedByName,
+  submittedAt,
+}: {
+  meta: ExcelSubmissionMeta;
+  siteIdCode?: string;
+  submittedByName?: string;
+  submittedAt?: string;
+}) {
+  const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -59,74 +43,39 @@ export default function ExcelSubmissionView({ meta }: { meta: ExcelSubmissionMet
     setDownloading(false);
   };
 
-  const sheet = sheets?.[active];
+  const date = meta.uploaded_at || submittedAt;
 
   return (
     <div>
       <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-        <FileSpreadsheet className="h-3.5 w-3.5" /> Excel Submission
+        <FileSpreadsheet className="h-3.5 w-3.5" /> Planning Excel Submission
       </h4>
       <div className="rounded-lg border bg-card p-3 space-y-3">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="min-w-0">
-            <p className="text-xs font-medium truncate">{meta.name || meta.path.split('/').pop()}</p>
-            {meta.uploaded_at && (
-              <p className="text-[11px] text-muted-foreground">
-                Uploaded {new Date(meta.uploaded_at).toLocaleString()}
-              </p>
-            )}
+        <div className="flex items-start gap-2.5">
+          <div className="rounded-md bg-primary/10 p-2 shrink-0">
+            <FileSpreadsheet className="h-4 w-4 text-primary" />
           </div>
-          <Button size="sm" variant="outline" onClick={handleDownload} disabled={downloading}>
-            {downloading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5 mr-1.5" />}
-            Download Excel File
-          </Button>
+          <div className="min-w-0 space-y-1">
+            <p className="text-xs font-medium break-all">{meta.name || meta.path.split('/').pop()}</p>
+            <dl className="text-[11px] text-muted-foreground space-y-0.5">
+              {siteIdCode && <div><span className="font-medium text-foreground/70">Site ID:</span> {siteIdCode}</div>}
+              {date && <div><span className="font-medium text-foreground/70">Submitted:</span> {new Date(date).toLocaleString()}</div>}
+              {submittedByName && <div><span className="font-medium text-foreground/70">Submitted by:</span> {submittedByName}</div>}
+              <div>
+                <span className="font-medium text-foreground/70">File type:</span> Excel (.xlsx)
+                {formatSize(meta.size) ? ` · ${formatSize(meta.size)}` : ''}
+              </div>
+            </dl>
+          </div>
         </div>
 
-        {loading && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading workbook…
-          </div>
-        )}
-        {error && <p className="text-xs text-destructive">{error}</p>}
-
-        {sheets && sheets.length > 0 && (
-          <>
-            {sheets.length > 1 && (
-              <div className="flex gap-1.5 flex-wrap">
-                {sheets.map((s, i) => (
-                  <button
-                    key={s.name}
-                    type="button"
-                    onClick={() => setActive(i)}
-                    className={`px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors ${
-                      i === active ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/40'
-                    }`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="max-h-[420px] overflow-auto rounded-md border">
-              <table className="w-full text-[11px] border-collapse">
-                <tbody>
-                  {(sheet?.rows || []).map((row, ri) => (
-                    <tr key={ri} className={ri === 0 ? 'bg-muted/60 font-semibold sticky top-0' : ri % 2 ? 'bg-muted/20' : ''}>
-                      {row.map((cell, ci) => (
-                        <td key={ci} className="border border-border/60 px-2 py-1 whitespace-nowrap align-top">
-                          {cell === null || cell === undefined ? '' : String(cell)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {sheet && sheet.rows.length === 0 && (
-              <p className="text-xs text-muted-foreground">This worksheet is empty.</p>
-            )}
-          </>
-        )}
+        <Button size="sm" variant="outline" onClick={handleDownload} disabled={downloading} className="w-full sm:w-auto">
+          {downloading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5 mr-1.5" />}
+          Download Excel
+        </Button>
+        <p className="text-[11px] text-muted-foreground">
+          The complete original workbook — all worksheets and data — is preserved exactly as submitted.
+        </p>
       </div>
     </div>
   );

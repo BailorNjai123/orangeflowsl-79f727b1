@@ -15,6 +15,8 @@ interface SiteDetailsViewProps {
   site: any;
   allowFileManage?: boolean;
   onFileUpdated?: () => void;
+  /** Procurement must not see the raw Planning workbook — only the usual parameters. */
+  showExcelSubmission?: boolean;
 }
 
 function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
@@ -178,7 +180,7 @@ function PlanningParameters({ site }: { site: any }) {
   );
 }
 
-export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }: SiteDetailsViewProps) {
+export default function SiteDetailsView({ site, allowFileManage, onFileUpdated, showExcelSubmission = true }: SiteDetailsViewProps) {
   const excelMeta = parsePlanningNotes(site?.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined;
 
   return (
@@ -292,7 +294,14 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }
       <PlanningParameters site={site} />
 
       {/* Original Planning Excel submission — full workbook view + download */}
-      {excelMeta?.path && <ExcelSubmissionView meta={excelMeta} />}
+      {showExcelSubmission && excelMeta?.path && (
+        <ExcelSubmissionView
+          meta={excelMeta}
+          siteIdCode={site.site_id_code}
+          submittedAt={site.created_at}
+          submittedByName={site.profiles?.full_name || site.submitted_by_name}
+        />
+      )}
 
 
 

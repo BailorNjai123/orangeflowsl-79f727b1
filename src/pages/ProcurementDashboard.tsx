@@ -376,7 +376,7 @@ export default function ProcurementDashboard() {
             </div>
             {selectedSite?.id === site.id && (
               <div className="space-y-3 border-t pt-3">
-                <SiteDetailsView site={site} />
+                <SiteDetailsView site={site} showExcelSubmission={false} />
                 <Textarea value={feedbackNotes} onChange={(e) => setFeedbackNotes(e.target.value)} placeholder="Your feedback notes (required)..." rows={3} />
                 <div className="flex gap-2">
                   <Button className="flex-1 bg-success hover:bg-success/90 text-success-foreground" disabled={submitting} onClick={() => handleFeedback('accepted')}>
@@ -577,7 +577,7 @@ export default function ProcurementDashboard() {
               {viewSubmission.sites && (
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Planning Site Details</h3>
-                  <SiteDetailsView site={viewSubmission.sites} />
+                  <SiteDetailsView site={viewSubmission.sites} showExcelSubmission={false} />
                 </div>
               )}
               <div>
