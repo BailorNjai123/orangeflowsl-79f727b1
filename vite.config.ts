@@ -67,6 +67,17 @@ export default defineConfig(({ mode }) => ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
+          {
+            // Esri satellite / label tiles — cached only for areas already viewed online.
+            urlPattern: /^https:\/\/server\.arcgisonline\.com\/ArcGIS\/rest\/services\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "satellite-tiles",
+              expiration: { maxEntries: 1200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+
 
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
