@@ -360,6 +360,53 @@ export default function RolloutDashboard() {
       }
     }
 
+    // ---- Extra Work / Unexpected Site Conditions (only stored when actually filled) ----
+    {
+      const prev = rollout.extra_work || {};
+      const condition = get('ew_condition');
+      const required = get('ew_required') || 'No';
+      const ew: any = {
+        ...prev,
+        site_id_code: editSite.site_id_code,
+        site_name: editSite.site_name,
+        unexpected_condition: condition,
+        extra_work_required: required,
+        work_type: required === 'Yes' ? get('ew_type') : '',
+        description: required === 'Yes' ? get('ew_description') : '',
+        estimated_cost: required === 'Yes' ? get('ew_cost') : '',
+        estimated_duration_days: required === 'Yes' ? get('ew_duration') : '',
+        status: get('ew_status') || prev.status || 'Draft',
+      };
+
+      const newDocs = (fd.getAll('ew_documents') as File[]).filter(f => f && f.size > 0);
+      if (newDocs.length) {
+        const paths = await uploadMany(editSite.id, 'extra_work_doc', newDocs, 15);
+        const metas = newDocs.map(f => ({
+          file_name: f.name,
+          file_size: f.size,
+          uploaded_at: new Date().toISOString(),
+          uploaded_by: profile?.full_name || '',
+        }));
+        ew.documents = [...(Array.isArray(prev.documents) ? prev.documents : []), ...paths];
+        ew.document_metas = [...(Array.isArray(prev.document_metas) ? prev.document_metas : []), ...metas];
+      }
+
+      const hasContent =
+        (condition && condition !== 'None') ||
+        required === 'Yes' ||
+        !!ew.description ||
+        (Array.isArray(ew.documents) && ew.documents.length > 0) ||
+        !!prev.submitted_at;
+
+      if (hasContent) {
+        ew.submitted_at = new Date().toISOString();
+        ew.submitted_by = profile?.full_name || '';
+        rollout.extra_work = ew;
+      }
+    }
+
+
+
     // Power RFI is READ-ONLY here — force it to whatever the sites record already has
     const enforcedMilestones: Record<string, string> = { ...milestones };
     enforcedMilestones.power_rfi = editSite.power_rfi || 'Not Started';
