@@ -84,6 +84,12 @@ export default function ExcelSubmissionView({
           {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
           <span className="ml-1.5 hidden sm:inline">Download</span>
         </Button>
+        {allowDelete && onDelete && (
+          <Button size="sm" variant="destructive" onClick={handleDelete} disabled={deleting} className="shrink-0 h-8">
+            {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            <span className="ml-1.5 hidden sm:inline">Delete</span>
+          </Button>
+        )}
       </div>
     );
   }
@@ -112,10 +118,18 @@ export default function ExcelSubmissionView({
           </div>
         </div>
 
-        <Button size="sm" variant="outline" onClick={handleDownload} disabled={downloading} className="w-full sm:w-auto">
-          {downloading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5 mr-1.5" />}
-          Download Excel
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button size="sm" variant="outline" onClick={handleDownload} disabled={downloading} className="w-full sm:w-auto">
+            {downloading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5 mr-1.5" />}
+            Download Excel
+          </Button>
+          {allowDelete && onDelete && (
+            <Button size="sm" variant="destructive" onClick={handleDelete} disabled={deleting} className="w-full sm:w-auto">
+              {deleting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1.5" />}
+              Delete Excel
+            </Button>
+          )}
+        </div>
         <p className="text-[11px] text-muted-foreground">
           The complete original workbook — all worksheets and data — is preserved exactly as submitted.
         </p>
