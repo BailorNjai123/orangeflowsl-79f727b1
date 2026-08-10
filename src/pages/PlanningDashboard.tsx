@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Plus, FileText, Radio, Loader2, Upload, Save, ShieldCheck, Send,
-  MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone,
+  MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone, FileSpreadsheet,
 } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
@@ -30,6 +30,7 @@ import { supabase } from '@/integrations/supabase/client';
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, value: 'dashboard' },
   { label: 'Submit New Site', icon: Plus, value: 'submit' },
+  { label: 'Submit Excel File', icon: FileSpreadsheet, value: 'excel' },
   { label: 'My Submissions', icon: FileText, value: 'submissions' },
 ];
 
@@ -725,6 +726,12 @@ export default function PlanningDashboard() {
       <DashboardLayout title="Planning Dashboard" navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab}>
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'submit' && renderSubmitForm()}
+        {activeTab === 'excel' && (
+          <div className="space-y-4 max-w-5xl">
+            <h2 className="text-lg sm:text-xl font-bold">Submit Planning Excel File</h2>
+            {renderExcelUpload()}
+          </div>
+        )}
         {activeTab === 'submissions' && renderSubmissions()}
       </DashboardLayout>
     </AuthGuard>
