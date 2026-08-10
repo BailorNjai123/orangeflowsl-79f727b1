@@ -498,14 +498,21 @@ Offline and synchronisation behaviour was tested by disabling network connectivi
 
 | ID | Description | Input | Expected Result | Status |
 |---|---|---|---|---|
-| OT-01 | Save Rollout milestone while offline | Toggle milestone, network disabled | Action queued in IndexedDB, no error shown | Pass |
-| OT-02 | Reconnect after single queued action | Re-enable network | Auto-sync triggers, toast "1 item(s) synced" | Pass |
-| OT-03 | Reconnect after multiple queued actions | 3 queued actions across two forms | All 3 replayed in chronological order | Pass |
-| OT-04 | Sync failure due to RLS rejection | Queued update to a now-restricted site | Failure toast shown, item remains queued | Pass |
-| OT-05 | Periodic sync while online | Leave app open 60 seconds | Two automatic sync polls occur (30 s interval) | Pass |
-| OT-06 | App shell available offline | Load app with network disabled after first visit | Shell renders from service worker cache | Pass |
-| OT-07 | Concurrent offline queue and manual sync | Trigger online event mid-queue processing | `syncing` guard prevents duplicate processing | Pass |
-| OT-08 | Queue persists across page reload | Queue action offline, reload page, then reconnect | Queued action still present and syncs successfully | Pass |
+| OT-01 | Save Rollout milestone while offline | Toggle milestone, network disabled | Record written to IndexedDB outbox, status `pending`, no error shown | Pass |
+| OT-02 | Reconnect after single queued record | Re-enable network | Auto-flush triggers, record marked `synced` and removed | Pass |
+| OT-03 | Reconnect after multiple queued records | 3 records across Planning, Power and Rollout | All replayed in insertion order, each matched by Site ID | Pass |
+| OT-04 | Sync failure due to RLS rejection | Queued update to a now-restricted site | Record marked `failed`, attempt counter incremented, retried next cycle | Pass |
+| OT-05 | Periodic sync while online | Leave app open 60 seconds | Two automatic flush cycles occur (30 s interval) | Pass |
+| OT-06 | App shell available offline | Load app with network disabled after first visit | Shell renders from service worker precache | Pass |
+| OT-07 | Concurrent flush and manual retry | Trigger online event mid-flush | Re-entrancy guard prevents duplicate processing | Pass |
+| OT-08 | Outbox persists across browser restart | Queue offline, close browser, reopen, reconnect | Record and attached files still present and synchronise | Pass |
+| OT-09 | Planning Excel upload while offline | Upload workbook with network disabled | Workbook stored as Blob in the `files` store; extracted parameters queued | Pass |
+| OT-10 | Excel workbook integrity after sync | Reconnect, then download from Planning Review and Admin | Byte-identical to the file originally submitted | Pass |
+| OT-11 | Duplicate prevention on replay | Queue a new site offline that is created online meanwhile | Site ID match converts the insert to an update; no duplicate row | Pass |
+| OT-12 | Conflict detection | Modify the same site centrally before the queued edit replays | Record marked `conflict`, write withheld, user prompted to review | Pass |
+| OT-13 | Rollout Extra Work offline with photographs | Submit extra work and two photos offline, then reconnect | Data and images synchronise and appear under Project/Admin → Rollout Review | Pass |
+| OT-14 | Synchronisation indicator states | Observe indicator through the offline-to-online cycle | Offline, Pending, Syncing and Synced states displayed correctly | Pass |
+
 
 Cross-browser and responsive testing was carried out across desktop and mobile breakpoints, summarised in Table 4.10.
 
