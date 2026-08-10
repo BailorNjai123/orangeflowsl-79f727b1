@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties, Zap, HardHat, ClipboardList } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
+import { deleteExcelSubmission } from '@/lib/deleteExcelSubmission';
 import SiteMonitorTable from '@/components/SiteMonitorTable';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import ProcurementManagementView from '@/components/ProcurementManagement';
@@ -563,6 +564,21 @@ export default function AdminDashboard() {
                       submittedAt={excelMeta.uploaded_at || site.created_at}
                       submittedByName={excelMeta.submitted_by_name}
                       compact
+                      allowDelete
+                      onDelete={async () => {
+                        const { error } = await deleteExcelSubmission(site);
+                        if (error) {
+                          toast({ variant: 'destructive', title: 'Delete failed', description: error });
+                          return;
+                        }
+                        await supabase.from('activity_log').insert({
+                          action: 'planning_excel_deleted',
+                          description: `Planning Excel file for site "${site.site_name}" was deleted`,
+                          user_id: user!.id, user_name: profile?.full_name, entity_type: 'site', entity_id: site.id,
+                        });
+                        toast({ title: 'Excel submission deleted' });
+                        fetchData();
+                      }}
                     />
                   </div>
                 ) : null;
@@ -578,7 +594,7 @@ export default function AdminDashboard() {
           <DialogHeader><DialogTitle>{selectedSite?.site_name}</DialogTitle></DialogHeader>
           {selectedSite && (
             <div className="space-y-4">
-              <SiteDetailsView site={selectedSite} allowFileManage={true} onFileUpdated={fetchData} />
+              <SiteDetailsView site={selectedSite} allowFileManage={true} allowExcelDelete={true} onFileUpdated={fetchData} />
               {selectedSite.status === 'pending' && (
                 <div className="space-y-3 border-t pt-4">
                   <Label>Review Notes</Label>
