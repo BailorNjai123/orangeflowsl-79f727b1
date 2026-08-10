@@ -15,6 +15,8 @@ interface SiteDetailsViewProps {
   site: any;
   allowFileManage?: boolean;
   onFileUpdated?: () => void;
+  /** Procurement must not see the raw Planning workbook — only the usual parameters. */
+  showExcelSubmission?: boolean;
 }
 
 function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
