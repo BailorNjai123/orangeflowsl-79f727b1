@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties, Zap, HardHat, ClipboardList } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
+import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
 import SiteMonitorTable from '@/components/SiteMonitorTable';
 import ProcSubmissionDetails from '@/components/ProcSubmissionDetails';
 import ProcurementManagementView from '@/components/ProcurementManagement';
@@ -23,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { getSignedUrl, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
+import { parsePlanningNotes } from '@/lib/planningNotes';
 
 type DocMeta = { file_name?: string; file_size?: number; uploaded_by?: string; uploaded_at?: string };
 type FileValue = { __files: string[]; bucket: string; metas?: (DocMeta | undefined)[] };
@@ -551,6 +553,20 @@ export default function AdminDashboard() {
                   </Button>
                 </div>
               </div>
+              {(() => {
+                const excelMeta = parsePlanningNotes(site.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined;
+                return excelMeta?.path ? (
+                  <div className="mt-3 border-t pt-3">
+                    <ExcelSubmissionView
+                      meta={excelMeta}
+                      siteIdCode={site.site_id_code}
+                      submittedAt={excelMeta.uploaded_at || site.created_at}
+                      submittedByName={excelMeta.submitted_by_name}
+                      compact
+                    />
+                  </div>
+                ) : null;
+              })()}
             </CardContent>
           </Card>
         ))}
