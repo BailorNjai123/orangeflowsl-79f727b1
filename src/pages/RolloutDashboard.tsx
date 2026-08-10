@@ -454,12 +454,32 @@ export default function RolloutDashboard() {
       if (k !== 'power_rfi') updates[k] = enforcedMilestones[k] || 'Not Started';
     });
 
-    const { error } = await supabase.from('sites').update(updates).eq('id', editSite.id);
+    const { error, queued } = await offlineWrite({
+      type: 'rollout_form',
+      label: `Rollout form — ${editSite.site_id_code || editSite.site_name}`,
+      table: 'sites',
+      operation: 'update',
+      match: { column: 'id', value: editSite.id },
+      payload: updates,
+      siteIdCode: editSite.site_id_code || null,
+      siteRowId: editSite.id,
+      userId: user!.id,
+      role: 'rollout_team',
+      baseUpdatedAt: (editSite as any)?.updated_at ?? null,
+    });
     setSaving(false);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
       return;
     }
+    if (queued) {
+      toast({
+        title: 'Saved offline — pending sync',
+        description: 'Rollout data, extra work details and photos are stored on this device and will sync automatically.',
+      });
+      return;
+    }
+
     await supabase.from('activity_log').insert({
       action: 'rollout_updated',
       description: `Rollout progress updated for "${editSite.site_name}" (${pct}%)`,
