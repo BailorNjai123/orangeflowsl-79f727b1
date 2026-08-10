@@ -297,6 +297,38 @@ export default function AdminDashboard() {
     setActionLoading(false);
   };
 
+  // Approve / reject an Extra Work request submitted from the Rollout form
+  const handleExtraWorkDecision = async (site: any, decision: 'Approved' | 'Rejected') => {
+    const ext = parseExt(site);
+    const rollout = { ...(ext.rollout || {}) };
+    if (!rollout.extra_work) return;
+    rollout.extra_work = {
+      ...rollout.extra_work,
+      status: decision,
+      reviewed_by: profile?.full_name || null,
+      reviewed_at: new Date().toISOString(),
+    };
+    setActionLoading(true);
+    const { error } = await supabase.from('sites').update({
+      review_notes: JSON.stringify({ ...(rawNotesObj(site) || {}), ...ext, rollout }),
+    }).eq('id', site.id);
+    setActionLoading(false);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      return;
+    }
+    await supabase.from('activity_log').insert({
+      action: `extra_work_${decision.toLowerCase()}`,
+      description: `Extra work request for "${site.site_name}" was ${decision.toLowerCase()}`,
+      user_id: user!.id, user_name: profile?.full_name,
+      entity_type: 'site', entity_id: site.id,
+    });
+    toast({ title: `Extra work ${decision.toLowerCase()}` });
+    setStageReview(prev => (prev ? { ...prev, site: { ...site, review_notes: JSON.stringify({ ...(rawNotesObj(site) || {}), ...ext, rollout }) } } : prev));
+    fetchData();
+  };
+
+
   const validatePassword = (pw: string): string | null => {
     if (pw.length < 8) return 'Password must be at least 8 characters';
     if (!/[a-z]/.test(pw)) return 'Password must contain a lowercase letter';
@@ -940,6 +972,82 @@ export default function AdminDashboard() {
                       })}
                     </dl>
                   </div>
+
+                  {/* Extra Work / Unexpected Site Conditions — only when submitted by Rollout */}
+                  {stage === 'rollout' && extStage.extra_work?.submitted_at && (() => {
+                    const ew = extStage.extra_work;
+                    const rows: [string, any][] = [
+                      ['Site ID', stageReview.site.site_id_code],
+                      ['Site Name', stageReview.site.site_name],
+                      ['Unexpected Site Condition', ew.unexpected_condition],
+                      ['Extra Work Required', ew.extra_work_required],
+                      ...(ew.extra_work_required === 'Yes'
+                        ? ([
+                            ['Type of Extra Work', ew.work_type],
+                            ['Description', ew.description],
+                            ['Estimated Additional Cost', ew.estimated_cost],
+                            ['Estimated Additional Duration (days)', ew.estimated_duration_days],
+                          ] as [string, any][])
+                        : []),
+                      ['Submission Date', ew.submitted_at ? new Date(ew.submitted_at).toLocaleString() : null],
+                      ['Extra Work Status', ew.status || 'Draft'],
+                    ];
+                    const docs: string[] = Array.isArray(ew.documents) ? ew.documents : [];
+                    return (
+                      <div className="rounded-lg border border-warning/40 bg-warning/5 p-3">
+                        <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                          Extra Work / Unexpected Site Conditions
+                        </h4>
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                          {rows.map(([label, v]) => (
+                            <div key={label} className="flex justify-between gap-2 border-b border-border/50 py-1">
+                              <dt className="text-muted-foreground">{label}</dt>
+                              <dd className="font-medium text-right break-words">{v == null || v === '' ? '—' : String(v)}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                        {docs.length > 0 && (
+                          <div className="mt-3 space-y-1">
+                            <p className="text-xs font-medium">Supporting Documents / Photos</p>
+                            {docs.map((path, i) => {
+                              const name = ew.document_metas?.[i]?.file_name || path.split('/').pop() || `file-${i + 1}`;
+                              return (
+                                <div key={path + i} className="flex items-center gap-2 text-xs">
+                                  <span className="truncate flex-1" title={name}>{name}</span>
+                                  <button type="button" className="text-primary hover:underline"
+                                    onClick={async () => {
+                                      const ok = await openFileInNewTab('site-documents', path);
+                                      if (!ok) toast({ variant: 'destructive', title: 'Preview failed' });
+                                    }}>👁 View</button>
+                                  <button type="button" className="text-primary hover:underline"
+                                    onClick={async () => {
+                                      const ok = await downloadFile('site-documents', path, name);
+                                      if (!ok) toast({ variant: 'destructive', title: 'Download failed' });
+                                    }}>⬇ Download</button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {ew.reviewed_at && (
+                          <p className="text-[11px] text-muted-foreground mt-2">
+                            {ew.status} by {ew.reviewed_by || 'admin'} — {new Date(ew.reviewed_at).toLocaleString()}
+                          </p>
+                        )}
+                        <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                          <Button size="sm" className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
+                            disabled={actionLoading} onClick={() => handleExtraWorkDecision(stageReview.site, 'Approved')}>
+                            <Check className="h-4 w-4 mr-1" /> Approve Extra Work
+                          </Button>
+                          <Button size="sm" variant="destructive" className="flex-1"
+                            disabled={actionLoading} onClick={() => handleExtraWorkDecision(stageReview.site, 'Rejected')}>
+                            <X className="h-4 w-4 mr-1" /> Reject Extra Work
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {previous && (
                     <div className={`rounded-lg border p-3 text-xs ${previous.status === 'approved' ? 'bg-success/10 border-success/30' : 'bg-warning/10 border-warning/30'}`}>
                       <p className="font-semibold mb-1">Previous decision: {previous.status === 'approved' ? '✅ Approved' : '❌ Revisions requested'}</p>

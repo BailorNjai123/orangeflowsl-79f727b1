@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Rocket, Loader2, CheckCircle2, Download, ClipboardCheck,
-  FileText, ThumbsUp, ThumbsDown, Lock, Clock, XCircle,
+  FileText, ThumbsUp, ThumbsDown, Lock, Clock, XCircle, ChevronDown, HardHat,
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
@@ -66,6 +68,18 @@ const uploadFields: Array<[string, string, string, number, boolean]> = [
 
 const PROC_BUCKET = 'procurement-documents';
 
+const unexpectedConditions = [
+  'None', 'Rocky Ground', 'Hard Soil', 'Soft/Unstable Soil', 'Swampy/Waterlogged Area',
+  'Steep/Hilly Terrain', 'Existing Underground Obstruction', 'Other',
+];
+const extraWorkTypes = [
+  'Rock Excavation', 'Additional Excavation', 'Additional Foundation Work', 'Soil Replacement',
+  'Dewatering', 'Additional Concrete Work', 'Additional Reinforcement', 'Ground Stabilisation', 'Other',
+];
+const extraWorkStatuses = ['Draft', 'Submitted for Review', 'Approved', 'Rejected', 'Completed'];
+
+
+
 type SiteRow = any;
 
 function rawNotesObj(site: SiteRow): any | null {
@@ -115,6 +129,11 @@ export default function RolloutDashboard() {
   const [saving, setSaving] = useState(false);
   const [milestones, setMilestones] = useState<Record<string, string>>({});
   const [formKey, setFormKey] = useState(0);
+
+  // Extra Work / Unexpected Site Conditions (additive, collapsed by default)
+  const [extraOpen, setExtraOpen] = useState(false);
+  const [extraRequired, setExtraRequired] = useState('No');
+
 
 
   const { user, profile, role } = useAuth();
@@ -265,7 +284,11 @@ export default function RolloutDashboard() {
     const init: Record<string, string> = {};
     milestoneFields.forEach(([k]) => { init[k] = site[k] || 'Not Started'; });
     setMilestones(init);
+    const ew = parseExt(site).rollout?.extra_work;
+    setExtraRequired(ew?.extra_work_required || 'No');
+    setExtraOpen(false);
   };
+
 
   const completedCount = Object.values(milestones).filter(v => v === 'Completed').length;
   const progressPct = Math.round((completedCount / milestoneFields.length) * 100);
@@ -336,6 +359,54 @@ export default function RolloutDashboard() {
         if (p) rollout[k] = p;
       }
     }
+
+    // ---- Extra Work / Unexpected Site Conditions (only stored when actually filled) ----
+    if (fd.has('ew_condition')) {
+
+      const prev = rollout.extra_work || {};
+      const condition = get('ew_condition');
+      const required = get('ew_required') || 'No';
+      const ew: any = {
+        ...prev,
+        site_id_code: editSite.site_id_code,
+        site_name: editSite.site_name,
+        unexpected_condition: condition,
+        extra_work_required: required,
+        work_type: required === 'Yes' ? get('ew_type') : '',
+        description: required === 'Yes' ? get('ew_description') : '',
+        estimated_cost: required === 'Yes' ? get('ew_cost') : '',
+        estimated_duration_days: required === 'Yes' ? get('ew_duration') : '',
+        status: get('ew_status') || prev.status || 'Draft',
+      };
+
+      const newDocs = (fd.getAll('ew_documents') as File[]).filter(f => f && f.size > 0);
+      if (newDocs.length) {
+        const paths = await uploadMany(editSite.id, 'extra_work_doc', newDocs, 15);
+        const metas = newDocs.map(f => ({
+          file_name: f.name,
+          file_size: f.size,
+          uploaded_at: new Date().toISOString(),
+          uploaded_by: profile?.full_name || '',
+        }));
+        ew.documents = [...(Array.isArray(prev.documents) ? prev.documents : []), ...paths];
+        ew.document_metas = [...(Array.isArray(prev.document_metas) ? prev.document_metas : []), ...metas];
+      }
+
+      const hasContent =
+        (condition && condition !== 'None') ||
+        required === 'Yes' ||
+        !!ew.description ||
+        (Array.isArray(ew.documents) && ew.documents.length > 0) ||
+        !!prev.submitted_at;
+
+      if (hasContent) {
+        ew.submitted_at = new Date().toISOString();
+        ew.submitted_by = profile?.full_name || '';
+        rollout.extra_work = ew;
+      }
+    }
+
+
 
     // Power RFI is READ-ONLY here — force it to whatever the sites record already has
     const enforcedMilestones: Record<string, string> = { ...milestones };
@@ -779,6 +850,105 @@ export default function RolloutDashboard() {
                       })}
                     </div>
                   </section>
+
+                  {/* Extra Work / Unexpected Site Conditions — collapsed by default */}
+                  {(() => {
+                    const ew = ext.extra_work || {};
+                    return (
+                      <Collapsible open={extraOpen} onOpenChange={setExtraOpen} className="rounded-lg border">
+                        <CollapsibleTrigger asChild>
+                          <button type="button" className="w-full flex items-center justify-between gap-2 p-3 text-left">
+                            <span className="text-sm font-semibold text-primary flex items-center gap-2">
+                              <HardHat className="h-4 w-4" /> Extra Work / Unexpected Site Conditions
+                              {ew.submitted_at && (
+                                <Badge variant="outline" className="text-[10px]">{ew.status || 'Draft'}</Badge>
+                              )}
+                            </span>
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${extraOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="p-3 pt-0 space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label>Unexpected Site Condition</Label>
+                                <Select name="ew_condition" defaultValue={ew.unexpected_condition || 'None'}>
+                                  <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
+                                  <SelectContent>{unexpectedConditions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label>Extra Work Required?</Label>
+                                <Select name="ew_required" value={extraRequired} onValueChange={setExtraRequired}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Yes">Yes</SelectItem>
+                                    <SelectItem value="No">No</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {extraRequired === 'Yes' && (
+                              <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div className="space-y-1.5">
+                                    <Label>Type of Extra Work</Label>
+                                    <Select name="ew_type" defaultValue={ew.work_type || ''}>
+                                      <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                                      <SelectContent>{extraWorkTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label>Estimated Additional Cost</Label>
+                                    <Input name="ew_cost" type="number" step="0.01" min="0" placeholder="0.00" defaultValue={ew.estimated_cost || ''} />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label>Estimated Additional Duration (days)</Label>
+                                    <Input name="ew_duration" type="number" min="0" placeholder="0" defaultValue={ew.estimated_duration_days || ''} />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <Label>Extra Work Status</Label>
+                                    <Select name="ew_status" defaultValue={ew.status || 'Draft'}>
+                                      <SelectTrigger><SelectValue /></SelectTrigger>
+                                      <SelectContent>{extraWorkStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-1.5 md:col-span-2">
+                                    <Label>Description of Extra Work</Label>
+                                    <Textarea name="ew_description" rows={3} defaultValue={ew.description || ''} placeholder="Describe the unexpected condition and the additional work required..." />
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            <div className="space-y-1.5">
+                              <Label>Supporting Evidence / Documents <span className="text-xs text-muted-foreground">(photos, engineer or inspection reports — max 15MB each)</span></Label>
+                              <Input name="ew_documents" type="file" multiple accept=".pdf,.doc,.docx,image/jpeg,image/png" />
+                              {Array.isArray(ew.documents) && ew.documents.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {ew.documents.map((p: string, i: number) => (
+                                    <button key={p + i} type="button" onClick={() => handleDownload(p)} className="text-xs text-primary underline inline-flex items-center gap-1">
+                                      <Download className="h-3 w-3" /> {ew.document_metas?.[i]?.file_name || `Document ${i + 1}`}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {ew.submitted_at && (
+                              <p className="text-[11px] text-muted-foreground">
+                                Last submitted {new Date(ew.submitted_at).toLocaleString()}
+                                {ew.submitted_by ? ` by ${ew.submitted_by}` : ''} • sent to Admin Rollout Review.
+                              </p>
+                            )}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })()}
+
+
 
                   <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
                     <Button type="submit" className="flex-1 gradient-orange border-0 text-primary-foreground" disabled={saving || !canEdit}>
