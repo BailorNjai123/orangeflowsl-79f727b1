@@ -177,9 +177,11 @@ function PlanningParameters({ site }: { site: any }) {
 }
 
 export default function SiteDetailsView({ site, allowFileManage, onFileUpdated }: SiteDetailsViewProps) {
+  const excelMeta = parsePlanningNotes(site?.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined;
 
   return (
     <div className="space-y-4">
+
       {/* Submission Info */}
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
