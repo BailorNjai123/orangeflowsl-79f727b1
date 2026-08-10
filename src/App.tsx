@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useOnlineSync } from "@/hooks/useOnlineSync";
 import InstallPrompt from "@/components/InstallPrompt";
+import SyncStatusIndicator from "@/components/SyncStatusIndicator";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import PlanningDashboard from "./pages/PlanningDashboard";
