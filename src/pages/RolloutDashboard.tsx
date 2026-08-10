@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Rocket, Loader2, CheckCircle2, Download, ClipboardCheck,
-  FileText, ThumbsUp, ThumbsDown, Lock, Clock, XCircle,
+  FileText, ThumbsUp, ThumbsDown, Lock, Clock, XCircle, ChevronDown, HardHat,
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 import DashboardLayout from '@/components/DashboardLayout';
 import AuthGuard from '@/components/AuthGuard';
 import StatCard from '@/components/StatCard';
