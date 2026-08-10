@@ -175,10 +175,103 @@ export default function PlanningDashboard() {
   const [viewSite, setViewSite] = useState<SiteRow | null>(null);
   const [form, setForm] = useState<FormState>(emptyState);
   const [files, setFiles] = useState<Record<string, File | null>>({});
+  const [entryMode, setEntryMode] = useState<'manual' | 'excel'>('manual');
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [excelBusy, setExcelBusy] = useState(false);
+  const [excelResult, setExcelResult] = useState<{
+    values: Record<string, any>; matched: string[]; sheets: string[];
+    errors: string[]; warnings: string[];
+  } | null>(null);
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
   const setField = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }));
+
+  // ---- Excel upload (alternative to manual entry) ----
+  const EXCEL_NATIVE = ['site_id_code','site_name','region','district','town','latitude','longitude','elevation','dimensions','distance_nearest_bts','site_type'];
+
+  const analyseExcel = async (file: File) => {
+    setExcelBusy(true);
+    setExcelResult(null);
+    try {
+      if (!/\.xlsx$/i.test(file.name)) {
+        setExcelResult({ values: {}, matched: [], sheets: [], errors: ['Only .xlsx Excel workbooks are accepted.'], warnings: [] });
+        return;
+      }
+      const wb = await readWorkbook(file);
+      const extracted = extractPlanningFromWorkbook(wb);
+      const validation = validateExtracted(extracted);
+      setExcelFile(file);
+      setExcelResult({
+        values: extracted.values,
+        matched: extracted.matchedLabels,
+        sheets: extracted.sheetNames,
+        errors: validation.errors,
+        warnings: validation.warnings,
+      });
+    } catch (e: any) {
+      setExcelResult({ values: {}, matched: [], sheets: [], errors: ['The file could not be read as a valid Excel workbook.'], warnings: [] });
+    } finally {
+      setExcelBusy(false);
+    }
+  };
+
+  const submitExcel = async () => {
+    if (!user || !excelFile || !excelResult || excelResult.errors.length) return;
+    setExcelBusy(true);
+    try {
+      const v = excelResult.values;
+      const code = String(v.site_id_code);
+
+      // Store the complete original workbook untouched.
+      const path = `${user.id}/excel/${Date.now()}_${excelFile.name.replace(/[^\w.\-]+/g, '_')}`;
+      const { error: upErr } = await supabase.storage.from('site-documents').upload(path, excelFile, { upsert: true });
+      if (upErr) { toast({ variant: 'destructive', title: 'Upload failed', description: upErr.message }); return; }
+
+      // Site ID is the primary identifier — update instead of duplicating.
+      const { data: existing } = await supabase.from('sites').select('*').eq('site_id_code', code).maybeSingle();
+
+      const prevExtended = existing ? parsePlanningNotes((existing as any).notes).extended : {};
+      const prevText = existing ? parsePlanningNotes((existing as any).notes).text : '';
+
+      const native: Record<string, any> = { submitted_by: user.id, status: 'pending' };
+      EXCEL_NATIVE.forEach(k => { if (v[k] !== undefined && v[k] !== '') native[k] = v[k]; });
+      native.site_id_code = code;
+      native.site_name = v.site_name || code;
+      native.region = native.region || (existing as any)?.region || 'Western Area';
+      native.district = native.district || (existing as any)?.district || 'Western Area Urban';
+      native.town = native.town || (existing as any)?.town || '—';
+
+      const extended: Record<string, any> = { ...prevExtended };
+      ['chiefdom','location_updated','site_classification','natca_classification','owner_sharing_status','technology_classification']
+        .forEach(k => { if (v[k] !== undefined) extended[k] = v[k]; });
+      extended.excel_submission = {
+        path,
+        name: excelFile.name,
+        size: excelFile.size,
+        uploaded_at: new Date().toISOString(),
+        sheets: excelResult.sheets,
+        extracted_fields: excelResult.matched,
+      };
+      native.notes = buildPlanningNotes(prevText, extended);
+
+      const { error } = existing
+        ? await supabase.from('sites').update(native as any).eq('id', (existing as any).id)
+        : await supabase.from('sites').insert(native as any);
+      if (error) { toast({ variant: 'destructive', title: 'Save failed', description: error.message }); return; }
+
+      toast({
+        title: existing ? `Site ${code} updated from Excel` : `Site ${code} created from Excel`,
+        description: 'Basic, Governance and Classification data propagated downstream. Full workbook stored for Planning Review.',
+      });
+      setExcelFile(null); setExcelResult(null);
+      fetchSites();
+      setActiveTab('submissions');
+    } finally {
+      setExcelBusy(false);
+    }
+  };
+
 
   const fetchSites = async () => {
     if (!user) return;
