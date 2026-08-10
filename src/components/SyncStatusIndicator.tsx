@@ -50,18 +50,18 @@ export default function SyncStatusIndicator() {
   const failed = records.filter(r => r.status === 'failed').length;
   const conflicts = records.filter(r => r.status === 'conflict').length;
 
-  const hidden = online && records.length === 0 && !justSynced;
-  if (hidden) return null;
-
   let Icon = CloudUpload;
   let text = `${pending + syncing} pending sync`;
   let tone = 'bg-amber-500/15 text-amber-700 border-amber-500/30';
 
-  if (!online) { Icon = CloudOff; text = records.length ? `Offline — ${records.length} saved locally` : 'Offline mode'; tone = 'bg-muted text-muted-foreground border-border'; }
-  else if (syncing) { Icon = RefreshCw; text = 'Synchronising…'; tone = 'bg-primary/10 text-primary border-primary/30'; }
+  if (!online) {
+    Icon = CloudOff;
+    text = records.length ? `Offline — ${records.length} saved locally` : 'Offline — working locally';
+    tone = 'bg-muted text-muted-foreground border-border';
+  } else if (syncing) { Icon = RefreshCw; text = 'Syncing…'; tone = 'bg-primary/10 text-primary border-primary/30'; }
   else if (conflicts) { Icon = AlertTriangle; text = `${conflicts} conflict${conflicts > 1 ? 's' : ''}`; tone = 'bg-destructive/10 text-destructive border-destructive/30'; }
   else if (failed) { Icon = AlertTriangle; text = `${failed} sync failed`; tone = 'bg-destructive/10 text-destructive border-destructive/30'; }
-  else if (records.length === 0 && justSynced) { Icon = CheckCircle2; text = 'All data synchronised'; tone = 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30'; }
+  else if (records.length === 0) { Icon = CheckCircle2; text = justSynced ? 'All changes synced' : 'Online'; tone = 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30'; }
 
   return (
     <div className="fixed bottom-3 right-3 z-[90] print:hidden">
