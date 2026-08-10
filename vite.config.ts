@@ -58,6 +58,17 @@ export default defineConfig(({ mode }) => ({
             handler: "NetworkOnly",
           },
           {
+            // Map tiles — keep previously viewed areas available offline.
+            urlPattern: /^https:\/\/[abc]\.tile\.openstreetmap\.org\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "map-tiles",
+              expiration: { maxEntries: 800, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+
+          {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
             handler: "NetworkFirst",
             options: {
