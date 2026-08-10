@@ -135,9 +135,14 @@ export default function PowerDashboard() {
   }, [user]);
 
   // Every site registered by Planning reaches the Power dashboard as soon as it
-  // is submitted (pending or approved). Only rejected sites are excluded.
-  const isEligible = (site: SiteRow) => site.status !== 'rejected';
+  // is submitted (pending or approved). Rejected sites and empty placeholder
+  // drafts (no real planning parameters) are excluded.
+  const isPlaceholder = (s: SiteRow) =>
+    /^DRAFT-\d+$/i.test(String(s.site_id_code || '')) ||
+    (!s.latitude && !s.longitude && (!s.town || s.town === '—') && !s.tower_height);
+  const isEligible = (site: SiteRow) => site.status !== 'rejected' && !isPlaceholder(site);
   const eligibleSites = useMemo(() => sites.filter(s => isEligible(s)), [sites, procMap]);
+
 
   const completedCount = eligibleSites.filter(s => s.power_rfi_status === 'Completed').length;
   const inProgressCount = eligibleSites.filter(s => s.power_rfi_status === 'In Progress').length;
