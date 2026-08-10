@@ -284,7 +284,11 @@ export default function RolloutDashboard() {
     const init: Record<string, string> = {};
     milestoneFields.forEach(([k]) => { init[k] = site[k] || 'Not Started'; });
     setMilestones(init);
+    const ew = parseExt(site).rollout?.extra_work;
+    setExtraRequired(ew?.extra_work_required || 'No');
+    setExtraOpen(false);
   };
+
 
   const completedCount = Object.values(milestones).filter(v => v === 'Completed').length;
   const progressPct = Math.round((completedCount / milestoneFields.length) * 100);
