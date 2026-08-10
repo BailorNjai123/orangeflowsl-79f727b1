@@ -154,6 +154,8 @@ const NATIVE_COLS = new Set([
   'foundation_depth','elevation','distance_nearest_bts','latitude','longitude',
   'tower_type','tower_material','antenna_type','number_of_antennas',
   'equipment_shelter','site_type','terrain_type','access_road_condition',
+  'chiefdom','location_updated','owner_sharing_status','site_classification',
+  'natca_classification','technology_classification',
   'site_photo_url','layout_plan_url','approval_letter_url',
 ]);
 
@@ -192,7 +194,11 @@ export default function PlanningDashboard() {
   const setField = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }));
 
   // ---- Excel upload (alternative to manual entry) ----
-  const EXCEL_NATIVE = ['site_id_code','site_name','region','district','town','latitude','longitude','elevation','dimensions','distance_nearest_bts','site_type'];
+  const EXCEL_NATIVE = [
+    'site_id_code','site_name','region','district','chiefdom','town','location_updated',
+    'latitude','longitude','elevation','dimensions','distance_nearest_bts','site_type',
+    'owner_sharing_status','site_classification','natca_classification','technology_classification',
+  ];
 
   const analyseExcel = async (file: File) => {
     setExcelBusy(true);

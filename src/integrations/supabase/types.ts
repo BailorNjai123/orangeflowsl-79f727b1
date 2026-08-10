@@ -412,6 +412,7 @@ export type Database = {
           backup_power: string | null
           battery_bank_type: string | null
           cast_status: string | null
+          chiefdom: string | null
           civil_rfi: string | null
           contractor_name: string | null
           created_at: string
@@ -432,11 +433,14 @@ export type Database = {
           last_inspection_date: string | null
           latitude: number | null
           layout_plan_url: string | null
+          location_updated: string | null
           longitude: number | null
+          natca_classification: string | null
           notes: string | null
           number_of_antennas: number | null
           number_of_battery_banks: number | null
           on_air: string | null
+          owner_sharing_status: string | null
           planned_start_date: string | null
           planning_approval_status: string | null
           power_backup_type: string | null
@@ -452,6 +456,7 @@ export type Database = {
           review_notes: string | null
           reviewed_by: string | null
           scope: string | null
+          site_classification: string | null
           site_configuration: string | null
           site_id_code: string
           site_implementation_design: string | null
@@ -463,6 +468,7 @@ export type Database = {
           status: Database["public"]["Enums"]["site_status"]
           submitted_by: string | null
           target_completion_date: string | null
+          technology_classification: string[] | null
           terrain_type: string | null
           tower_height: number | null
           tower_material: string | null
@@ -482,6 +488,7 @@ export type Database = {
           backup_power?: string | null
           battery_bank_type?: string | null
           cast_status?: string | null
+          chiefdom?: string | null
           civil_rfi?: string | null
           contractor_name?: string | null
           created_at?: string
@@ -502,11 +509,14 @@ export type Database = {
           last_inspection_date?: string | null
           latitude?: number | null
           layout_plan_url?: string | null
+          location_updated?: string | null
           longitude?: number | null
+          natca_classification?: string | null
           notes?: string | null
           number_of_antennas?: number | null
           number_of_battery_banks?: number | null
           on_air?: string | null
+          owner_sharing_status?: string | null
           planned_start_date?: string | null
           planning_approval_status?: string | null
           power_backup_type?: string | null
@@ -522,6 +532,7 @@ export type Database = {
           review_notes?: string | null
           reviewed_by?: string | null
           scope?: string | null
+          site_classification?: string | null
           site_configuration?: string | null
           site_id_code?: string
           site_implementation_design?: string | null
@@ -533,6 +544,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["site_status"]
           submitted_by?: string | null
           target_completion_date?: string | null
+          technology_classification?: string[] | null
           terrain_type?: string | null
           tower_height?: number | null
           tower_material?: string | null
@@ -552,6 +564,7 @@ export type Database = {
           backup_power?: string | null
           battery_bank_type?: string | null
           cast_status?: string | null
+          chiefdom?: string | null
           civil_rfi?: string | null
           contractor_name?: string | null
           created_at?: string
@@ -572,11 +585,14 @@ export type Database = {
           last_inspection_date?: string | null
           latitude?: number | null
           layout_plan_url?: string | null
+          location_updated?: string | null
           longitude?: number | null
+          natca_classification?: string | null
           notes?: string | null
           number_of_antennas?: number | null
           number_of_battery_banks?: number | null
           on_air?: string | null
+          owner_sharing_status?: string | null
           planned_start_date?: string | null
           planning_approval_status?: string | null
           power_backup_type?: string | null
@@ -592,6 +608,7 @@ export type Database = {
           review_notes?: string | null
           reviewed_by?: string | null
           scope?: string | null
+          site_classification?: string | null
           site_configuration?: string | null
           site_id_code?: string
           site_implementation_design?: string | null
@@ -603,6 +620,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["site_status"]
           submitted_by?: string | null
           target_completion_date?: string | null
+          technology_classification?: string[] | null
           terrain_type?: string | null
           tower_height?: number | null
           tower_material?: string | null
