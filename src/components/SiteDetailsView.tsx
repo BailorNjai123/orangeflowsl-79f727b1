@@ -19,6 +19,37 @@ interface SiteDetailsViewProps {
   showExcelSubmission?: boolean;
 }
 
+const PROCUREMENT_PLANNING_GROUPS = PLANNING_FIELD_GROUPS.slice(0, 2);
+
+/** Approved Planning fields shared with Procurement. The original workbook and
+ * all technical worksheets/parameters are deliberately excluded. */
+export function ProcurementPlanningDetails({ site }: { site: any }) {
+  const { extended } = parsePlanningNotes(site?.notes);
+  const merged: Record<string, any> = { ...(site || {}), ...(extended || {}) };
+
+  return (
+    <div className="space-y-4">
+      {PROCUREMENT_PLANNING_GROUPS.map(group => {
+        const rows = group.fields
+          .map(field => ({ label: field.label, value: formatPlanningValue(merged[field.key]) }))
+          .filter(row => row.value !== null);
+        if (!rows.length) return null;
+        return (
+          <div key={group.title}>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              {group.title === 'Basic Site & Location' ? <MapPin className="h-3.5 w-3.5" /> : <ListChecks className="h-3.5 w-3.5" />}
+              {group.title}
+            </h4>
+            <div className="rounded-lg border bg-card p-3">
+              {rows.map(row => <DetailRow key={row.label} label={row.label} value={row.value} />)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   if (value === null || value === undefined || value === '') return null;
   return (
@@ -295,12 +326,14 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated, 
 
       {/* Original Planning Excel submission — full workbook view + download */}
       {showExcelSubmission && excelMeta?.path && (
-        <ExcelSubmissionView
-          meta={excelMeta}
-          siteIdCode={site.site_id_code}
-          submittedAt={site.created_at}
-          submittedByName={site.profiles?.full_name || site.submitted_by_name}
-        />
+        <div className="border-t pt-4">
+          <ExcelSubmissionView
+            meta={excelMeta}
+            siteIdCode={site.site_id_code}
+            submittedAt={excelMeta.uploaded_at || site.created_at}
+            submittedByName={excelMeta.submitted_by_name || site.profiles?.full_name || site.submitted_by_name}
+          />
+        </div>
       )}
 
 

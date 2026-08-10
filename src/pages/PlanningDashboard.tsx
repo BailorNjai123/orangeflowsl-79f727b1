@@ -685,7 +685,13 @@ export default function PlanningDashboard() {
                       const xm = parsePlanningNotes(site.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined;
                       return xm?.path ? (
                         <div className="mt-2">
-                          <ExcelSubmissionView meta={xm} siteIdCode={site.site_id_code} submittedAt={site.created_at} compact />
+                          <ExcelSubmissionView
+                            meta={xm}
+                            siteIdCode={site.site_id_code}
+                            submittedAt={xm.uploaded_at || site.created_at}
+                            submittedByName={xm.submitted_by_name || profile?.full_name || user?.email}
+                            compact
+                          />
                         </div>
                       ) : null;
                     })()}
