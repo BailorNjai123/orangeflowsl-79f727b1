@@ -47,6 +47,7 @@ export default function ExcelSubmissionView({
   };
 
   const date = meta.uploaded_at || submittedAt;
+  const byName = submittedByName || meta.submitted_by_name;
 
   if (compact) {
     return (
@@ -56,8 +57,13 @@ export default function ExcelSubmissionView({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium truncate">{meta.name || meta.path.split('/').pop()}</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground truncate">
             Excel (.xlsx){formatSize(meta.size) ? ` · ${formatSize(meta.size)}` : ''}
+            {siteIdCode ? ` · ${siteIdCode}` : ''}
+          </p>
+          <p className="text-[11px] text-muted-foreground truncate">
+            {byName ? `By ${byName}` : ''}{byName && date ? ' · ' : ''}
+            {date ? new Date(date).toLocaleString() : ''}
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={handleDownload} disabled={downloading} className="shrink-0 h-8">
