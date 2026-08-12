@@ -13,7 +13,7 @@ import * as XLSX from 'xlsx';
  * stored as-is and is only viewable/downloadable from Planning Review.
  */
 
-export type ExcelCategory = 'basic' | 'governance' | 'classification';
+export type ExcelCategory = 'basic' | 'governance' | 'classification' | 'radio';
 
 interface ExcelFieldDef {
   key: string;
