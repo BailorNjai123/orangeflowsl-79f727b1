@@ -336,7 +336,8 @@ export default function PlanningDashboard() {
       native.town = native.town || (existing as any)?.town || '—';
 
       const extended: Record<string, any> = { ...prevExtended };
-      ['chiefdom','location_updated','site_classification','natca_classification','owner_sharing_status','technology_classification']
+      ['chiefdom','location_updated','site_classification','natca_classification','owner_sharing_status','technology_classification',
+        ...EXCEL_FIELDS.filter(f => f.category === 'radio').map(f => f.key)]
         .forEach(k => { if (v[k] !== undefined) extended[k] = v[k]; });
       extended.excel_submission = {
         path,
