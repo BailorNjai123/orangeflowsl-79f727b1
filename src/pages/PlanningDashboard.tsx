@@ -77,9 +77,9 @@ const MOD1: FieldDef[] = [
   { key: 'chiefdom', label: 'Chiefdom', type: 'text' },
   { key: 'town', label: 'Town / City / Location', type: 'text', required: true },
   { key: 'location_updated', label: 'Location Updated', type: 'date' },
+  { key: 'elevation', label: 'Elevation (m)', type: 'number' },
   { key: 'latitude', label: 'Latitude', type: 'number', required: true, placeholder: '8.4657' },
   { key: 'longitude', label: 'Longitude', type: 'number', required: true, placeholder: '-13.2317' },
-  { key: 'elevation', label: 'Elevation (m)', type: 'number' },
   { key: 'dimensions', label: 'Dimensions (m)', type: 'text', placeholder: '15x15' },
   { key: 'distance_nearest_bts', label: 'Distance from Nearest BTS (km)', type: 'number' },
 ];
