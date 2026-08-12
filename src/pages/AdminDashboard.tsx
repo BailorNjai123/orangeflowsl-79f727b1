@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties, Zap, HardHat, ClipboardList, Map } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties, Zap, HardHat, ClipboardList, Map, FileDown } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
+import { downloadPlanningExcel } from '@/lib/planningExcelExport';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
 import { deleteExcelSubmission } from '@/lib/deleteExcelSubmission';
 import SiteMonitorTable from '@/components/SiteMonitorTable';
