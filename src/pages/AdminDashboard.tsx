@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties, Zap, HardHat, ClipboardList, Map, FileDown } from 'lucide-react';
-import { downloadPlanningExcel } from '@/lib/planningExcelExport';
+import { LayoutDashboard, CheckSquare, Users, FileCheck, Activity, Loader2, Check, X, Eye, EyeOff, Plus, UserCog, Lock, Unlock, KeyRound, Trash2, TableProperties, Zap, HardHat, ClipboardList, Map } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
 import { deleteExcelSubmission } from '@/lib/deleteExcelSubmission';
@@ -531,8 +530,8 @@ export default function AdminDashboard() {
                   <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setReviewNotes(''); }}>
                     <Eye className="h-3 w-3 mr-1" /> Review
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => downloadPlanningExcel(site)}>
-                    <FileDown className="h-3 w-3 mr-1" /> Download Planning Excel
+                  <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setReviewNotes(''); }}>
+                    <Eye className="h-3 w-3 mr-1" /> Review
                   </Button>
                   <Button size="sm" variant="destructive" onClick={async () => {
                     if (!confirm(`Delete site "${site.site_name}"? This will also delete all related procurement submissions and feedback. This cannot be undone.`)) return;
