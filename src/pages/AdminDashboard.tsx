@@ -530,6 +530,9 @@ export default function AdminDashboard() {
                   <Button size="sm" variant="outline" onClick={() => { setSelectedSite(site); setReviewNotes(''); }}>
                     <Eye className="h-3 w-3 mr-1" /> Review
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => downloadPlanningExcel(site)}>
+                    <FileDown className="h-3 w-3 mr-1" /> Download Planning Excel
+                  </Button>
                   <Button size="sm" variant="destructive" onClick={async () => {
                     if (!confirm(`Delete site "${site.site_name}"? This will also delete all related procurement submissions and feedback. This cannot be undone.`)) return;
                     // Clean up procurement submission files first
