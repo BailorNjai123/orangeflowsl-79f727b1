@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSignedUrl, extractStoragePath, openFileInNewTab, downloadFile } from '@/lib/storageUtils';
-import { cleanNote, parsePlanningNotes } from '@/lib/planningNotes';
+import { cleanNote, parsePlanningNotes, parseReviewNotes } from '@/lib/planningNotes';
 import { PLANNING_FIELD_GROUPS, formatPlanningValue, isKnownPlanningKey, prettifyKey } from '@/lib/planningFieldLabels';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
 import { deleteExcelSubmission } from '@/lib/deleteExcelSubmission';
@@ -397,6 +397,24 @@ export default function SiteDetailsView({ site, allowFileManage, onFileUpdated, 
       )}
 
 
+
+      {/* Approval & Review — human-readable only, never the raw workflow object */}
+      {(() => {
+        const rv = parseReviewNotes(site.review_notes);
+        return (
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <ListChecks className="h-3.5 w-3.5" /> Approval &amp; Review
+            </h4>
+            <div className="rounded-lg border bg-card p-3">
+              <AlwaysShowRow label="Approval Status" value={site.status ? String(site.status).charAt(0).toUpperCase() + String(site.status).slice(1) : null} />
+              <DetailRow label="Reviewed By" value={rv.reviewer} />
+              <DetailRow label="Review Date" value={rv.reviewedAt ? new Date(rv.reviewedAt).toLocaleDateString() : (site.approval_date || null)} />
+              <AlwaysShowRow label="Review Notes" value={rv.note} />
+            </div>
+          </div>
+        );
+      })()}
 
       {cleanNote(site.notes) && (
         <div>
