@@ -57,6 +57,12 @@ const FREQ_BAND_4G = ['L800','L900','L1800','L2100','L2600'];
 const BW_4G = ['CELL_BW_N15','CELL_BW_N25','CELL_BW_N50','CELL_BW_N75','CELL_BW_N100'];
 const FDD_TDD = ['CELL_FDD','CELL_TDD'];
 const YES_NO = ['YES','NO'];
+const NR_BAND_5G = ['n1','n3','n7','n8','n28','n38','n40','n41','n77','n78','n79'];
+const DUPLEX_5G = ['CELL_FDD','CELL_TDD'];
+const SCS_5G = ['15','30','60','120'];
+const BW_5G = ['5','10','15','20','40','50','60','80','100'];
+const TXRX_5G = ['2T2R','4T4R','8T8R','32T32R','64T64R'];
+const MODE_5G = ['NSA','SA','NSA/SA'];
 
 // ----- Field definitions per module -----
 type FieldType = 'text'|'number'|'date'|'select';
@@ -115,12 +121,24 @@ const MOD5_2G: FieldDef[] = [
   { key: '2g_freq_band', label: 'Frequency Band', type: 'select', options: FREQ_BAND_2G },
   { key: 'g900_trx', label: 'G900 TRX Number', type: 'number' },
   { key: 'g1800_trx', label: 'G1800 TRX Number', type: 'number' },
-  { key: '2g_bcch_ncc_bcc', label: '2G BCCH, NCC, BCC', type: 'text' },
-  { key: 'hsn_ma_maio_900', label: 'HSN_900M, MA_900, MAIO_900M', type: 'text' },
-  { key: 'hsn_ma_maio_1800', label: 'HSN_1800M, MA_1800, MAIO_1800M', type: 'text' },
-  { key: 'bch_sdcch_pdtch', label: 'BCH, SDCCH, PDTCH Channels', type: 'text' },
+  { key: '2g_bcch', label: 'BCCH', type: 'text' },
+  { key: '2g_ncc', label: 'NCC', type: 'text' },
+  { key: '2g_bcc', label: 'BCC', type: 'text' },
+  { key: 'hsn_900', label: 'HSN_900', type: 'text' },
+  { key: 'ma_900', label: 'MA_900', type: 'text' },
+  { key: 'maio_900m', label: 'MAIO_900M', type: 'text' },
+  { key: 'hsn_1800m', label: 'HSN_1800M', type: 'text' },
+  { key: 'ma_1800', label: 'MA_1800', type: 'text' },
+  { key: 'maio_1800m', label: 'MAIO_1800M', type: 'text' },
+  { key: '2g_bch', label: 'BCH', type: 'text' },
+  { key: '2g_sdcch', label: 'SDCCH', type: 'text' },
+  { key: '2g_pdtch', label: 'PDTCH', type: 'text' },
   { key: 'tx_power_powt', label: 'Transmitter Power (POWT, dBm)', type: 'number' },
-  { key: '2g_identifiers', label: '2G Identifiers (MCC, MNC, LAC, RAC, CGI)', type: 'text' },
+  { key: '2g_mcc', label: 'MCC', type: 'text' },
+  { key: '2g_mnc', label: 'MNC', type: 'text' },
+  { key: '2g_lac', label: 'LAC', type: 'text' },
+  { key: '2g_rac', label: 'RAC', type: 'text' },
+  { key: '2g_cgi', label: 'CGI', type: 'text' },
 ];
 
 const MOD6_3G: FieldDef[] = [
@@ -131,7 +149,12 @@ const MOD6_3G: FieldDef[] = [
   { key: '3g_psc', label: 'Primary Scrambling Code (PSC)', type: 'number' },
   { key: '3g_txrx', label: '3G TxRxMode', type: 'select', options: TXRX_3G },
   { key: '3g_dl_bw_earfcn', label: '3G DL Bandwidth & DL EARFCN', type: 'text' },
-  { key: '3g_identifiers', label: '3G Identifiers (MCC, MNC, LAC, RAC, SAC, CGI)', type: 'text' },
+  { key: '3g_mcc', label: 'MCC', type: 'text' },
+  { key: '3g_mnc', label: 'MNC', type: 'text' },
+  { key: '3g_lac', label: 'LAC', type: 'text' },
+  { key: '3g_rac', label: 'RAC', type: 'text' },
+  { key: '3g_sac', label: 'SAC', type: 'text' },
+  { key: '3g_cgi', label: 'CGI', type: 'text' },
 ];
 
 const MOD7_4G: FieldDef[] = [
@@ -146,8 +169,65 @@ const MOD7_4G: FieldDef[] = [
   { key: '4g_dl_earfcn', label: '4G DL EARFCN', type: 'number' },
   { key: '4g_tac_pci_root', label: 'TAC, PCI, Root Sequence Index', type: 'text' },
   { key: '4g_cell_radius', label: 'Cell Radius (m)', type: 'number' },
-  { key: '4g_identifiers', label: '4G Identifiers (ECI, ECGI, MCC, MNC)', type: 'text' },
+  { key: '4g_eci', label: 'ECI', type: 'text' },
+  { key: '4g_ecgi', label: 'ECGI', type: 'text' },
+  { key: '4g_mcc', label: 'MCC', type: 'text' },
+  { key: '4g_mnc', label: 'MNC', type: 'text' },
 ];
+
+const MOD8_5G: FieldDef[] = [
+  { key: '5g_gnodeb_name', label: '5G gNodeB Name', type: 'text' },
+  { key: '5g_gnodeb_id', label: '5G gNodeB ID', type: 'text' },
+  { key: '5g_cell_name', label: '5G Cell Name', type: 'text' },
+  { key: '5g_cell_id', label: '5G Cell ID', type: 'text' },
+  { key: '5g_local_cell_id', label: '5G Local Cell ID', type: 'text' },
+  { key: '5g_nr_band', label: '5G NR Frequency Band', type: 'select', options: NR_BAND_5G },
+  { key: '5g_duplex_mode', label: '5G Duplex Mode (FDD / TDD)', type: 'select', options: DUPLEX_5G },
+  { key: '5g_scs', label: 'Subcarrier Spacing (kHz)', type: 'select', options: SCS_5G },
+  { key: '5g_dl_bandwidth', label: '5G DL Bandwidth (MHz)', type: 'select', options: BW_5G },
+  { key: '5g_ul_bandwidth', label: '5G UL Bandwidth (MHz)', type: 'select', options: BW_5G },
+  { key: '5g_ssb_arfcn', label: 'SSB ARFCN', type: 'text' },
+  { key: '5g_dl_arfcn', label: 'DL NR-ARFCN', type: 'text' },
+  { key: '5g_ul_arfcn', label: 'UL NR-ARFCN', type: 'text' },
+  { key: '5g_pci', label: '5G PCI', type: 'text' },
+  { key: '5g_root_sequence_index', label: 'Root Sequence Index', type: 'text' },
+  { key: '5g_txrx', label: '5G TxRxMode', type: 'select', options: TXRX_5G },
+  { key: '5g_max_tx_power', label: 'Max Transmit Power (dBm)', type: 'number' },
+  { key: '5g_ssb_power', label: 'SSB Power (dBm)', type: 'number' },
+  { key: '5g_tac', label: '5G TAC', type: 'text' },
+  { key: '5g_nci', label: 'NCI (NR Cell Identity)', type: 'text' },
+  { key: '5g_ncgi', label: 'NCGI', type: 'text' },
+  { key: '5g_mcc', label: 'MCC', type: 'text' },
+  { key: '5g_mnc', label: 'MNC', type: 'text' },
+  { key: '5g_nsa_sa_mode', label: 'Deployment Mode (NSA / SA)', type: 'select', options: MODE_5G },
+  { key: '5g_slice_type', label: 'Network Slice Type', type: 'text' },
+  { key: '5g_cell_radius', label: '5G Cell Radius (m)', type: 'number' },
+];
+
+// Older records stored some radio parameters as combined comma-separated values.
+// Split them into the new independent fields so existing sites open and edit cleanly.
+const LEGACY_SPLITS: { from: string; to: string[] }[] = [
+  { from: '2g_bcch_ncc_bcc', to: ['2g_bcch', '2g_ncc', '2g_bcc'] },
+  { from: 'hsn_ma_maio_900', to: ['hsn_900', 'ma_900', 'maio_900m'] },
+  { from: 'hsn_ma_maio_1800', to: ['hsn_1800m', 'ma_1800', 'maio_1800m'] },
+  { from: 'bch_sdcch_pdtch', to: ['2g_bch', '2g_sdcch', '2g_pdtch'] },
+  { from: '2g_identifiers', to: ['2g_mcc', '2g_mnc', '2g_lac', '2g_rac', '2g_cgi'] },
+  { from: '3g_identifiers', to: ['3g_mcc', '3g_mnc', '3g_lac', '3g_rac', '3g_sac', '3g_cgi'] },
+  { from: '4g_identifiers', to: ['4g_eci', '4g_ecgi', '4g_mcc', '4g_mnc'] },
+];
+
+function migrateLegacyRadio(extended: Record<string, any>): Record<string, any> {
+  const out = { ...extended };
+  LEGACY_SPLITS.forEach(({ from, to }) => {
+    const raw = out[from];
+    if (raw === undefined || raw === null || String(raw).trim() === '') return;
+    const parts = String(raw).split(/[,/;|]+/).map(p => p.trim());
+    to.forEach((key, i) => {
+      if ((out[key] === undefined || out[key] === '') && parts[i]) out[key] = parts[i];
+    });
+  });
+  return out;
+}
 
 // Columns actually present on the `sites` table — safe to write directly.
 const NATIVE_COLS = new Set([
@@ -256,7 +336,8 @@ export default function PlanningDashboard() {
       native.town = native.town || (existing as any)?.town || '—';
 
       const extended: Record<string, any> = { ...prevExtended };
-      ['chiefdom','location_updated','site_classification','natca_classification','owner_sharing_status','technology_classification']
+      ['chiefdom','location_updated','site_classification','natca_classification','owner_sharing_status','technology_classification',
+        ...EXCEL_FIELDS.filter(f => f.category === 'radio').map(f => f.key)]
         .forEach(k => { if (v[k] !== undefined) extended[k] = v[k]; });
       extended.excel_submission = {
         path,
@@ -314,7 +395,7 @@ export default function PlanningDashboard() {
   useEffect(() => {
     if (!editSite) { setForm(emptyState); return; }
     const { text, extended } = parsePlanningNotes(editSite.notes);
-    const hydrated: FormState = { technology_classification: [], ...extended, planner_note: text };
+    const hydrated: FormState = { technology_classification: [], ...migrateLegacyRadio(extended), planner_note: text };
     Object.keys(editSite).forEach(k => { if (editSite[k] != null && NATIVE_COLS.has(k)) hydrated[k] = editSite[k]; });
     setForm(hydrated);
 
@@ -435,6 +516,7 @@ export default function PlanningDashboard() {
     { id: 'm5', icon: Radio,        title: '2G Radio Network', fields: MOD5_2G, show: has('2G') },
     { id: 'm6', icon: Signal,       title: '3G Radio Network', fields: MOD6_3G, show: has('3G') },
     { id: 'm7', icon: Smartphone,   title: '4G LTE Radio Network', fields: MOD7_4G, show: has('4G') },
+    { id: 'm8', icon: Wifi,         title: '5G NR Radio Network', fields: MOD8_5G, show: has('5G') },
 
   ]), [tech]);
 
