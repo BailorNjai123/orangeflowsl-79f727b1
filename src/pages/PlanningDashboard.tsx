@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { parsePlanningNotes, buildPlanningNotes, parseReviewNotes } from '@/lib/planningNotes';
 import { readWorkbook, extractPlanningFromWorkbook, validateExtracted, EXCEL_FIELDS } from '@/lib/planningExcel';
+import { downloadPlanningExcel } from '@/lib/planningExcelExport';
 import { offlineUpload, offlineWrite, isOnline } from '@/lib/offline/outbox';
 
 
