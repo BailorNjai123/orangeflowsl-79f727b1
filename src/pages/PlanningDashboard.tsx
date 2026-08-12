@@ -57,6 +57,12 @@ const FREQ_BAND_4G = ['L800','L900','L1800','L2100','L2600'];
 const BW_4G = ['CELL_BW_N15','CELL_BW_N25','CELL_BW_N50','CELL_BW_N75','CELL_BW_N100'];
 const FDD_TDD = ['CELL_FDD','CELL_TDD'];
 const YES_NO = ['YES','NO'];
+const NR_BAND_5G = ['n1','n3','n7','n8','n28','n38','n40','n41','n77','n78','n79'];
+const DUPLEX_5G = ['CELL_FDD','CELL_TDD'];
+const SCS_5G = ['15','30','60','120'];
+const BW_5G = ['5','10','15','20','40','50','60','80','100'];
+const TXRX_5G = ['2T2R','4T4R','8T8R','32T32R','64T64R'];
+const MODE_5G = ['NSA','SA','NSA/SA'];
 
 // ----- Field definitions per module -----
 type FieldType = 'text'|'number'|'date'|'select';
