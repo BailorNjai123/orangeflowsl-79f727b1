@@ -1,130 +1,147 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 800" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" font-family="'Plus Jakarta Sans', 'Segoe UI', Helvetica, Arial, sans-serif">
   <defs>
-    <linearGradient id="tier1" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#fff7ed"/><stop offset="1" stop-color="#ffedd5"/>
+    <!-- OrangeFlow brand palette -->
+    <linearGradient id="userGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff7ed"/>
+      <stop offset="1" stop-color="#ffedd5"/>
     </linearGradient>
-    <linearGradient id="tier2" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#eef2ff"/><stop offset="1" stop-color="#e0e7ff"/>
+    <linearGradient id="appGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff7ed"/>
+      <stop offset="1" stop-color="#fed7aa"/>
     </linearGradient>
-    <linearGradient id="tier3" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#f1f5f9"/><stop offset="1" stop-color="#e2e8f0"/>
+    <linearGradient id="domainGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f8fafc"/>
     </linearGradient>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    <linearGradient id="backendGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f1f5f9"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="offlineGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f0fdfa"/>
+      <stop offset="1" stop-color="#ccfbf1"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
     </marker>
-    <style>
-      .title{font-size:24px;font-weight:700;fill:#0f172a}
-      .tier{font-size:18px;font-weight:700;fill:#0f172a}
-      .lbl{font-size:12.5px;fill:#0f172a;font-weight:600}
-      .sub{font-size:10.5px;fill:#475569}
-      .box{stroke:#cbd5e1;stroke-width:1.5;rx:10;ry:10}
-      .line{stroke:#334155;stroke-width:2;fill:none}
-      .dash{stroke:#f97316;stroke-width:2;stroke-dasharray:6 4;fill:none}
-    </style>
+    <marker id="arrowOrange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f97316"/>
+    </marker>
+    <marker id="arrowDashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
   </defs>
 
-  <rect width="1080" height="800" fill="#ffffff"/>
-  <text class="title" x="540" y="36" text-anchor="middle">OrangeFlow — Three-Tier System Architecture</text>
+  <!-- Background -->
+  <rect width="1000" height="700" fill="#ffffff"/>
 
-  <!-- Tier 1 -->
-  <rect x="30" y="64" width="1020" height="150" fill="url(#tier1)" class="box" stroke="#fb923c"/>
-  <text class="tier" x="50" y="90">Tier 1 — Presentation Layer: Five Role Dashboards</text>
+  <!-- Title -->
+  <text x="500" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1e293b">
+    Figure 3.1: High-Level Architecture of the Proposed OrangeFlow System
+  </text>
+  <line x1="120" y1="48" x2="880" y2="48" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- ===== Users ===== -->
+  <rect x="430" y="70" width="140" height="54" rx="10" ry="10" fill="url(#userGrad)" stroke="#f97316" stroke-width="2"/>
+  <text x="500" y="95" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">Users</text>
+  <text x="500" y="112" text-anchor="middle" font-size="10" fill="#64748b">Planning · Procurement · Power</text>
+
+  <!-- Arrow: Users → Web App -->
+  <line x1="500" y1="124" x2="500" y2="158" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== OrangeFlow Web Application ===== -->
+  <rect x="300" y="166" width="400" height="64" rx="12" ry="12" fill="url(#appGrad)" stroke="#f97316" stroke-width="2.5"/>
+  <text x="500" y="195" text-anchor="middle" font-size="16" font-weight="700" fill="#1e293b">OrangeFlow Web Application</text>
+  <text x="500" y="215" text-anchor="middle" font-size="10" fill="#64748b">Role-based dashboards · Offline-first PWA</text>
+
+  <!-- Arrow: Web App → Domains -->
+  <line x1="500" y1="230" x2="500" y2="264" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Main Domain Boxes ===== -->
   <g>
-    <rect x="46" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="140" y="128" text-anchor="middle">Planning</text>
-    <text class="sub" x="140" y="146" text-anchor="middle">/planning</text>
-    <text class="sub" x="140" y="163" text-anchor="middle">61-param form</text>
-    <text class="sub" x="140" y="180" text-anchor="middle">Excel import</text>
+    <!-- Planning -->
+    <rect x="60" y="276" width="140" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
+    <text x="130" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Planning</text>
+    <text x="130" y="323" text-anchor="middle" font-size="9" fill="#64748b">Site parameters</text>
 
-    <rect x="246" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="340" y="128" text-anchor="middle">Procurement</text>
-    <text class="sub" x="340" y="146" text-anchor="middle">/procurement</text>
-    <text class="sub" x="340" y="163" text-anchor="middle">9-pt checklist</text>
-    <text class="sub" x="340" y="180" text-anchor="middle">Vendor / PO / docs</text>
+    <!-- Procurement -->
+    <rect x="240" y="276" width="140" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
+    <text x="310" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Procurement</text>
+    <text x="310" y="323" text-anchor="middle" font-size="9" fill="#64748b">Land & vendor checks</text>
 
-    <rect x="446" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="540" y="128" text-anchor="middle">Power</text>
-    <text class="sub" x="540" y="146" text-anchor="middle">/power</text>
-    <text class="sub" x="540" y="163" text-anchor="middle">Earthing / RFI</text>
-    <text class="sub" x="540" y="180" text-anchor="middle">Certification</text>
+    <!-- Power -->
+    <rect x="420" y="276" width="140" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
+    <text x="490" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Power</text>
+    <text x="490" y="323" text-anchor="middle" font-size="9" fill="#64748b">Energy & certification</text>
 
-    <rect x="646" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="740" y="128" text-anchor="middle">Rollout</text>
-    <text class="sub" x="740" y="146" text-anchor="middle">/rollout</text>
-    <text class="sub" x="740" y="163" text-anchor="middle">Milestones</text>
-    <text class="sub" x="740" y="180" text-anchor="middle">Handover accept</text>
+    <!-- Rollout -->
+    <rect x="600" y="276" width="140" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
+    <text x="670" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Rollout</text>
+    <text x="670" y="323" text-anchor="middle" font-size="9" fill="#64748b">Civil works & milestones</text>
 
-    <rect x="846" y="104" width="188" height="94" rx="8" ry="8" fill="#fff" stroke="#fb923c"/>
-    <text class="lbl" x="940" y="128" text-anchor="middle">Project / Admin</text>
-    <text class="sub" x="940" y="146" text-anchor="middle">/admin</text>
-    <text class="sub" x="940" y="163" text-anchor="middle">Global authority</text>
-    <text class="sub" x="940" y="180" text-anchor="middle">8 tabs</text>
+    <!-- Project / Admin -->
+    <rect x="780" y="276" width="160" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
+    <text x="860" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Project / Admin</text>
+    <text x="860" y="323" text-anchor="middle" font-size="9" fill="#64748b">Oversight & approvals</text>
   </g>
 
-  <!-- Tier 2 -->
-  <rect x="30" y="240" width="1020" height="270" fill="url(#tier2)" class="box" stroke="#6366f1"/>
-  <text class="tier" x="50" y="266">Tier 2 — API / Middleware Layer</text>
-  <g>
-    <rect x="46" y="282" width="230" height="112" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
-    <text class="lbl" x="161" y="304" text-anchor="middle">Authenticated Client</text>
-    <text class="sub" x="161" y="322" text-anchor="middle">JWT Session Auth</text>
-    <text class="sub" x="161" y="338" text-anchor="middle">PostgREST Gateway</text>
-    <text class="sub" x="161" y="354" text-anchor="middle">RLS Enforced</text>
-    <text class="sub" x="161" y="370" text-anchor="middle">HTTPS</text>
+  <!-- Workflow arrow: Planning → Procurement → Power → Rollout -->
+  <path d="M 200 308 L 240 308" stroke="#f97316" stroke-width="2.5" fill="none" marker-end="url(#arrowOrange)"/>
+  <path d="M 380 308 L 420 308" stroke="#f97316" stroke-width="2.5" fill="none" marker-end="url(#arrowOrange)"/>
+  <path d="M 560 308 L 600 308" stroke="#f97316" stroke-width="2.5" fill="none" marker-end="url(#arrowOrange)"/>
+  <text x="220" y="302" font-size="9" fill="#f97316" font-weight="600">workflow</text>
+  <text x="395" y="302" font-size="9" fill="#f97316" font-weight="600">workflow</text>
+  <text x="575" y="302" font-size="9" fill="#f97316" font-weight="600">workflow</text>
 
-    <rect x="292" y="282" width="230" height="112" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
-    <text class="lbl" x="407" y="304" text-anchor="middle">Deno Edge Functions</text>
-    <text class="sub" x="407" y="322" text-anchor="middle">manage-users</text>
-    <text class="sub" x="407" y="338" text-anchor="middle">seed-users</text>
-    <text class="sub" x="407" y="354" text-anchor="middle">service-role, project_team only</text>
-    <text class="sub" x="407" y="370" text-anchor="middle">archives to deleted_users_archive</text>
+  <!-- Project/Admin monitoring lines (dashed) to all domains -->
+  <line x1="860" y1="276" x2="860" y2="250" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDashed)"/>
+  <line x1="840" y1="276" x2="670" y2="252" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDashed)"/>
+  <line x1="820" y1="276" x2="490" y2="252" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDashed)"/>
+  <line x1="800" y1="276" x2="310" y2="252" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDashed)"/>
+  <line x1="780" y1="276" x2="130" y2="252" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDashed)"/>
 
-    <rect x="538" y="282" width="220" height="112" rx="8" ry="8" fill="#fff7ed" stroke="#f97316"/>
-    <text class="lbl" x="648" y="304" text-anchor="middle">Offline Queue</text>
-    <text class="sub" x="648" y="322" text-anchor="middle">IndexedDB (idb-keyval)</text>
-    <text class="sub" x="648" y="338" text-anchor="middle">offlineQueue.ts</text>
-    <text class="sub" x="648" y="354" text-anchor="middle">useOnlineSync replay</text>
-    <text class="sub" x="648" y="370" text-anchor="middle">on reconnect</text>
+  <!-- Monitor label -->
+  <text x="890" y="240" font-size="9" fill="#64748b" font-weight="600">monitor</text>
 
-    <rect x="774" y="282" width="230" height="112" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
-    <text class="lbl" x="889" y="304" text-anchor="middle">Realtime Channel</text>
-    <text class="sub" x="889" y="322" text-anchor="middle">REPLICA IDENTITY FULL</text>
-    <text class="sub" x="889" y="338" text-anchor="middle">sites · procurement_submissions</text>
-    <text class="sub" x="889" y="354" text-anchor="middle">Websocket push</text>
-    <text class="sub" x="889" y="370" text-anchor="middle">+ 30s TanStack poll</text>
+  <!-- Arrow: Domains → Backend -->
+  <line x1="130" y1="340" x2="130" y2="398" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="310" y1="340" x2="310" y2="398" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="490" y1="340" x2="490" y2="398" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="670" y1="340" x2="670" y2="398" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="860" y1="340" x2="860" y2="398" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-    <rect x="46" y="408" width="958" height="80" rx="8" ry="8" fill="#fff" stroke="#6366f1"/>
-    <text class="lbl" x="525" y="430" text-anchor="middle">send_workflow_notification(_user_ids, _title, _message, _type, _link) — SECURITY DEFINER RPC</text>
-    <text class="sub" x="525" y="450" text-anchor="middle">Role-checked cross-user notification · sanitises content · rejects external (non-relative) links</text>
-    <text class="sub" x="525" y="468" text-anchor="middle">Used by Procurement→Project/Rollout, Power→Rollout/Admin notifications</text>
+  <!-- ===== Central Backend / Database ===== -->
+  <rect x="260" y="404" width="480" height="64" rx="12" ry="12" fill="url(#backendGrad)" stroke="#64748b" stroke-width="2"/>
+  <text x="500" y="430" text-anchor="middle" font-size="15" font-weight="700" fill="#1e293b">Central Backend / Database</text>
+  <text x="500" y="450" text-anchor="middle" font-size="10" fill="#64748b">Shared site records · Role-level security · Activity log · Storage</text>
+
+  <!-- ===== Offline Storage & Synchronization (left side) ===== -->
+  <rect x="60" y="404" width="160" height="110" rx="10" ry="10" fill="url(#offlineGrad)" stroke="#0d9488" stroke-width="1.5"/>
+  <text x="140" y="425" text-anchor="middle" font-size="11" font-weight="700" fill="#134e4a">Offline Storage &amp; Sync</text>
+
+  <!-- Online path -->
+  <rect x="72" y="438" width="136" height="28" rx="5" ry="5" fill="#ffffff" stroke="#0d9488" stroke-width="1"/>
+  <text x="140" y="456" text-anchor="middle" font-size="9" fill="#134e4a">Online → Backend Sync</text>
+
+  <!-- Offline path -->
+  <rect x="72" y="474" width="136" height="28" rx="5" ry="5" fill="#ffffff" stroke="#0d9488" stroke-width="1"/>
+  <text x="140" y="492" text-anchor="middle" font-size="9" fill="#134e4a">Offline → Local Storage</text>
+
+  <!-- Sync when online -->
+  <line x1="220" y1="500" x2="260" y2="500" stroke="#0d9488" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="235" y="493" font-size="9" fill="#0d9488" font-weight="600">sync</text>
+
+  <!-- Legend -->
+  <g transform="translate(620, 540)">
+    <rect x="0" y="0" width="300" height="110" rx="8" ry="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="15" y="22" font-size="11" font-weight="700" fill="#1e293b">Legend</text>
+    <line x1="15" y1="35" x2="50" y2="35" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="60" y="39" font-size="10" fill="#475569">General data flow</text>
+    <line x1="15" y1="58" x2="50" y2="58" stroke="#f97316" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+    <text x="60" y="62" font-size="10" fill="#475569">Domain workflow</text>
+    <line x1="15" y1="81" x2="50" y2="81" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDashed)"/>
+    <text x="60" y="85" font-size="10" fill="#475569">Management oversight</text>
+    <line x1="15" y1="101" x2="50" y2="101" stroke="#0d9488" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+    <text x="60" y="105" font-size="10" fill="#475569">Offline synchronisation</text>
   </g>
-
-  <!-- Tier 3 -->
-  <rect x="30" y="546" width="1020" height="230" fill="url(#tier3)" class="box" stroke="#64748b"/>
-  <text class="tier" x="50" y="572">Tier 3 — Data Store Layer</text>
-  <g>
-    <rect x="46" y="588" width="580" height="170" rx="8" ry="8" fill="#fff" stroke="#64748b"/>
-    <text class="lbl" x="336" y="610" text-anchor="middle">PostgreSQL — 9 tables (RLS + explicit GRANTs)</text>
-    <text class="sub" x="336" y="630" text-anchor="middle">profiles · user_roles · sites · procurement_submissions</text>
-    <text class="sub" x="336" y="648" text-anchor="middle">procurement_feedback · activity_log · notifications</text>
-    <text class="sub" x="336" y="666" text-anchor="middle">deleted_users_archive · security_audit_log</text>
-    <text class="sub" x="336" y="690" text-anchor="middle">Functions: has_role · get_user_role · handle_new_user</text>
-    <text class="sub" x="336" y="708" text-anchor="middle">prevent_role_self_escalation · log_security_event</text>
-    <text class="sub" x="336" y="726" text-anchor="middle">31 SQL migrations applied</text>
-
-    <rect x="646" y="588" width="358" height="170" rx="8" ry="8" fill="#fff" stroke="#64748b"/>
-    <text class="lbl" x="825" y="610" text-anchor="middle">Cloud Storage — Private Buckets</text>
-    <text class="sub" x="825" y="634" text-anchor="middle">site-documents</text>
-    <text class="sub" x="825" y="652" text-anchor="middle">procurement-documents</text>
-    <text class="sub" x="825" y="676" text-anchor="middle">DB stores object paths, not URLs</text>
-    <text class="sub" x="825" y="694" text-anchor="middle">1-hour signed URLs</text>
-    <text class="sub" x="825" y="712" text-anchor="middle">fetchAsObjectUrl → Blob delivery</text>
-    <text class="sub" x="825" y="730" text-anchor="middle">(bypasses adblock ERR_BLOCKED_BY_CLIENT)</text>
-  </g>
-
-  <!-- connectors -->
-  <path class="line" d="M540,214 L540,240" marker-end="url(#arrow)"/>
-  <path class="line" d="M540,510 L540,546" marker-end="url(#arrow)"/>
-  <path class="dash" d="M648,282 C 648,235 610,214 610,214" marker-end="url(#arrow)"/>
-  <text class="sub" x="660" y="240" fill="#c2410c">offline bypass</text>
 </svg>
