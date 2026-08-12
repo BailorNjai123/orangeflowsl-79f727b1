@@ -12,7 +12,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { parsePlanningNotes, buildPlanningNotes } from '@/lib/planningNotes';
+import { parsePlanningNotes, buildPlanningNotes, parseReviewNotes } from '@/lib/planningNotes';
 import { readWorkbook, extractPlanningFromWorkbook, validateExtracted, EXCEL_FIELDS } from '@/lib/planningExcel';
 import { offlineUpload, offlineWrite, isOnline } from '@/lib/offline/outbox';
 
@@ -816,11 +816,22 @@ export default function PlanningDashboard() {
                         </div>
                       ) : null;
                     })()}
-                    {site.review_notes && (
-                      <p className="text-xs mt-2 p-2 rounded bg-muted text-muted-foreground">
-                        <span className="font-medium">Review Notes:</span> {site.review_notes}
-                      </p>
-                    )}
+                    {(() => {
+                      const rv = parseReviewNotes(site.review_notes);
+                      if (!rv.note) return null;
+                      return (
+                        <div className="text-xs mt-2 p-2 rounded bg-muted text-muted-foreground">
+                          <p className="font-medium text-foreground">Review Notes</p>
+                          <p className="mt-0.5 whitespace-pre-wrap">{rv.note}</p>
+                          {(rv.reviewer || rv.reviewedAt) && (
+                            <p className="mt-1 text-[11px]">
+                              {rv.reviewer ? `Reviewed by ${rv.reviewer}` : 'Reviewed'}
+                              {rv.reviewedAt ? ` • ${new Date(rv.reviewedAt).toLocaleDateString()}` : ''}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
                     <Button size="sm" variant="outline" onClick={() => setViewSite(site)}>View</Button>
