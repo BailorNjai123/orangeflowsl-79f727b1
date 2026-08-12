@@ -835,7 +835,11 @@ export default function PlanningDashboard() {
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
                     <Button size="sm" variant="outline" onClick={() => setViewSite(site)}>View</Button>
-                    <Button size="sm" variant="outline" onClick={() => setViewSite(site)}>View</Button>
+                    {!(parsePlanningNotes(site.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined)?.path && (
+                      <Button size="sm" variant="outline" onClick={() => downloadPlanningExcel(site)}>
+                        <FileDown className="h-3 w-3 mr-1" /> Download Excel
+                      </Button>
+                    )}
                     {(site.status === 'pending' || site.status === 'rejected') && (
                       <Button size="sm" variant="outline" onClick={() => { setEditSite(site); setActiveTab('submit'); }}>Edit</Button>
                     )}
