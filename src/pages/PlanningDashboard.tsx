@@ -490,6 +490,7 @@ export default function PlanningDashboard() {
     { id: 'm5', icon: Radio,        title: '2G Radio Network', fields: MOD5_2G, show: has('2G') },
     { id: 'm6', icon: Signal,       title: '3G Radio Network', fields: MOD6_3G, show: has('3G') },
     { id: 'm7', icon: Smartphone,   title: '4G LTE Radio Network', fields: MOD7_4G, show: has('4G') },
+    { id: 'm8', icon: Wifi,         title: '5G NR Radio Network', fields: MOD8_5G, show: has('5G') },
 
   ]), [tech]);
 
