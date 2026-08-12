@@ -369,7 +369,7 @@ export default function PlanningDashboard() {
   useEffect(() => {
     if (!editSite) { setForm(emptyState); return; }
     const { text, extended } = parsePlanningNotes(editSite.notes);
-    const hydrated: FormState = { technology_classification: [], ...extended, planner_note: text };
+    const hydrated: FormState = { technology_classification: [], ...migrateLegacyRadio(extended), planner_note: text };
     Object.keys(editSite).forEach(k => { if (editSite[k] != null && NATIVE_COLS.has(k)) hydrated[k] = editSite[k]; });
     setForm(hydrated);
 
