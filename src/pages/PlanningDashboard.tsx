@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Plus, FileText, Radio, Loader2, Upload, Save, ShieldCheck, Send,
-  MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone, FileSpreadsheet,
+  MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone, FileSpreadsheet, FileDown,
 } from 'lucide-react';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { parsePlanningNotes, buildPlanningNotes, parseReviewNotes } from '@/lib/planningNotes';
 import { readWorkbook, extractPlanningFromWorkbook, validateExtracted, EXCEL_FIELDS } from '@/lib/planningExcel';
+import { downloadPlanningExcel } from '@/lib/planningExcelExport';
 import { offlineUpload, offlineWrite, isOnline } from '@/lib/offline/outbox';
 
 
@@ -835,7 +836,11 @@ export default function PlanningDashboard() {
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
                     <Button size="sm" variant="outline" onClick={() => setViewSite(site)}>View</Button>
-                    <Button size="sm" variant="outline" onClick={() => setViewSite(site)}>View</Button>
+                    {!(parsePlanningNotes(site.notes).extended?.excel_submission as ExcelSubmissionMeta | undefined)?.path && (
+                      <Button size="sm" variant="outline" onClick={() => downloadPlanningExcel(site)}>
+                        <FileDown className="h-3 w-3 mr-1" /> Download Excel
+                      </Button>
+                    )}
                     {(site.status === 'pending' || site.status === 'rejected') && (
                       <Button size="sm" variant="outline" onClick={() => { setEditSite(site); setActiveTab('submit'); }}>Edit</Button>
                     )}
