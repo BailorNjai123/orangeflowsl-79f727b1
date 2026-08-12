@@ -196,15 +196,28 @@ export function extractPlanningFromWorkbook(wb: XLSX.WorkBook): ExtractedPlannin
     const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, blankrows: false });
     if (!rows.length) continue;
 
+    // A worksheet named "2G", "3G", "4G" or "5G" scopes bare columns such as
+    // MCC / MNC / LAC to that technology, so identifiers never collide.
+    const techPrefix = (norm(sheetName).match(/\b([2345])\s*g\b/) || [])[1];
+    const lookup = (cell: any) => {
+      const key = norm(cell);
+      if (!key) return undefined;
+      if (techPrefix) {
+        const scoped = FIELD_BY_ALIAS.get(`${techPrefix}g ${key}`);
+        if (scoped) return scoped;
+      }
+      return FIELD_BY_ALIAS.get(key);
+    };
+
     // Layout 1 — header row + data row(s)
     for (let r = 0; r < Math.min(rows.length, 15); r++) {
       const header = rows[r] || [];
-      const hits = header.filter(c => FIELD_BY_ALIAS.has(norm(c))).length;
+      const hits = header.filter(c => lookup(c)).length;
       if (hits < 3) continue;
       const dataRow = rows.slice(r + 1).find(row => row.some(c => c !== null && String(c).trim() !== ''));
       if (!dataRow) continue;
       header.forEach((cell, i) => {
-        const field = FIELD_BY_ALIAS.get(norm(cell));
+        const field = lookup(cell);
         if (field) put(field, dataRow[i]);
       });
       break;
@@ -214,13 +227,14 @@ export function extractPlanningFromWorkbook(wb: XLSX.WorkBook): ExtractedPlannin
     rows.forEach(row => {
       if (!row) return;
       for (let c = 0; c < row.length - 1; c++) {
-        const field = FIELD_BY_ALIAS.get(norm(row[c]));
+        const field = lookup(row[c]);
         if (!field) continue;
         const next = row.slice(c + 1).find(v => v !== null && String(v).trim() !== '');
         if (next !== undefined) put(field, next);
       }
     });
   }
+
 
   return { values, matchedLabels: [...matched], sheetNames: wb.SheetNames };
 }
