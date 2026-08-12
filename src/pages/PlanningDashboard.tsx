@@ -204,6 +204,31 @@ const MOD8_5G: FieldDef[] = [
   { key: '5g_cell_radius', label: '5G Cell Radius (m)', type: 'number' },
 ];
 
+// Older records stored some radio parameters as combined comma-separated values.
+// Split them into the new independent fields so existing sites open and edit cleanly.
+const LEGACY_SPLITS: { from: string; to: string[] }[] = [
+  { from: '2g_bcch_ncc_bcc', to: ['2g_bcch', '2g_ncc', '2g_bcc'] },
+  { from: 'hsn_ma_maio_900', to: ['hsn_900', 'ma_900', 'maio_900m'] },
+  { from: 'hsn_ma_maio_1800', to: ['hsn_1800m', 'ma_1800', 'maio_1800m'] },
+  { from: 'bch_sdcch_pdtch', to: ['2g_bch', '2g_sdcch', '2g_pdtch'] },
+  { from: '2g_identifiers', to: ['2g_mcc', '2g_mnc', '2g_lac', '2g_rac', '2g_cgi'] },
+  { from: '3g_identifiers', to: ['3g_mcc', '3g_mnc', '3g_lac', '3g_rac', '3g_sac', '3g_cgi'] },
+  { from: '4g_identifiers', to: ['4g_eci', '4g_ecgi', '4g_mcc', '4g_mnc'] },
+];
+
+function migrateLegacyRadio(extended: Record<string, any>): Record<string, any> {
+  const out = { ...extended };
+  LEGACY_SPLITS.forEach(({ from, to }) => {
+    const raw = out[from];
+    if (raw === undefined || raw === null || String(raw).trim() === '') return;
+    const parts = String(raw).split(/[,/;|]+/).map(p => p.trim());
+    to.forEach((key, i) => {
+      if ((out[key] === undefined || out[key] === '') && parts[i]) out[key] = parts[i];
+    });
+  });
+  return out;
+}
+
 // Columns actually present on the `sites` table — safe to write directly.
 const NATIVE_COLS = new Set([
   'site_id_code','site_name','region','district','town','dimensions','tower_height',
