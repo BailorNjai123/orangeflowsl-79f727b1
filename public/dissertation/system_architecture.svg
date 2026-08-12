@@ -67,22 +67,22 @@
     <!-- Procurement -->
     <rect x="240" y="276" width="140" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
     <text x="310" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Procurement</text>
-    <text x="310" y="323" text-anchor="middle" font-size="9" fill="#64748b">Land & vendor checks</text>
+    <text x="310" y="323" text-anchor="middle" font-size="9" fill="#64748b">Land &amp; vendor checks</text>
 
     <!-- Power -->
     <rect x="420" y="276" width="140" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
     <text x="490" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Power</text>
-    <text x="490" y="323" text-anchor="middle" font-size="9" fill="#64748b">Energy & certification</text>
+    <text x="490" y="323" text-anchor="middle" font-size="9" fill="#64748b">Energy &amp; certification</text>
 
     <!-- Rollout -->
     <rect x="600" y="276" width="140" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
     <text x="670" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Rollout</text>
-    <text x="670" y="323" text-anchor="middle" font-size="9" fill="#64748b">Civil works & milestones</text>
+    <text x="670" y="323" text-anchor="middle" font-size="9" fill="#64748b">Civil works &amp; milestones</text>
 
     <!-- Project / Admin -->
     <rect x="780" y="276" width="160" height="64" rx="8" ry="8" fill="url(#domainGrad)" stroke="#f97316" stroke-width="1.5"/>
     <text x="860" y="305" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Project / Admin</text>
-    <text x="860" y="323" text-anchor="middle" font-size="9" fill="#64748b">Oversight & approvals</text>
+    <text x="860" y="323" text-anchor="middle" font-size="9" fill="#64748b">Oversight &amp; approvals</text>
   </g>
 
   <!-- Workflow arrow: Planning → Procurement → Power → Rollout -->
@@ -115,7 +115,7 @@
   <text x="500" y="430" text-anchor="middle" font-size="15" font-weight="700" fill="#1e293b">Central Backend / Database</text>
   <text x="500" y="450" text-anchor="middle" font-size="10" fill="#64748b">Shared site records · Role-level security · Activity log · Storage</text>
 
-  <!-- ===== Offline Storage & Synchronization (left side) ===== -->
+  <!-- ===== Offline Storage &amp; Synchronization (left side) ===== -->
   <rect x="60" y="404" width="160" height="110" rx="10" ry="10" fill="url(#offlineGrad)" stroke="#0d9488" stroke-width="1.5"/>
   <text x="140" y="425" text-anchor="middle" font-size="11" font-weight="700" fill="#134e4a">Offline Storage &amp; Sync</text>
 
