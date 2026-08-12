@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, Plus, FileText, Radio, Loader2, Upload, Save, ShieldCheck, Send,
-  MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone, FileSpreadsheet, FileDown,
+  MapPin, Building2, HardHat, Antenna, Signal, Wifi, Smartphone, FileSpreadsheet,
 } from 'lucide-react';
-import { downloadPlanningExcel } from '@/lib/planningExcelExport';
 import SiteDetailsView from '@/components/SiteDetailsView';
 import ExcelSubmissionView, { type ExcelSubmissionMeta } from '@/components/ExcelSubmissionView';
 import DashboardLayout from '@/components/DashboardLayout';
